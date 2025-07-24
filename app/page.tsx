@@ -51,46 +51,46 @@ export default function HomePage() {
   };
 
   return (
-    <div className="workspace-background flex">
+    <div className="workspace-background flex min-h-screen">
       <WorkspaceSidebar />
       <main className="flex-1 transition-all duration-300 md:ml-64">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="workspace-card-solid p-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="workspace-card-solid p-6 sm:p-8 lg:p-10">
 
             {/* Hero Section */}
-            <div className="text-center space-y-6 py-8 mb-8">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <Brain className="h-8 w-8 text-primary" />
+            <div className="text-center space-y-8 py-12 mb-12">
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="p-4 bg-primary/10 rounded-full">
+                  <Brain className="h-10 w-10 text-primary" />
                 </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
                   MVP Studio
                 </h1>
               </div>
 
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-4">
                 Your AI-powered build orchestrator. Generate prompts, get tool recommendations,
                 and build your MVP with the best AI builders in the market.
               </p>
 
-              <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <div className="flex items-center gap-2 glass-effect px-4 py-2 rounded-full">
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mt-10">
+                <div className="flex items-center gap-2 glass-effect px-4 py-3 rounded-full">
                   <Zap className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm">AI-Generated Prompts</span>
+                  <span className="text-sm font-medium">AI-Generated Prompts</span>
                 </div>
-                <div className="flex items-center gap-2 glass-effect px-4 py-2 rounded-full">
+                <div className="flex items-center gap-2 glass-effect px-4 py-3 rounded-full">
                   <Users className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">{aiToolsDatabase.length}+ Tools</span>
+                  <span className="text-sm font-medium">{aiToolsDatabase.length}+ Tools</span>
                 </div>
-                <div className="flex items-center gap-2 glass-effect px-4 py-2 rounded-full">
+                <div className="flex items-center gap-2 glass-effect px-4 py-3 rounded-full">
                   <Star className="h-4 w-4 text-primary" />
-                  <span className="text-sm">Export Ready</span>
+                  <span className="text-sm font-medium">Export Ready</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
               <Button
                 onClick={() => setActiveTab('builder')}
                 size="lg"

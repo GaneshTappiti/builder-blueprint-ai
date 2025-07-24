@@ -16,7 +16,7 @@ import {
   Download,
   ArrowRight
 } from "lucide-react";
-import { BuilderProvider, useBuilder } from "@/lib/builderContext";
+import { BuilderProvider, useBuilder, builderActions } from "@/lib/builderContext";
 import { AppIdeaCard } from "./builder-cards/AppIdeaCard";
 import { ValidationCard } from "./builder-cards/ValidationCard";
 import { BlueprintCard } from "./builder-cards/BlueprintCard";
@@ -199,28 +199,31 @@ function BuilderWizardContent() {
                   disabled={!isAccessible}
                   onClick={() => handleCardToggle(`card-${stage.id}`)}
                 >
-                  <CardHeader className="w-full">
+                  <CardHeader className="w-full p-6">
                     <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stage.color} flex items-center justify-center shadow-lg`}>
-                          <Icon className="w-6 h-6 text-white" />
+                      <div className="flex items-center gap-5">
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${stage.color} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}>
+                          <Icon className="w-7 h-7 text-white" />
                         </div>
                         <div className="text-left">
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg">{stage.title}</CardTitle>
+                          <div className="flex items-center gap-3 mb-1">
+                            <CardTitle className="text-xl font-semibold">{stage.title}</CardTitle>
                             {getStatusIcon(status)}
                           </div>
-                          <p className="text-sm text-muted-foreground font-normal">
+                          <p className="text-sm text-muted-foreground font-normal leading-relaxed">
                             {stage.subtitle}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          status === 'completed' ? 'default' : 
-                          status === 'current' ? 'secondary' : 
-                          'outline'
-                        }>
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant={
+                            status === 'completed' ? 'default' :
+                            status === 'current' ? 'secondary' :
+                            'outline'
+                          }
+                          className="px-3 py-1 font-medium"
+                        >
                           Stage {stage.id}
                         </Badge>
                       </div>
@@ -229,9 +232,9 @@ function BuilderWizardContent() {
                 </AccordionTrigger>
                 
                 <AccordionContent>
-                  <CardContent className="pt-0">
-                    <div className="border-t pt-6">
-                      <p className="text-sm text-muted-foreground mb-4">
+                  <CardContent className="pt-0 px-6 pb-6">
+                    <div className="border-t border-primary/10 pt-6">
+                      <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                         {stage.description}
                       </p>
                       {isAccessible && renderCardContent(stage.id)}

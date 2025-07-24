@@ -41,21 +41,21 @@ export const Hero = () => {
         </p>
         
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-          <Button 
-            size="lg" 
-            className="bg-gradient-primary hover:shadow-glow-primary transition-all duration-300 group px-8 py-4 text-lg"
-          >
-            Start Building
-            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
-          <Button 
-            variant="outline" 
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20">
+          <Button
             size="lg"
-            className="px-8 py-4 text-lg border-primary/30 hover:bg-primary/10"
+            className="bg-gradient-primary hover:shadow-glow-primary transition-all duration-300 group px-10 py-5 text-lg font-semibold hover:scale-105 active:scale-95"
           >
-            <Zap className="mr-2 w-5 h-5" />
-            See How It Works
+            <span>Start Building</span>
+            <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="px-10 py-5 text-lg border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <Zap className="mr-3 w-5 h-5" />
+            <span>See How It Works</span>
           </Button>
         </div>
         
