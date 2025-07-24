@@ -5,19 +5,55 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Palette, 
-  Smartphone, 
-  Monitor, 
-  Copy, 
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Palette,
+  Smartphone,
+  Monitor,
+  Copy,
   Wand2,
   Home,
   Search,
   MessageSquare,
   User,
-  Layout
+  Layout,
+  Settings,
+  Code2,
+  Zap,
+  Eye,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface ToolSyntax {
+  name: string;
+  componentStyle: string;
+  layoutApproach: string;
+  interactionPatterns: string[];
+  syntaxNotes: string;
+}
+
+interface UIPrompt {
+  screenId: string;
+  basePrompt: string;
+  toolSpecific: Record<string, string>;
+  components: ComponentSpec[];
+  interactions: InteractionSpec[];
+}
+
+interface ComponentSpec {
+  name: string;
+  type: string;
+  properties: Record<string, any>;
+  children?: ComponentSpec[];
+}
+
+interface InteractionSpec {
+  trigger: string;
+  action: string;
+  feedback: string;
+  conditions?: string;
+}
 
 const screens = [
   { id: "home", name: "Home", icon: Home },
@@ -38,27 +74,172 @@ const designSystems = [
 
 const colorSchemes = [
   "Professional Blue",
-  "Academic Green", 
+  "Academic Green",
   "Warm Orange",
   "Modern Purple",
   "Clean Monochrome"
 ];
+
+const toolSyntaxes: Record<string, ToolSyntax> = {
+  "Framer": {
+    name: "Framer",
+    componentStyle: "Component-based with variants and overrides",
+    layoutApproach: "Auto Layout with responsive breakpoints",
+    interactionPatterns: ["Smart Animate", "Page transitions", "Hover states", "Scroll triggers"],
+    syntaxNotes: "Use component instances, define variants for states, specify responsive behavior with breakpoints"
+  },
+  "Uizard": {
+    name: "Uizard",
+    componentStyle: "Standard UI elements and patterns",
+    layoutApproach: "Grid-based layout with mobile-first approach",
+    interactionPatterns: ["Tap gestures", "Swipe navigation", "Form interactions", "Modal overlays"],
+    syntaxNotes: "Focus on wireframe structure, use standard UI patterns, specify screen sizes and orientations"
+  },
+  "Adalo": {
+    name: "Adalo",
+    componentStyle: "Native mobile components with actions",
+    layoutApproach: "Screen-based with component lists and forms",
+    interactionPatterns: ["Database actions", "Navigation actions", "Conditional visibility", "Push notifications"],
+    syntaxNotes: "Define database collections, specify user actions, include conditional logic and data binding"
+  },
+  "Builder.io": {
+    name: "Builder.io",
+    componentStyle: "Block-based visual components",
+    layoutApproach: "Drag-and-drop blocks with responsive containers",
+    interactionPatterns: ["Click actions", "Form submissions", "Dynamic content", "A/B test variants"],
+    syntaxNotes: "Structure content in blocks, define data sources, specify responsive behavior and SEO elements"
+  },
+  "FlutterFlow": {
+    name: "FlutterFlow",
+    componentStyle: "Flutter widgets with custom properties",
+    layoutApproach: "Widget tree with flexible layouts",
+    interactionPatterns: ["Widget state changes", "Navigation routes", "Firebase actions", "Custom functions"],
+    syntaxNotes: "Use Flutter widget terminology, define state management, specify Firebase integration and custom code"
+  }
+};
 
 const UIPromptGenerator = () => {
   const [activeScreen, setActiveScreen] = useState("home");
   const [designSystem, setDesignSystem] = useState("");
   const [colorScheme, setColorScheme] = useState("");
   const [deviceTarget, setDeviceTarget] = useState("mobile-first");
-  const [generatedPrompts, setGeneratedPrompts] = useState<Record<string, string>>({});
+  const [selectedTool, setSelectedTool] = useState("Framer");
+  const [generatedPrompts, setGeneratedPrompts] = useState<Record<string, UIPrompt>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showComponentSpecs, setShowComponentSpecs] = useState(false);
+  const [customRequirements, setCustomRequirements] = useState("");
   const { toast } = useToast();
+
+  const generateToolSpecificPrompt = (basePrompt: string, tool: string): string => {
+    const syntax = toolSyntaxes[tool];
+    if (!syntax) return basePrompt;
+
+    let toolPrompt = `# ${tool} Implementation\n\n`;
+    toolPrompt += `**Component Style:** ${syntax.componentStyle}\n`;
+    toolPrompt += `**Layout Approach:** ${syntax.layoutApproach}\n\n`;
+    toolPrompt += `**${tool}-Specific Instructions:**\n`;
+    toolPrompt += `${syntax.syntaxNotes}\n\n`;
+    toolPrompt += `**Base Design:**\n${basePrompt}\n\n`;
+    toolPrompt += `**Interaction Patterns:**\n`;
+    syntax.interactionPatterns.forEach(pattern => {
+      toolPrompt += `- ${pattern}\n`;
+    });
+
+    return toolPrompt;
+  };
+
+  const generateComponentSpecs = (screenId: string): ComponentSpec[] => {
+    const componentSpecs: Record<string, ComponentSpec[]> = {
+      home: [
+        {
+          name: "AppHeader",
+          type: "container",
+          properties: { height: "auto", padding: "16px", backgroundColor: "primary" },
+          children: [
+            { name: "Logo", type: "image", properties: { width: "120px", height: "40px" } },
+            { name: "NotificationIcon", type: "icon", properties: { size: "24px", color: "white" } }
+          ]
+        },
+        {
+          name: "SearchBar",
+          type: "input",
+          properties: { placeholder: "What are you looking for?", borderRadius: "8px", padding: "12px" }
+        },
+        {
+          name: "QuickActions",
+          type: "grid",
+          properties: { columns: 2, gap: "16px", padding: "20px" },
+          children: [
+            { name: "PostButton", type: "button", properties: { variant: "primary", text: "Post Resource" } },
+            { name: "BrowseButton", type: "button", properties: { variant: "secondary", text: "Browse Books" } }
+          ]
+        }
+      ],
+      search: [
+        {
+          name: "SearchHeader",
+          type: "container",
+          properties: { position: "sticky", top: 0, backgroundColor: "background" },
+          children: [
+            { name: "SearchInput", type: "input", properties: { placeholder: "Search resources...", fullWidth: true } },
+            { name: "FilterButton", type: "button", properties: { variant: "ghost", icon: "filter" } }
+          ]
+        },
+        {
+          name: "CategoryChips",
+          type: "scrollable",
+          properties: { direction: "horizontal", gap: "8px" },
+          children: [
+            { name: "CategoryChip", type: "chip", properties: { text: "Textbooks", selectable: true } }
+          ]
+        }
+      ]
+    };
+
+    return componentSpecs[screenId] || [];
+  };
+
+  const generateInteractionSpecs = (screenId: string): InteractionSpec[] => {
+    const interactionSpecs: Record<string, InteractionSpec[]> = {
+      home: [
+        {
+          trigger: "User taps Search Bar",
+          action: "Navigate to Search screen",
+          feedback: "Smooth transition animation",
+          conditions: "Always available"
+        },
+        {
+          trigger: "User taps Post Resource",
+          action: "Open create listing form",
+          feedback: "Modal slide up animation",
+          conditions: "User must be authenticated"
+        }
+      ],
+      search: [
+        {
+          trigger: "User types in search input",
+          action: "Filter results in real-time",
+          feedback: "Loading skeleton while searching",
+          conditions: "Debounce input by 300ms"
+        },
+        {
+          trigger: "User taps filter button",
+          action: "Open filter panel",
+          feedback: "Slide in from right",
+          conditions: "Always available"
+        }
+      ]
+    };
+
+    return interactionSpecs[screenId] || [];
+  };
 
   const generatePrompt = async (screenId: string) => {
     setIsGenerating(true);
-    
+
     // Simulate AI prompt generation
     setTimeout(() => {
-      const mockPrompts: Record<string, string> = {
+      const basePrompts: Record<string, string> = {
         home: `Create a mobile-first home screen with the following layout:
 
 **Header Section:**
@@ -75,7 +256,9 @@ const UIPromptGenerator = () => {
 - Tab bar with 5 icons: Home, Search, Post, Messages, Profile
 - Use ${colorScheme || 'Professional Blue'} as primary color
 - Apply ${designSystem || 'Material Design'} principles
-- Ensure touch targets are minimum 44px for accessibility`,
+- Ensure touch targets are minimum 44px for accessibility
+
+${customRequirements ? `**Custom Requirements:**\n${customRequirements}` : ''}`,
 
         search: `Design a comprehensive search and browse interface:
 
@@ -91,10 +274,12 @@ const UIPromptGenerator = () => {
 
 **Filter Panel (slide-in):**
 - Price range slider
-- Distance radius selector  
+- Distance radius selector
 - Subject/course filters
 - Condition dropdown
-- Apply/Clear buttons at bottom`,
+- Apply/Clear buttons at bottom
+
+${customRequirements ? `**Custom Requirements:**\n${customRequirements}` : ''}`,
 
         "listing-detail": `Create a detailed resource view page:
 
@@ -114,7 +299,9 @@ const UIPromptGenerator = () => {
 - Recent reviews/comments section
 
 **Related Items:**
-- "Similar Resources" horizontal scroll section at bottom`,
+- "Similar Resources" horizontal scroll section at bottom
+
+${customRequirements ? `**Custom Requirements:**\n${customRequirements}` : ''}`,
 
         chat: `Build an in-app messaging interface:
 
@@ -129,7 +316,9 @@ const UIPromptGenerator = () => {
 - Message bubbles: sent (right, primary color), received (left, gray)
 - Image/photo sharing capability
 - Quick action buttons: "Share Location", "Send Photo", "Make Offer"
-- Input field with send button and attachment icon`,
+- Input field with send button and attachment icon
+
+${customRequirements ? `**Custom Requirements:**\n${customRequirements}` : ''}`,
 
         profile: `Design a comprehensive user profile interface:
 
@@ -151,12 +340,31 @@ const UIPromptGenerator = () => {
 
 **Settings Access:**
 - Account settings, notification preferences, privacy controls
-- Help/Support and logout options`
+- Help/Support and logout options
+
+${customRequirements ? `**Custom Requirements:**\n${customRequirements}` : ''}`
+      };
+
+      const basePrompt = basePrompts[screenId] || "Screen not found";
+      const components = generateComponentSpecs(screenId);
+      const interactions = generateInteractionSpecs(screenId);
+
+      const toolSpecificPrompts: Record<string, string> = {};
+      Object.keys(toolSyntaxes).forEach(tool => {
+        toolSpecificPrompts[tool] = generateToolSpecificPrompt(basePrompt, tool);
+      });
+
+      const uiPrompt: UIPrompt = {
+        screenId,
+        basePrompt,
+        toolSpecific: toolSpecificPrompts,
+        components,
+        interactions
       };
 
       setGeneratedPrompts(prev => ({
         ...prev,
-        [screenId]: mockPrompts[screenId] || "Prompt generation failed. Please try again."
+        [screenId]: uiPrompt
       }));
       
       setIsGenerating(false);
@@ -206,40 +414,54 @@ const UIPromptGenerator = () => {
                 Set your design preferences to influence all generated prompts
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Design System</label>
-                <Select value={designSystem} onValueChange={setDesignSystem}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose design system..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {designSystems.map((system) => (
-                      <SelectItem key={system} value={system}>{system}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Color Scheme</label>
-                <Select value={colorScheme} onValueChange={setColorScheme}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose color scheme..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colorSchemes.map((scheme) => (
-                      <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Target Device</label>
-                <Select value={deviceTarget} onValueChange={setDeviceTarget}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Tool</label>
+                  <Select value={selectedTool} onValueChange={setSelectedTool}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(toolSyntaxes).map((tool) => (
+                        <SelectItem key={tool} value={tool}>{tool}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Design System</label>
+                  <Select value={designSystem} onValueChange={setDesignSystem}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose design system..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {designSystems.map((system) => (
+                        <SelectItem key={system} value={system}>{system}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Color Scheme</label>
+                  <Select value={colorScheme} onValueChange={setColorScheme}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose color scheme..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colorSchemes.map((scheme) => (
+                        <SelectItem key={scheme} value={scheme}>{scheme}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Device</label>
+                  <Select value={deviceTarget} onValueChange={setDeviceTarget}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                     <SelectItem value="mobile-first">
                       <div className="flex items-center gap-2">
                         <Smartphone className="h-4 w-4" />
@@ -255,15 +477,53 @@ const UIPromptGenerator = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Custom Requirements */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Custom Requirements</label>
+                <Textarea
+                  placeholder="Add any specific requirements, constraints, or special features for your UI..."
+                  value={customRequirements}
+                  onChange={(e) => setCustomRequirements(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              {/* Tool Syntax Info */}
+              {selectedTool && (
+                <div className="bg-muted/30 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Code2 className="h-4 w-4" />
+                    <span className="font-medium">{selectedTool} Syntax Guidelines</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Component Style:</strong> {toolSyntaxes[selectedTool]?.componentStyle}</p>
+                    <p><strong>Layout Approach:</strong> {toolSyntaxes[selectedTool]?.layoutApproach}</p>
+                    <p><strong>Key Patterns:</strong> {toolSyntaxes[selectedTool]?.interactionPatterns.slice(0, 3).join(', ')}</p>
+                  </div>
+                </div>
+              )}
+              </div>
             </CardContent>
           </Card>
 
           {/* Generate All Button */}
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <Button onClick={generateAllPrompts} size="lg" disabled={isGenerating}>
               <Wand2 className="h-4 w-4 mr-2" />
               {isGenerating ? "Generating All Prompts..." : "Generate All Screen Prompts"}
             </Button>
+
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowComponentSpecs(!showComponentSpecs)}
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                {showComponentSpecs ? "Hide" : "Show"} Component Specs
+              </Button>
+            </div>
           </div>
 
           {/* Screen Tabs */}
@@ -315,15 +575,109 @@ const UIPromptGenerator = () => {
                     {generatedPrompts[screen.id] ? (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary">Framer Optimized</Badge>
+                          <Badge variant="secondary">{selectedTool} Optimized</Badge>
                           <Badge variant="outline">{deviceTarget === 'mobile-first' ? 'Mobile First' : 'Desktop First'}</Badge>
                           {designSystem && <Badge variant="outline">{designSystem}</Badge>}
+                          {colorScheme && <Badge variant="outline">{colorScheme}</Badge>}
                         </div>
-                        <div className="bg-secondary p-4 rounded-lg">
-                          <pre className="whitespace-pre-wrap text-sm font-mono">
-                            {generatedPrompts[screen.id]}
-                          </pre>
-                        </div>
+
+                        {/* Tool-Specific Prompt Tabs */}
+                        <Tabs defaultValue={selectedTool} className="w-full">
+                          <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="base">Base Prompt</TabsTrigger>
+                            <TabsTrigger value={selectedTool}>{selectedTool} Specific</TabsTrigger>
+                            <TabsTrigger value="specs">Components & Interactions</TabsTrigger>
+                          </TabsList>
+
+                          <TabsContent value="base" className="space-y-4">
+                            <div className="bg-muted/30 p-4 rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">Universal Base Prompt</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyPrompt(generatedPrompts[screen.id].basePrompt)}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Copy
+                                </Button>
+                              </div>
+                              <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                {generatedPrompts[screen.id].basePrompt}
+                              </pre>
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value={selectedTool} className="space-y-4">
+                            <div className="bg-muted/30 p-4 rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">{selectedTool}-Specific Prompt</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => copyPrompt(generatedPrompts[screen.id].toolSpecific[selectedTool])}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Copy
+                                </Button>
+                              </div>
+                              <pre className="text-sm whitespace-pre-wrap bg-background p-3 rounded border overflow-x-auto">
+                                {generatedPrompts[screen.id].toolSpecific[selectedTool]}
+                              </pre>
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="specs" className="space-y-4">
+                            {showComponentSpecs && (
+                              <>
+                                {/* Component Specifications */}
+                                <div className="bg-muted/30 p-4 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Layers className="h-4 w-4" />
+                                    <span className="text-sm font-medium">Component Specifications</span>
+                                  </div>
+                                  <div className="space-y-3">
+                                    {generatedPrompts[screen.id].components.map((component, index) => (
+                                      <div key={index} className="bg-background p-3 rounded border">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Badge variant="outline" className="text-xs">{component.type}</Badge>
+                                          <span className="font-medium text-sm">{component.name}</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {Object.entries(component.properties).map(([key, value]) => (
+                                            <span key={key} className="mr-3">{key}: {String(value)}</span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Interaction Specifications */}
+                                <div className="bg-muted/30 p-4 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Zap className="h-4 w-4" />
+                                    <span className="text-sm font-medium">Interaction Specifications</span>
+                                  </div>
+                                  <div className="space-y-3">
+                                    {generatedPrompts[screen.id].interactions.map((interaction, index) => (
+                                      <div key={index} className="bg-background p-3 rounded border">
+                                        <div className="text-sm font-medium mb-1">{interaction.trigger}</div>
+                                        <div className="text-xs text-muted-foreground space-y-1">
+                                          <div><strong>Action:</strong> {interaction.action}</div>
+                                          <div><strong>Feedback:</strong> {interaction.feedback}</div>
+                                          {interaction.conditions && (
+                                            <div><strong>Conditions:</strong> {interaction.conditions}</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </TabsContent>
+                        </Tabs>
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
