@@ -291,7 +291,7 @@ export default function TeamSpacePage() {
         </div>
 
         {/* Main Content */}
-        <div className="px-6 py-8">
+        <div className="px-6 py-8 workspace-content-spacing">
           {/* Header Section */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">

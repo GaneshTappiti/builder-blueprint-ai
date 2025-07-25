@@ -215,7 +215,7 @@ export default function IdeaVaultPage() {
         </div>
 
         {/* Main Content */}
-        <div className="px-6 py-8 max-w-4xl mx-auto">
+        <div className="px-6 py-8 max-w-4xl mx-auto workspace-content-spacing">
           {/* Header Section */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">

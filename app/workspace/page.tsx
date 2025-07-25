@@ -895,8 +895,8 @@ export default function WorkspacePage() {
 
         {/* Main Content */}
         <div className="workspace-background workspace-content-area overflow-y-auto">
-          <div className="w-full h-full px-4 sm:px-6 lg:px-8 py-6">
-            <div className="workspace-card-solid p-6 sm:p-8 lg:p-10 h-full">
+          <div className="w-full min-h-full px-4 sm:px-6 lg:px-8 py-6 workspace-content-spacing">
+            <div className="workspace-card-solid p-6 sm:p-8 lg:p-10 min-h-full">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
                 <div>
@@ -1125,7 +1125,7 @@ export default function WorkspacePage() {
               </div>
 
               {/* Recent Projects */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 md:mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 workspace-last-section">
                 <Card className="workspace-card">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-white flex items-center gap-2">

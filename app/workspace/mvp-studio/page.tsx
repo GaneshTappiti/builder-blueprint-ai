@@ -100,7 +100,7 @@ export default function MVPStudioPage() {
         </div>
 
         {/* Hero Section */}
-        <div className="px-6 py-12">
+        <div className="px-6 py-12 workspace-content-spacing">
           <div className="max-w-4xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/20 bg-black/20 backdrop-blur-xl mb-6">
               <Sparkles className="w-4 h-4 text-green-400" />

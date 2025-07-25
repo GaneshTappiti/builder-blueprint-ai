@@ -373,4 +373,17 @@
   .layout-content {
     @apply flex-1 min-h-0;
   }
+
+  /* Workspace content spacing utilities */
+  .workspace-content-spacing {
+    @apply pb-16 md:pb-20;
+  }
+
+  .workspace-section-spacing {
+    @apply mb-8 md:mb-12;
+  }
+
+  .workspace-last-section {
+    @apply mb-12 md:mb-16 lg:mb-20;
+  }
 }
