@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
 
-// Get the Gemini Pro model
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+// Get the Gemini Flash model (updated model name)
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 export interface GeminiResponse {
   text: string;
@@ -36,7 +36,7 @@ export const geminiService = {
         text,
         confidence: 0.9, // Gemini typically has high confidence
         metadata: {
-          model: 'gemini-pro',
+          model: 'gemini-1.5-flash',
           tokens: text.length, // Approximate token count
           temperature: options?.temperature || 0.7
         }
