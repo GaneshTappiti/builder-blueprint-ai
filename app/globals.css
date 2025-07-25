@@ -64,8 +64,20 @@
     @apply border-border;
   }
 
-  body {
+  /* Prevent overscroll and white screen flash */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevents overscroll */
+    background-color: #000; /* Fallback background */
+    overscroll-behavior: none; /* Prevent bounce on mobile */
     @apply bg-background text-foreground;
+  }
+
+  /* Ensure root container takes full height */
+  #__next {
+    height: 100%;
   }
 }
 
@@ -347,5 +359,18 @@
 
   .workspace-content-area {
     @apply flex-1 w-full min-h-0;
+  }
+
+  /* Layout container classes for workspace pages */
+  .layout-container {
+    @apply h-screen w-screen flex overflow-hidden;
+  }
+
+  .layout-main {
+    @apply flex-1 overflow-y-auto;
+  }
+
+  .layout-content {
+    @apply flex-1 min-h-0;
   }
 }

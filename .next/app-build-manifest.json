@@ -1,14 +1,9 @@
 {
   "pages": {
-    "/not-found": [
+    "/workspace/teamspace/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/not-found.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/workspace/teamspace/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -26,35 +21,30 @@
       "static/chunks/main-app.js",
       "static/chunks/app/loading.js"
     ],
-    "/workspace/page": [
+    "/not-found": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/workspace/page.js"
+      "static/chunks/app/not-found.js"
     ],
-    "/workspace/idea-vault/page": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/workspace/idea-vault/page.js"
+      "static/chunks/app/_not-found/page.js"
     ],
-    "/workspace/ideaforge/page": [
+    "/workspace/investor-radar/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/workspace/ideaforge/page.js"
-    ],
-    "/workspace/mvp-studio/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/workspace/mvp-studio/page.js"
-    ],
-    "/ai-features/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/ai-features/page.js"
+      "static/chunks/app/workspace/investor-radar/page.js"
     ],
     "/workspace/ai-tools/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/workspace/ai-tools/page.js"
+    ],
+    "/workspace/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/workspace/page.js"
     ]
   }
 }

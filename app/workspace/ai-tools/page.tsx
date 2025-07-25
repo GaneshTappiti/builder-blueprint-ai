@@ -181,7 +181,7 @@ export default function AIToolsPage() {
                   <CardContent>
                     <CardDescription className="mb-4 text-gray-400">{tool.description}</CardDescription>
                     <div className="flex flex-wrap gap-1 mb-4">
-                      {tool.tags.slice(0, 3).map((tag, index) => (
+                      {tool.bestFor.slice(0, 3).map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs bg-black/20 border-white/10 text-gray-300">
                           {tag}
                         </Badge>

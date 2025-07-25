@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
@@ -10,6 +10,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ReactQueryProvider } from './providers/ReactQueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
 
 export const metadata: Metadata = {
   title: 'Builder Blueprint AI - MVP Studio',
@@ -42,8 +49,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased`}>
+    <html lang="en" className="dark h-full">
+      <body className={`${inter.className} antialiased h-full`}>
         <ReactQueryProvider>
           <AuthProvider>
             <AdminProvider>

@@ -288,158 +288,175 @@ export default function TeamSpacePage() {
               </Button>
             </div>
           </div>
+        </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-green-600">
-                <Users className="h-4 w-4 mr-2" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="tasks" className="data-[state=active]:bg-green-600">
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Tasks
-              </TabsTrigger>
-              <TabsTrigger value="messages" className="data-[state=active]:bg-green-600">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Messages
-              </TabsTrigger>
-              <TabsTrigger value="meetings" className="data-[state=active]:bg-green-600">
-                <Calendar className="h-4 w-4 mr-2" />
-                Meetings
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-green-600">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
+        {/* Main Content */}
+        <div className="px-6 py-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <Users className="h-8 w-8 text-green-400" />
+              <h1 className="text-3xl md:text-4xl font-bold text-white">TeamSpace</h1>
+            </div>
+            <p className="text-gray-400 text-lg">
+              Collaborate with your team, manage tasks, and stay connected
+            </p>
+          </div>
 
-            <TabsContent value="overview" className="space-y-6">
-              {/* Team Members Grid */}
-              <div>
-                <h2 className="text-xl font-semibold text-white mb-4">Team Members</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {teamMembers.map((member) => (
-                    <TeamMemberCard key={member.id} member={member} />
-                  ))}
+          {/* Main Content Container */}
+          <div className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-green-600">
+                  <Users className="h-4 w-4 mr-2" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="tasks" className="data-[state=active]:bg-green-600">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Tasks
+                </TabsTrigger>
+                <TabsTrigger value="messages" className="data-[state=active]:bg-green-600">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Messages
+                </TabsTrigger>
+                <TabsTrigger value="meetings" className="data-[state=active]:bg-green-600">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Meetings
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="data-[state=active]:bg-green-600">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-8">
+                {/* Team Members Grid */}
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-6">Team Members</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {teamMembers.map((member) => (
+                      <TeamMemberCard key={member.id} member={member} />
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Quick Actions */}
-              <div>
-                <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Button
-                    onClick={handleStartVideoCall}
-                    className="bg-green-600 hover:bg-green-700 h-16 text-left justify-start"
-                  >
-                    <Video className="h-6 w-6 mr-3" />
-                    <div>
-                      <div className="font-medium">Start Video Call</div>
-                      <div className="text-sm opacity-80">Connect with your team</div>
-                    </div>
-                  </Button>
+                {/* Quick Actions */}
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-6">Quick Actions</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Button
+                      onClick={handleStartVideoCall}
+                      className="bg-green-600 hover:bg-green-700 h-16 text-left justify-start"
+                    >
+                      <Video className="h-6 w-6 mr-3" />
+                      <div>
+                        <div className="font-medium">Start Video Call</div>
+                        <div className="text-sm opacity-80">Connect with your team</div>
+                      </div>
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
-                    onClick={() => setActiveTab('messages')}
-                  >
-                    <MessageSquare className="h-6 w-6 mr-3 text-blue-400" />
-                    <div>
-                      <div className="font-medium text-white">Team Chat</div>
-                      <div className="text-sm text-gray-400">Send a message</div>
-                    </div>
-                  </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
+                      onClick={() => setActiveTab('messages')}
+                    >
+                      <MessageSquare className="h-6 w-6 mr-3 text-blue-400" />
+                      <div>
+                        <div className="font-medium text-white">Team Chat</div>
+                        <div className="text-sm text-gray-400">Send a message</div>
+                      </div>
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
-                    onClick={() => setActiveTab('tasks')}
-                  >
-                    <Target className="h-6 w-6 mr-3 text-purple-400" />
-                    <div>
-                      <div className="font-medium text-white">Assign Task</div>
-                      <div className="text-sm text-gray-400">Create new task</div>
-                    </div>
-                  </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
+                      onClick={() => setActiveTab('tasks')}
+                    >
+                      <Target className="h-6 w-6 mr-3 text-purple-400" />
+                      <div>
+                        <div className="font-medium text-white">Assign Task</div>
+                        <div className="text-sm text-gray-400">Create new task</div>
+                      </div>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="tasks">
-              <TaskList tasks={tasks} onTaskUpdate={setTasks} />
-            </TabsContent>
+              <TabsContent value="tasks">
+                <TaskList tasks={tasks} onTaskUpdate={setTasks} />
+              </TabsContent>
 
-            <TabsContent value="messages">
-              <MessagesPanel messages={messages} onSendMessage={setMessages} />
-            </TabsContent>
+              <TabsContent value="messages">
+                <MessagesPanel messages={messages} onSendMessage={setMessages} />
+              </TabsContent>
 
-            <TabsContent value="meetings">
-              <MeetingsList meetings={meetings} onScheduleMeeting={setMeetings} />
-            </TabsContent>
+              <TabsContent value="meetings">
+                <MeetingsList meetings={meetings} onScheduleMeeting={setMeetings} />
+              </TabsContent>
 
-            <TabsContent value="analytics" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-white">Team Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-400">Tasks Completed</span>
-                          <span className="text-white">85%</span>
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-white">Team Performance</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-gray-400">Tasks Completed</span>
+                            <span className="text-white">85%</span>
+                          </div>
+                          <Progress value={85} className="h-2" />
                         </div>
-                        <Progress value={85} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-400">Sprint Progress</span>
-                          <span className="text-white">72%</span>
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-gray-400">Sprint Progress</span>
+                            <span className="text-white">72%</span>
+                          </div>
+                          <Progress value={72} className="h-2" />
                         </div>
-                        <Progress value={72} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-gray-400">Team Velocity</span>
-                          <span className="text-white">94%</span>
+                        <div>
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-gray-400">Team Velocity</span>
+                            <span className="text-white">94%</span>
+                          </div>
+                          <Progress value={94} className="h-2" />
                         </div>
-                        <Progress value={94} className="h-2" />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-white">Activity Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Messages sent today</span>
-                        <span className="text-white font-medium">47</span>
+                  <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+                    <CardHeader>
+                      <CardTitle className="text-white">Activity Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Messages sent today</span>
+                          <span className="text-white font-medium">47</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Meetings this week</span>
+                          <span className="text-white font-medium">12</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Tasks created</span>
+                          <span className="text-white font-medium">8</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400">Average response time</span>
+                          <span className="text-white font-medium">2.3h</span>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Meetings this week</span>
-                        <span className="text-white font-medium">12</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Tasks created</span>
-                        <span className="text-white font-medium">8</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Average response time</span>
-                        <span className="text-white font-medium">2.3h</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
 
         {/* Video Call Overlay */}

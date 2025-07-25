@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Lightbulb,
   ChevronLeft,
@@ -18,8 +16,6 @@ import {
   DollarSign,
   TrendingUp,
   CheckCircle2,
-  AlertCircle,
-  Lock,
   ArrowRight,
   Brain,
   Zap,
@@ -58,7 +54,7 @@ export default function WorkshopPage() {
   const { user } = useAuth();
 
   // Use Zustand store
-  const { activeIdea, setActiveIdea } = useActiveIdea();
+  const { setActiveIdea } = useActiveIdea();
   const hasActiveIdea = useIdeaStore((state) => state.hasActiveIdea);
   const setHasActiveIdea = useIdeaStore((state) => state.setHasActiveIdea);
   const setCurrentStep = useIdeaStore((state) => state.setCurrentStep);
@@ -70,9 +66,9 @@ export default function WorkshopPage() {
   // Check if user has an active idea (free tier restriction)
   useEffect(() => {
     checkActiveIdea();
-  }, []);
+  }, [checkActiveIdea]);
 
-  const checkActiveIdea = async () => {
+  const checkActiveIdea = useCallback(async () => {
     try {
       const { data: ideas, error } = await supabaseHelpers.getIdeas();
       if (!error && ideas) {
@@ -83,7 +79,7 @@ export default function WorkshopPage() {
     } catch (error) {
       console.error('Error checking active ideas:', error);
     }
-  };
+  }, [setHasActiveIdea]);
 
   const validateIdea = async () => {
     if (!ideaInput.trim()) {
@@ -196,7 +192,7 @@ export default function WorkshopPage() {
           id: savedIdea.id,
           title: savedIdea.title,
           description: savedIdea.description || '',
-          status: savedIdea.status as any,
+          status: savedIdea.status as 'exploring' | 'validated' | 'building' | 'launched' | 'archived',
           category: savedIdea.category,
           tags: savedIdea.tags || [],
           validation_score: savedIdea.validation_score,
