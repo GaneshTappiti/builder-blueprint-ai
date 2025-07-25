@@ -850,6 +850,31 @@ video {
   flex: 1 1 0%;
   overflow-y: auto;
 }
+/* Workspace content spacing utilities */
+.workspace-content-spacing {
+  padding-bottom: 4rem;
+}
+@media (min-width: 768px) {
+
+  .workspace-content-spacing {
+    padding-bottom: 5rem;
+  }
+}
+.workspace-last-section {
+  margin-bottom: 3rem;
+}
+@media (min-width: 768px) {
+
+  .workspace-last-section {
+    margin-bottom: 4rem;
+  }
+}
+@media (min-width: 1024px) {
+
+  .workspace-last-section {
+    margin-bottom: 5rem;
+  }
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1410,6 +1435,9 @@ video {
 }
 .min-h-\[80px\] {
   min-height: 80px;
+}
+.min-h-full {
+  min-height: 100%;
 }
 .min-h-screen {
   min-height: 100vh;
