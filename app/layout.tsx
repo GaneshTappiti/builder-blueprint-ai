@@ -1,13 +1,15 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ReactQueryProvider } from './providers/ReactQueryProvider';
-
-const inter = Inter({ subsets: ['latin'] })
+import { AuthProvider } from '@/contexts/AuthContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 
 export const metadata: Metadata = {
   title: 'Builder Blueprint AI - MVP Studio',
@@ -40,14 +42,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark">
+      <body className={`${inter.className} antialiased`}>
         <ReactQueryProvider>
-          <TooltipProvider>
-            {children}
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
+          <AuthProvider>
+            <AdminProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
+            </AdminProvider>
+          </AuthProvider>
         </ReactQueryProvider>
       </body>
     </html>

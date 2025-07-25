@@ -47,7 +47,7 @@ export function PromptGeneratorCard() {
   const copyPromptToClipboard = async (promptText: string, promptId: string) => {
     try {
       await navigator.clipboard.writeText(promptText);
-      setCopiedPrompts(prev => new Set([...prev, promptId]));
+      setCopiedPrompts(prev => new Set(Array.from(prev).concat(promptId)));
       toast({
         title: "Copied to Clipboard",
         description: "Prompt has been copied to your clipboard.",

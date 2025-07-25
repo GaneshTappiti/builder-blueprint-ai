@@ -1,200 +1,217 @@
 "use client"
 
-import { useState } from 'react';
+import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Lightbulb,
+  Code,
+  Users,
+  Search,
+  Brain,
+  MessageSquare,
+  X,
+  FileText,
+  Menu,
+  Target,
+  Shield
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Brain, 
-  Lightbulb, 
-  Layout, 
-  Palette, 
-  GitBranch, 
-  FileText, 
-  Home,
-  Settings,
-  HelpCircle,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useAdmin } from "@/contexts/AdminContext";
 
-interface StageItem {
-  id: string;
-  name: string;
-  path: string;
-  icon: React.ComponentType<{ className?: string }>;
-  status: 'completed' | 'current' | 'upcoming';
-  description: string;
+// Simple BetaLabel component using Badge
+interface BetaLabelProps {
+  variant?: 'default' | 'secondary' | 'outline' | 'destructive';
+  size?: 'sm' | 'default';
+  className?: string;
 }
 
-const stages: StageItem[] = [
-  {
-    id: 'tool-adaptive',
-    name: 'Tool-Adaptive Engine',
-    path: '/stage/tool-adaptive',
-    icon: Brain,
-    status: 'upcoming',
-    description: 'Configure AI builder preferences'
-  },
-  {
-    id: 'idea-interpreter',
-    name: 'Idea Interpreter',
-    path: '/stage/idea-interpreter',
-    icon: Lightbulb,
-    status: 'upcoming',
-    description: 'Transform ideas into structured requirements'
-  },
-  {
-    id: 'app-skeleton',
-    name: 'App Skeleton Generator',
-    path: '/stage/app-skeleton',
-    icon: Layout,
-    status: 'upcoming',
-    description: 'Generate app structure and navigation'
-  },
-  {
-    id: 'ui-prompts',
-    name: 'UI Prompt Generator',
-    path: '/stage/ui-prompts',
-    icon: Palette,
-    status: 'upcoming',
-    description: 'Create page-by-page UI prompts'
-  },
-  {
-    id: 'logic-flow',
-    name: 'Logic & Navigation Flow',
-    path: '/stage/logic-flow',
-    icon: GitBranch,
-    status: 'upcoming',
-    description: 'Map interactions and data flow'
-  },
-  {
-    id: 'prompt-export',
-    name: 'Prompt Export Composer',
-    path: '/stage/prompt-export',
-    icon: FileText,
-    status: 'upcoming',
-    description: 'Export ready-to-use prompts'
-  }
-];
+const BetaLabel = ({ variant = 'default', size = 'default', className = '' }: BetaLabelProps) => {
+  return (
+    <Badge
+      variant={variant}
+      className={`${size === 'sm' ? 'text-xs px-1.5 py-0.5' : ''} ${className}`}
+    >
+      BETA
+    </Badge>
+  );
+};
 
-export const WorkspaceSidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+interface SidebarItemProps {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  isActive: boolean;
+  onClick?: () => void;
+  isBeta?: boolean;
+  betaVariant?: 'default' | 'secondary' | 'outline' | 'destructive';
+}
+
+const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaVariant = 'default' }: SidebarItemProps) => {
+  return (
+    <Link
+      href={path}
+      onClick={onClick}
+      className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm transition-all duration-200 ${
+        isActive
+          ? "bg-green-600/20 text-green-400 border-l-2 border-green-400"
+          : "text-gray-400 hover:bg-black/30 hover:text-white hover:border-l-2 hover:border-green-500/50"
+      }`}
+    >
+      <Icon className="h-5 w-5" />
+      <span className="flex-1">{label}</span>
+      {isBeta && (
+        <BetaLabel
+          variant={betaVariant}
+          size="sm"
+          className="ml-auto"
+        />
+      )}
+    </Link>
+  );
+};
+
+interface WorkspaceSidebarProps {
+  isOpen?: boolean;
+  setIsOpen?: (open: boolean) => void;
+}
+
+const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSidebarProps) => {
   const pathname = usePathname();
 
-  const isStageActive = (path: string) => pathname === path;
-  const isHomeActive = pathname === '/';
+  const { isAdmin } = useAdmin();
 
-  return (
-    <div className={`fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-50 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <Brain className="h-6 w-6 text-primary" />
-                <span className="font-bold text-lg">MVP Studio</span>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="h-8 w-8 p-0"
-            >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
+  const handleLinkClick = () => {
+    if (setIsOpen) {
+      setIsOpen(false);
+    }
+  };
+
+  // Close sidebar when route changes
+  useEffect(() => {
+    if (setIsOpen) {
+      setIsOpen(false);
+    }
+  }, [pathname, setIsOpen]);
+
+  const modules = [
+    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, path: "/workspace" },
+    { id: "idea-vault", name: "Idea Vault", icon: Lightbulb, path: "/workspace/idea-vault" },
+    { id: "ideaforge", name: "IdeaForge", icon: Target, path: "/workspace/ideaforge", isBeta: true, betaVariant: 'secondary' as const },
+    { id: "mvp-studio", name: "MVP Studio", icon: Code, path: "/workspace/mvp-studio" },
+    { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
+    { id: "docs-decks", name: "Docs & Decks", icon: FileText, path: "/workspace/docs-decks" },
+    { id: "teamspace", name: "TeamSpace", icon: Users, path: "/workspace/teamspace", isBeta: true, betaVariant: 'secondary' as const },
+    { id: "investor-radar", name: "Investor Radar", icon: Search, path: "/workspace/investor-radar", isBeta: true, betaVariant: 'secondary' as const },
+  ];
+
+  const sidebarContent = (
+    <div className="h-full flex flex-col workspace-sidebar">
+      <div className="p-4 flex items-center border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-gradient-to-br from-green-500 to-green-600 w-8 h-8 flex items-center justify-center">
+            <span className="font-bold text-white text-sm">SW</span>
           </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {/* Home */}
-          <Link href="/">
-            <Button
-              variant={isHomeActive ? "default" : "ghost"}
-              className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-3'}`}
-              size="sm"
-            >
-              <Home className="h-4 w-4" />
-              {!isCollapsed && <span className="ml-2">Home</span>}
-            </Button>
-          </Link>
-
-          <Separator className="my-4" />
-
-          {/* Stages */}
-          {!isCollapsed && (
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Build Stages
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg text-white">StartWise</span>
+              <Badge
+                variant="secondary"
+                className="bg-blue-600/20 text-blue-300 border-blue-600/40 text-xs font-semibold"
+              >
+                BETA
+              </Badge>
             </div>
-          )}
-
-          <div className="space-y-1">
-            {stages.map((stage, index) => {
-              const Icon = stage.icon;
-              const isActive = isStageActive(stage.path);
-              
-              return (
-                <Link key={stage.id} href={stage.path}>
-                  <Button
-                    variant={isActive ? "default" : "ghost"}
-                    className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-3'} relative`}
-                    size="sm"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      {!isCollapsed && (
-                        <div className="flex-1 text-left">
-                          <div className="text-sm font-medium">{stage.name}</div>
-                          <div className="text-xs text-muted-foreground">{stage.description}</div>
-                        </div>
-                      )}
-                    </div>
-                    {!isCollapsed && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">{index + 1}</span>
-                        {stage.status === 'completed' && (
-                          <Badge variant="default" className="text-xs">✓</Badge>
-                        )}
-                        {stage.status === 'current' && (
-                          <Badge variant="secondary" className="text-xs">•</Badge>
-                        )}
-                      </div>
-                    )}
-                  </Button>
-                </Link>
-              );
-            })}
           </div>
         </div>
+      </div>
+      <div className="px-2 py-4 flex-1 overflow-y-auto">
+        <nav className="space-y-1">
+          {modules.map((module) => (
+            <SidebarItem
+              key={module.id}
+              icon={module.icon}
+              label={module.name}
+              path={module.path}
+              onClick={handleLinkClick}
+              isBeta={module.isBeta}
+              betaVariant={module.betaVariant}
+              isActive={
+                module.path === "/workspace"
+                  ? pathname === "/workspace"
+                  : pathname.startsWith(module.path)
+              }
+            />
+          ))}
 
-        {/* Footer */}
-        <div className="p-4 border-t border-border space-y-2">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-3'}`}
-            size="sm"
-          >
-            <Settings className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Settings</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-3'}`}
-            size="sm"
-          >
-            <HelpCircle className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Help</span>}
-          </Button>
+          {/* Admin Panel Link - Only visible to admin users */}
+          {isAdmin && (
+            <>
+              <div className="my-4 border-t border-white/10"></div>
+              <SidebarItem
+                icon={Shield}
+                label="Admin Panel"
+                path="/admin"
+                onClick={handleLinkClick}
+                isActive={pathname.startsWith("/admin")}
+              />
+            </>
+          )}
+        </nav>
+      </div>
+      <div className="p-4 border-t border-white/10">
+        <div className="workspace-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 bg-green-500/20 rounded">
+              <MessageSquare className="h-4 w-4 text-green-400" />
+            </div>
+            <h4 className="text-sm font-medium text-white">Founder's GPT</h4>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">
+            Get advice on your startup journey from your AI co-founder
+          </p>
+          <button className="w-full bg-black/50 hover:bg-black/70 px-3 py-2 rounded text-xs text-left text-gray-300 hover:text-white transition-colors border border-white/10">
+            Ask Founder's GPT...
+          </button>
         </div>
       </div>
     </div>
   );
+
+  // Use Sheet for both mobile and desktop for consistent off-canvas behavior
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen || (() => {})}>
+      <SheetContent
+        side="left"
+        className="w-64 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0 text-white"
+      >
+        {sidebarContent}
+      </SheetContent>
+    </Sheet>
+  );
 };
 
+// Hamburger Menu Button Component
+interface SidebarToggleProps {
+  onClick: () => void;
+  className?: string;
+}
+
+export const SidebarToggle = ({ onClick, className }: SidebarToggleProps) => {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`text-gray-400 hover:text-white hover:bg-black/30 ${className}`}
+      onClick={onClick}
+    >
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Toggle Sidebar</span>
+    </Button>
+  );
+};
+
+export default WorkspaceSidebar;

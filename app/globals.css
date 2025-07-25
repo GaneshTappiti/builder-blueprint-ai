@@ -2,102 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 70% 50%;
-
-    /* Custom design tokens for PromptForge */
-    --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%), hsl(280 70% 60%));
-    --gradient-secondary: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 3.7% 15.9%));
-    --gradient-accent: linear-gradient(135deg, hsl(180 100% 50%), hsl(200 100% 60%));
-    --glow-primary: 0 0 40px hsl(263 70% 50% / 0.3);
-    --glow-accent: 0 0 30px hsl(180 100% 50% / 0.2);
-
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar styles */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 263.4 70% 50.2%;
+    --sidebar-primary-foreground: 221.2 83.2% 53.3%;
+    --sidebar-accent: 216 34% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 34% 17%;
+    --sidebar-ring: 216 34% 17%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 0%;
     --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
+    --card: 0 0% 0%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 0% 0%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
+    --primary: 142 76% 36%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 142 76% 36%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 142 76% 36%;
   }
 }
 
@@ -217,5 +175,167 @@ All colors MUST be HSL.
 
   .status-busy {
     @apply bg-yellow-500;
+  }
+
+  /* Custom animations */
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes scale-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slide-in {
+    0% {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+
+  /* Card hover effects */
+  .hover-card-scale {
+    @apply transition-all duration-200 hover:scale-[1.02];
+  }
+
+  /* Button hover effects */
+  .button-hover-scale {
+    @apply transition-all duration-200 hover:scale-105;
+  }
+
+  /* Tab transitions */
+  .tab-transition {
+    @apply transition-all duration-300;
+  }
+
+  /* Status indicators */
+  .status-draft {
+    @apply bg-gray-500/20 text-gray-400 border-gray-500/30;
+  }
+
+  .status-researching {
+    @apply bg-blue-500/20 text-blue-400 border-blue-500/30;
+  }
+
+  .status-validated {
+    @apply bg-green-500/20 text-green-400 border-green-500/30;
+  }
+
+  .status-building {
+    @apply bg-purple-500/20 text-purple-400 border-purple-500/30;
+  }
+
+  /* Priority indicators */
+  .priority-high {
+    @apply bg-red-500/20 text-red-400 border-red-500/30;
+  }
+
+  .priority-medium {
+    @apply bg-yellow-500/20 text-yellow-400 border-yellow-500/30;
+  }
+
+  .priority-low {
+    @apply bg-green-500/20 text-green-400 border-green-500/30;
+  }
+
+  /* Text styles */
+  .workspace-title {
+    @apply text-2xl md:text-3xl font-bold text-white;
+  }
+
+  .workspace-subtitle {
+    @apply text-sm md:text-base text-gray-400;
+  }
+
+  .workspace-heading {
+    @apply text-base md:text-xl font-semibold text-white;
+  }
+
+  /* Green Glass Theme Classes */
+  .bg-green-glass {
+    @apply bg-gradient-to-br from-black via-gray-900 to-green-950;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400;
+  }
+
+  /* Feature Gradient Classes */
+  .feature-gradient-1 {
+    @apply bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-teal-500/20;
+  }
+
+  .feature-gradient-2 {
+    @apply bg-gradient-to-br from-blue-500/20 via-cyan-500/10 to-green-500/20;
+  }
+
+  .feature-gradient-3 {
+    @apply bg-gradient-to-br from-purple-500/20 via-violet-500/10 to-blue-500/20;
+  }
+
+  .feature-gradient-4 {
+    @apply bg-gradient-to-br from-pink-500/20 via-rose-500/10 to-purple-500/20;
+  }
+
+  /* Landing Page Specific Styles */
+  .hero-gradient {
+    @apply bg-gradient-to-br from-green-600/20 via-emerald-600/10 to-teal-600/20;
+  }
+
+  .pricing-card-popular {
+    @apply border-green-500/50 shadow-lg shadow-green-500/20 relative;
+  }
+
+  .pricing-card-popular::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-teal-500/10 rounded-lg;
+  }
+
+  /* Navigation styles */
+  .workspace-nav-enhanced {
+    @apply sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10;
   }
 }

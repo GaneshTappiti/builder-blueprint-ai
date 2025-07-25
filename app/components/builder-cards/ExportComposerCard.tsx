@@ -84,7 +84,7 @@ export function ExportComposerCard() {
   const copyToClipboard = async (text: string, itemId: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedItems(prev => new Set([...prev, itemId]));
+      setCopiedItems(prev => new Set(Array.from(prev).concat(itemId)));
       toast({
         title: "Copied to Clipboard",
         description: "Content has been copied to your clipboard.",
