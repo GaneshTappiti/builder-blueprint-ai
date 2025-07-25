@@ -336,6 +336,16 @@
 
   /* Navigation styles */
   .workspace-nav-enhanced {
-    @apply sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10;
+    @apply sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10 w-full;
+  }
+
+  /* Full screen layout utilities */
+  .workspace-full-height {
+    min-height: 100vh;
+    height: 100vh;
+  }
+
+  .workspace-content-area {
+    @apply flex-1 w-full min-h-0;
   }
 }

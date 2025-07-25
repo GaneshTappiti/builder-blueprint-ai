@@ -26,7 +26,7 @@ import WorkspaceSidebar from '@/components/WorkspaceSidebar';
 export default function AIProviderDashboard() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [preferences, setPreferences] = useState<any | null>(null);
+  const [preferences, setPreferences] = useState<Record<string, unknown> | null>(null);
   const [usageStats, setUsageStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -356,7 +356,7 @@ export default function AIProviderDashboard() {
                   <div className="space-y-3">
                     <h4 className="font-semibold text-white">Quota Exceeded</h4>
                     <ul className="space-y-2 text-sm text-gray-300">
-                      <li>• Check your provider's usage dashboard for current limits</li>
+                      <li>• Check your provider&apos;s usage dashboard for current limits</li>
                       <li>• Consider upgrading your plan if you need higher limits</li>
                       <li>• Wait for your quota to reset (usually monthly)</li>
                       <li>• Switch to a different provider temporarily</li>

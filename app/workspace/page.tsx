@@ -623,7 +623,7 @@ export default function WorkspacePage() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/auth');
+    router.push('/');
   };
 
   // Handler functions for non-functional buttons
@@ -685,12 +685,12 @@ export default function WorkspacePage() {
 
 
   return (
-    <div className="layout-container bg-green-glass">
+    <div className="workspace-full-height bg-green-glass">
       <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      <main className="layout-main transition-all duration-300 md:ml-64">
-        <div className="flex flex-col w-full h-full">
+      <main className="w-full workspace-full-height">
+        <div className="flex flex-col w-full workspace-full-height">
         {/* Enhanced Top Navigation Bar */}
-        <div className="workspace-nav-enhanced">
+        <div className="workspace-nav-enhanced w-full">
           <div className="flex items-center justify-between w-full px-4 md:px-6 py-3 md:py-4">
             {/* Left Section - Hamburger, Search & Context */}
             <div className="flex items-center gap-2 md:gap-4 flex-1">
@@ -894,9 +894,9 @@ export default function WorkspacePage() {
         </div>
 
         {/* Main Content */}
-        <div className="workspace-background flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="workspace-card-solid p-6 sm:p-8 lg:p-10">
+        <div className="workspace-background workspace-content-area overflow-y-auto">
+          <div className="w-full h-full px-4 sm:px-6 lg:px-8 py-6">
+            <div className="workspace-card-solid p-6 sm:p-8 lg:p-10 h-full">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
                 <div>
@@ -923,7 +923,7 @@ export default function WorkspacePage() {
 
               {/* Founder's GPT - Redesigned as AI Co-founder */}
               <section className="mb-6 md:mb-8 flex justify-center items-center min-h-[60vh]">
-                <div className="bg-black/20 backdrop-blur-xl rounded-2xl shadow-xl p-4 md:p-10 w-full max-w-4xl flex flex-col items-center border border-white/10">
+                <div className="bg-black/20 backdrop-blur-xl rounded-2xl shadow-xl p-4 md:p-10 w-full flex flex-col items-center border border-white/10">
                   {/* Header */}
                   <div className="flex flex-col items-center mb-6 md:mb-8">
                     <div className="flex items-center gap-2 mb-3">

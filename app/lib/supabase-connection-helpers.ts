@@ -239,6 +239,42 @@ export const investorHelpers = {
   }
 };
 
+// IdeaForge specific helpers
+export const ideaForgeHelpers = {
+  async getIdeas() {
+    return { data: [], error: null };
+  },
+  async createIdea(idea: any) {
+    return { data: { id: Date.now(), ...idea }, error: null };
+  },
+  async updateIdea(id: string, updates: any) {
+    return { data: { id, ...updates }, error: null };
+  },
+  async deleteIdea(id: string) {
+    return { data: { id }, error: null };
+  }
+};
+
+// Blueprint Zone specific helpers
+export const blueprintZoneHelpers = {
+  async getBlueprints() {
+    return { data: [], error: null };
+  },
+  async createBlueprint(blueprint: any) {
+    return { data: { id: Date.now(), ...blueprint }, error: null };
+  }
+};
+
+// Investor Radar specific helpers
+export const investorRadarHelpers = {
+  async getInvestors() {
+    return { data: [], error: null };
+  },
+  async createInvestor(investor: any) {
+    return { data: { id: Date.now(), ...investor }, error: null };
+  }
+};
+
 // Default export for backward compatibility
 export default {
   supabaseHelpers,
@@ -247,5 +283,8 @@ export default {
   wikiHelpers,
   taskHelpers,
   teamHelpers,
-  investorHelpers
+  investorHelpers,
+  ideaForgeHelpers,
+  blueprintZoneHelpers,
+  investorRadarHelpers
 };

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, Github, Sparkles } from 'lucide-react';
+import { Loader2, Mail, Lock, Github, Sparkles, ArrowLeft, Brain } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 
@@ -56,28 +57,59 @@ export default function AuthPage() {
     return { error: new Error('Invalid credentials') };
   };
 
-  const mockSignUp = async (email: string, password: string) => {
+  const mockSignUp = async (_email: string, _password: string) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { error: null };
   };
 
-  const mockResetPassword = async (email: string) => {
+  const mockResetPassword = async (_email: string) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { error: null };
   };
 
-  const mockUpdatePassword = async (newPassword: string) => {
+  const mockUpdatePassword = async (_newPassword: string) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { error: null };
   };
 
-  const mockSignInWithProvider = async (provider: 'github' | 'google') => {
+  const mockSignInWithProvider = async (_provider: 'github' | 'google') => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { error: null };
+  };
+
+  const handleProviderSignIn = async (provider: 'github' | 'google') => {
+    setLoading(true);
+    try {
+      const { error } = await mockSignInWithProvider(provider);
+      if (error) {
+        setError((error as Error).message);
+        toast({
+          title: "Error",
+          description: (error as Error).message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: `Signed in with ${provider} successfully!`
+        });
+        router.push('/workspace');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -322,12 +354,32 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="dark min-h-screen flex items-center justify-center bg-green-glass">
-      <div className="w-full max-w-md space-y-8 workspace-card p-8 m-auto">
+    <div className="dark min-h-screen bg-green-glass">
+      {/* Navigation Header */}
+      <nav className="px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="p-2 bg-green-600/20 rounded-lg border border-green-500/30">
+              <Brain className="h-6 w-6 text-green-400" />
+            </div>
+            <span className="text-xl font-bold text-white">MVP Studio</span>
+          </Link>
+          <Link href="/">
+            <Button variant="ghost" className="text-gray-300 hover:text-white">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Auth Form */}
+      <div className="flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md space-y-8 workspace-card p-8">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="h-8 w-8 text-green-400" />
-            <h1 className="text-3xl font-bold text-white">Builder Blueprint AI</h1>
+            <h1 className="text-3xl font-bold text-white">MVP Studio</h1>
           </div>
           <p className="text-gray-400">Sign in to your account or create a new one</p>
         </div>

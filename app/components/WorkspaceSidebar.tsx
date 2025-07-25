@@ -15,7 +15,8 @@ import {
   FileText,
   Menu,
   Target,
-  Shield
+  Shield,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     { id: "idea-vault", name: "Idea Vault", icon: Lightbulb, path: "/workspace/idea-vault" },
     { id: "ideaforge", name: "IdeaForge", icon: Target, path: "/workspace/ideaforge", isBeta: true, betaVariant: 'secondary' as const },
     { id: "mvp-studio", name: "MVP Studio", icon: Code, path: "/workspace/mvp-studio" },
+    { id: "ai-features", name: "AI Features", icon: Sparkles, path: "/ai-features", isBeta: true, betaVariant: 'default' as const },
     { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
     { id: "docs-decks", name: "Docs & Decks", icon: FileText, path: "/workspace/docs-decks" },
     { id: "teamspace", name: "TeamSpace", icon: Users, path: "/workspace/teamspace", isBeta: true, betaVariant: 'secondary' as const },
@@ -111,13 +113,13 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
   const sidebarContent = (
     <div className="h-full flex flex-col workspace-sidebar">
       <div className="p-4 flex items-center border-b border-white/10">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="rounded-full bg-gradient-to-br from-green-500 to-green-600 w-8 h-8 flex items-center justify-center">
-            <span className="font-bold text-white text-sm">SW</span>
+            <span className="font-bold text-white text-sm">MVP</span>
           </div>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-white">StartWise</span>
+              <span className="font-bold text-lg text-white">MVP Studio</span>
               <Badge
                 variant="secondary"
                 className="bg-blue-600/20 text-blue-300 border-blue-600/40 text-xs font-semibold"
@@ -126,7 +128,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
               </Badge>
             </div>
           </div>
-        </div>
+        </Link>
       </div>
       <div className="px-2 py-4 flex-1 overflow-y-auto">
         <nav className="space-y-1">

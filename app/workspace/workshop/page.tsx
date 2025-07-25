@@ -32,7 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabaseHelpers } from "@/lib/supabase";
 import { useIdeaStore, useActiveIdea } from "@/stores/ideaStore";
-import UpgradePrompt from "@/components/UpgradePrompt";
+import EnhancedUpgradePrompt from "@/components/EnhancedUpgradePrompt";
 
 interface IdeaValidation {
   problemStatement: string;
@@ -313,10 +313,8 @@ export default function WorkshopPage() {
 
           {/* Free Tier Restriction Alert */}
           {!canCreateNewIdea() && (
-            <UpgradePrompt
+            <EnhancedUpgradePrompt
               feature="Multiple Active Ideas"
-              description="You have 1 active idea (free tier limit). Archive your current idea or upgrade to Pro to work on multiple ideas simultaneously. You can always view all your ideas in the Idea Vault."
-              variant="alert"
               className="mb-6"
             />
           )}

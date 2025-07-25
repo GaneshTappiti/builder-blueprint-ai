@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Users, Database, AlertTriangle } from 'lucide-react';
+import { Settings, Users, Database } from 'lucide-react';
 import { useAdmin } from '@/contexts/AdminContext';
 
 const AdminQuickActions: React.FC = () => {

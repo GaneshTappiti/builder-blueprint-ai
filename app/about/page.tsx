@@ -22,7 +22,7 @@ export default function AboutPage() {
                 Building the Future of MVP Development
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-300 md:text-xl animate-fade-in" style={{animationDelay: '0.2s'}}>
-                We're on a mission to democratize startup creation by making AI-powered development tools accessible to everyone.
+                We&apos;re on a mission to democratize startup creation by making AI-powered development tools accessible to everyone.
               </p>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function AboutPage() {
                   Our Mission
                 </h2>
                 <p className="text-gray-400 md:text-lg">
-                  We believe that great ideas shouldn't be limited by technical barriers. Builder Blueprint AI empowers entrepreneurs, creators, and innovators to turn their visions into reality using the power of artificial intelligence.
+                  We believe that great ideas shouldn&apos;t be limited by technical barriers. Builder Blueprint AI empowers entrepreneurs, creators, and innovators to turn their visions into reality using the power of artificial intelligence.
                 </p>
                 <p className="text-gray-400 md:text-lg">
                   Our platform combines cutting-edge AI technology with intuitive design to create a seamless experience from ideation to deployment.
@@ -53,7 +53,7 @@ export default function AboutPage() {
                 <div className="text-6xl mb-4">🚀</div>
                 <h3 className="text-xl font-bold text-white mb-2">Innovation First</h3>
                 <p className="text-gray-400">
-                  We're constantly pushing the boundaries of what's possible with AI-assisted development.
+                  We&apos;re constantly pushing the boundaries of what&apos;s possible with AI-assisted development.
                 </p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function AboutPage() {
                 Meet the Team
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto">
-                We're a passionate team of developers, designers, and entrepreneurs working to make AI development accessible to everyone.
+                We&apos;re a passionate team of developers, designers, and entrepreneurs working to make AI development accessible to everyone.
               </p>
             </div>
             
@@ -116,7 +116,7 @@ export default function AboutPage() {
               <div className="text-6xl mb-4">👥</div>
               <h3 className="text-xl font-bold text-white mb-2">Growing Team</h3>
               <p className="text-gray-400 mb-6">
-                We're actively building our team of talented individuals who share our vision for the future of development.
+                We&apos;re actively building our team of talented individuals who share our vision for the future of development.
               </p>
               <Button asChild variant="outline" className="workspace-button-secondary">
                 <Link href="/careers">
