@@ -32,7 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useToast } from "@/hooks/use-toast";
-import { taskPlannerHelpers } from "@/lib/supabase-connection-helpers";
+import taskPlannerHelpers from "@/lib/supabase-connection-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Task {
@@ -185,7 +185,7 @@ export default function TaskPlannerPage() {
           <Badge className={`text-xs px-2 py-1 ${getPriorityColor(task.priority)}`}>
             {task.priority}
           </Badge>
-          {task.assignee && (
+          {task.assignee && task.assignee !== "unassigned" && (
             <div className="flex items-center gap-1 text-xs text-gray-400">
               <User className="h-3 w-3" />
               {task.assignee}
@@ -398,7 +398,7 @@ export default function TaskPlannerPage() {
                             </div>
                             <p className="text-gray-400 text-sm mb-2">{task.description}</p>
                             <div className="flex items-center gap-4 text-xs text-gray-400">
-                              {task.assignee && (
+                              {task.assignee && task.assignee !== "unassigned" && (
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
                                   {task.assignee}
@@ -508,7 +508,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, title, initialTask }: TaskModalP
     status: "todo" as Task["status"],
     priority: "medium" as Task["priority"],
     dueDate: "",
-    assignee: "",
+    assignee: "unassigned",
     tags: [] as string[]
   });
 
@@ -520,7 +520,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, title, initialTask }: TaskModalP
         status: initialTask.status,
         priority: initialTask.priority,
         dueDate: initialTask.dueDate,
-        assignee: initialTask.assignee || "",
+        assignee: initialTask.assignee || "unassigned",
         tags: initialTask.tags
       });
     } else {
@@ -530,7 +530,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, title, initialTask }: TaskModalP
         status: "todo",
         priority: "medium",
         dueDate: "",
-        assignee: "",
+        assignee: "unassigned",
         tags: []
       });
     }
@@ -611,7 +611,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, title, initialTask }: TaskModalP
                 <SelectValue placeholder="Select assignee" />
               </SelectTrigger>
               <SelectContent className="bg-black/90 backdrop-blur-sm border-white/10">
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 <SelectItem value="John Doe">John Doe</SelectItem>
                 <SelectItem value="Jane Smith">Jane Smith</SelectItem>
                 <SelectItem value="Mike Johnson">Mike Johnson</SelectItem>

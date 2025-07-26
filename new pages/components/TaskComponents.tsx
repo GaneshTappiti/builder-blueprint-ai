@@ -85,7 +85,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </div>
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            {task.assignee && (
+            {task.assignee && task.assignee !== "unassigned" && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span>{task.assignee}</span>
@@ -139,7 +139,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     status: task?.status || "todo",
     priority: task?.priority || "medium",
     dueDate: task?.dueDate || new Date().toISOString().split('T')[0],
-    assignee: task?.assignee || "",
+    assignee: task?.assignee || "unassigned",
     tags: task?.tags || []
   });
 
@@ -166,7 +166,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       status: "todo",
       priority: "medium",
       dueDate: new Date().toISOString().split('T')[0],
-      assignee: "",
+      assignee: "unassigned",
       tags: []
     });
     setTagInput("");
@@ -198,7 +198,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         status: task.status,
         priority: task.priority,
         dueDate: task.dueDate,
-        assignee: task.assignee || "",
+        assignee: task.assignee || "unassigned",
         tags: task.tags
       });
     }
@@ -283,7 +283,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   <SelectItem value="John Doe">John Doe</SelectItem>
                   <SelectItem value="Jane Smith">Jane Smith</SelectItem>
                   <SelectItem value="Mike Johnson">Mike Johnson</SelectItem>
