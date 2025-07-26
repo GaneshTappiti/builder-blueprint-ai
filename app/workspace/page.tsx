@@ -996,10 +996,10 @@ export default function WorkspacePage() {
                               <button
                                 key={i}
                                 onClick={action.onClick}
-                                className="group bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-white/20 transition-all hover:bg-black/30 text-left"
+                                className="group bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:bg-black/30 text-left"
                               >
                                 <div className="flex items-start gap-3">
-                                  <div className="p-2 bg-green-600/20 rounded-lg group-hover:scale-110 transition-transform">
+                                  <div className="p-2 bg-green-600/20 rounded-lg group-hover:scale-[1.02] transition-transform duration-200">
                                     {action.icon}
                                   </div>
                                   <div>
@@ -1113,15 +1113,15 @@ export default function WorkspacePage() {
                     Customize
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="grid grid-cols-3 gap-3 md:gap-4">
                   {modules.map((module) => (
                     <Link
                       key={module.id}
                       href={module.path}
-                      className="group bg-black/20 backdrop-blur-xl rounded-xl p-3 md:p-4 border border-white/10 hover:border-green-500/30 transition-all duration-300 h-[100px] md:h-[120px] flex flex-col justify-center hover:scale-105 hover:bg-black/30"
+                      className="group bg-black/20 backdrop-blur-xl rounded-xl p-3 md:p-4 border border-white/10 hover:border-green-500/30 transition-all duration-200 h-[100px] md:h-[120px] flex flex-col justify-center hover:scale-[1.02] hover:bg-black/30"
                     >
                       <div className="flex items-center gap-2 md:gap-3">
-                        <span className="text-xl md:text-2xl group-hover:scale-110 transition-transform">{module.icon}</span>
+                        <span className="text-xl md:text-2xl transition-colors duration-200">{module.icon}</span>
                         <div>
                           <h3 className="font-medium text-white text-sm md:text-base group-hover:text-green-400 transition-colors">{module.name}</h3>
                           <p className="text-xs md:text-sm text-gray-400 line-clamp-2">{module.description}</p>

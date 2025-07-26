@@ -86,7 +86,7 @@ const Stepper: React.FC<StepperProps> = ({
         'bg-muted border-muted-foreground/30 text-muted-foreground': status === 'pending',
         
         // Interactive styling
-        'cursor-pointer hover:scale-105': isClickable,
+        'cursor-pointer hover:scale-[1.02] duration-200': isClickable,
         'cursor-not-allowed opacity-50': step.disabled
       }
     );

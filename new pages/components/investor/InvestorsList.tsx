@@ -37,7 +37,7 @@ const InvestorsList: React.FC<InvestorsListProps> = ({
       
       <Card className="workspace-card border-dashed border-2 flex flex-col items-center justify-center cursor-pointer h-full transition-all duration-200 hover:shadow-md hover:border-primary/50">
         <CardContent className="flex flex-col items-center justify-center p-6 h-full" onClick={onAddInvestor}>
-          <div className="rounded-full bg-primary/20 p-3 mb-4 transition-transform hover:scale-110">
+          <div className="rounded-full bg-primary/20 p-3 mb-4 transition-transform hover:scale-[1.02] duration-200">
             <Plus className="h-6 w-6 text-primary" />
           </div>
           <p className="font-medium">Add New Investor</p>

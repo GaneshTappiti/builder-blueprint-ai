@@ -166,8 +166,8 @@ export function AppIdeaCard() {
             return (
               <Card
                 key={style.id}
-                className={`cursor-pointer transition-all duration-300 hover:shadow-md hover:scale-105 animate-in fade-in slide-in-from-bottom-4 ${
-                  isSelected ? 'ring-2 ring-blue-500 shadow-lg scale-105' : 'hover:shadow-sm'
+                className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] animate-in fade-in slide-in-from-bottom-4 ${
+                  isSelected ? 'ring-2 ring-blue-500 shadow-lg scale-[1.02]' : 'hover:shadow-sm'
                 }`}
                 style={{ animationDelay: `${index * 100}ms` }}
                 onClick={() => handleStyleSelect(style.id as any)}
@@ -246,7 +246,7 @@ export function AppIdeaCard() {
         <Button
           onClick={validateAndContinue}
           disabled={isValidating}
-          className="flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95"
+          className="flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-95"
         >
           {isValidating ? (
             <>

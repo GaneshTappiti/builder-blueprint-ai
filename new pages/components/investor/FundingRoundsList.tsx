@@ -73,7 +73,7 @@ const FundingRoundsList: React.FC<FundingRoundsListProps> = ({
               <div className="flex justify-end gap-2">
                 <Button 
                   size="sm"
-                  className="transition-all hover:scale-105"
+                  className="transition-all hover:scale-[1.02] duration-200"
                 >
                   Manage Round
                 </Button>
@@ -87,7 +87,7 @@ const FundingRoundsList: React.FC<FundingRoundsListProps> = ({
           onClick={() => setIsAddModalOpen(true)}
         >
           <CardContent className="flex flex-col items-center justify-center p-6">
-            <div className="rounded-full bg-primary/20 p-3 mb-4 transition-transform hover:scale-110">
+            <div className="rounded-full bg-primary/20 p-3 mb-4 transition-transform hover:scale-[1.02] duration-200">
               <Plus className="h-6 w-6 text-primary" />
             </div>
             <p className="font-medium">Create New Funding Round</p>

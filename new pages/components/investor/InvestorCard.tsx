@@ -97,7 +97,7 @@ const InvestorCard: React.FC<InvestorCardProps> = ({
             <Button 
               size="sm" 
               onClick={() => setIsProfileOpen(true)}
-              className="transition-all hover:scale-105"
+              className="transition-all hover:scale-[1.02] duration-200"
             >
               View Profile
             </Button>

@@ -100,7 +100,7 @@
   }
 
   .workspace-button {
-    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 hover:scale-105;
+    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02];
   }
 
   .glass-effect {
@@ -255,7 +255,7 @@
 
   /* Button hover effects */
   .button-hover-scale {
-    @apply transition-all duration-200 hover:scale-105;
+    @apply transition-all duration-200 hover:scale-[1.02];
   }
 
   /* Tab transitions */
