@@ -34,7 +34,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
         </Button>
         <Button 
           onClick={onAddClick}
-          className="transition-all hover:scale-105"
+          className="transition-all hover:scale-[1.02] duration-200"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Investor

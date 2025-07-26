@@ -20,7 +20,7 @@ const PitchDeckView: React.FC = () => {
             <FileText className="h-4 w-4 mr-2" />
             Import Template
           </Button>
-          <Button className="transition-all hover:scale-105">
+          <Button className="transition-all hover:scale-[1.02] duration-200">
             <Presentation className="h-4 w-4 mr-2" />
             Create New Deck
           </Button>

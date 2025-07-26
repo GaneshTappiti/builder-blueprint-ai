@@ -92,7 +92,7 @@ export default function NotFound() {
                     <Link key={link.path} href={link.path}>
                       <div className="group bg-black/40 rounded-lg p-4 border border-white/10 hover:border-green-500/30 transition-all duration-300 text-left hover:bg-black/60">
                         <div className="flex items-center gap-3">
-                          <link.icon className="h-5 w-5 text-green-400 group-hover:scale-110 transition-transform" />
+                          <link.icon className="h-5 w-5 text-green-400 group-hover:scale-[1.02] transition-transform duration-200" />
                           <div>
                             <h4 className="font-medium text-white group-hover:text-green-400 transition-colors">
                               {link.name}

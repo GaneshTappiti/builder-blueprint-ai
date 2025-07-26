@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   Bell,
   Brain,
@@ -66,7 +65,6 @@ import { useActiveIdea, useIdeaStore } from "@/stores/ideaStore";
 import { AISettingsPanel } from '@/components/ai-settings';
 import AdminStatusIndicator from '@/components/admin/AdminStatusIndicator';
 import AdminQuickActions from '@/components/admin/AdminQuickActions';
-import AdminVerification from '@/components/admin/AdminVerification';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { WorkspaceContainer, WorkspaceHeader } from '@/components/ui/workspace-layout';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -148,29 +146,19 @@ export default function WorkspacePage() {
   const setHasActiveIdea = useIdeaStore((state) => state.setHasActiveIdea);
   const setCurrentStep = useIdeaStore((state) => state.setCurrentStep);
 
-  // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
   const [showTemplates, setShowTemplates] = useState(false);
 
   const { toast } = useToast();
-  const { checkAndExecute } = useFeatureAccess();
+  const { canUseFeature } = useFeatureAccess();
 
   // Idea validation function (from Workshop)
   const validateIdea = async (ideaText: string) => {
-    const canProceed = await checkAndExecute(
-      'create_idea',
-      async () => {
-        await performIdeaValidation(ideaText);
-      },
-      {
-        feature: 'Idea Creation',
-        description: 'Create and validate new startup ideas',
-        showUpgradePrompt: true,
-        trackUsage: true
-      }
-    );
-
-    if (!canProceed) {
+    if (!canUseFeature('create_idea')) {
+      toast({
+        title: "Feature Limited",
+        description: "Please upgrade to validate more ideas.",
+        variant: "destructive",
+      });
       return;
     }
   };
@@ -190,8 +178,6 @@ export default function WorkspacePage() {
     setShowValidationResult(false);
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
       const prompt = `
       Analyze this startup idea comprehensively and provide a detailed validation report:
 
@@ -238,9 +224,28 @@ export default function WorkspacePage() {
       Use proper markdown formatting with headers (##), bullet points (-), and clear section separation.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      // Use the API route for validation
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          type: 'validate',
+          options: {
+            temperature: 0.7,
+            maxTokens: 1500
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.text || data.result?.text || 'No validation response generated';
 
       // Parse the response to extract structured data
       const validationScore = extractValidationScore(text);
@@ -460,14 +465,6 @@ export default function WorkspacePage() {
     setShowResponse(true);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Gemini API key is not configured. Please check your .env.local file.");
-      }
-
-      // Get the generative model
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
       // Enhanced prompt for better startup analysis
       const enhancedPrompt = `
       As an AI startup consultant, analyze this idea and provide:
@@ -482,17 +479,28 @@ export default function WorkspacePage() {
       Format your response in a structured way with clear sections.
       `;
 
-      const result = await model.generateContent({
-        contents: [{
-          role: "user",
-          parts: [{
-            text: enhancedPrompt
-          }]
-        }]
+      // Use the API route instead of direct client-side calls
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: enhancedPrompt,
+          type: 'text',
+          options: {
+            temperature: 0.7,
+            maxTokens: 1000
+          }
+        }),
       });
 
-      const response = await result.response;
-      const text = response.text();
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.text || data.result?.text || 'No response generated';
 
       setAiResponse(text);
 
@@ -1025,10 +1033,10 @@ export default function WorkspacePage() {
                               <button
                                 key={i}
                                 onClick={action.onClick}
-                                className="group bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-white/20 transition-all hover:bg-black/30 text-left"
+                                className="group bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:bg-black/30 text-left"
                               >
                                 <div className="flex items-start gap-3">
-                                  <div className="p-2 bg-green-600/20 rounded-lg group-hover:scale-110 transition-transform">
+                                  <div className="p-2 bg-green-600/20 rounded-lg group-hover:scale-[1.02] transition-transform duration-200">
                                     {action.icon}
                                   </div>
                                   <div>
@@ -1142,7 +1150,7 @@ export default function WorkspacePage() {
                     Customize
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="grid grid-cols-3 gap-3 md:gap-4">
                   {modules.map((module) => (
                     <Link
                       key={module.id}

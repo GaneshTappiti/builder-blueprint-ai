@@ -28,7 +28,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
             ? "Start tracking potential investors for your startup. Add investors to keep track of your fundraising progress."
             : "Plan and track your fundraising rounds to organize your fundraising efforts."}
         </p>
-        <Button onClick={onAction} className="transition-all hover:scale-105">
+        <Button onClick={onAction} className="transition-all hover:scale-[1.02] duration-200">
           <Plus className="h-4 w-4 mr-2" />
           {type === "investors" ? "Add Your First Investor" : "Create Your First Funding Round"}
         </Button>

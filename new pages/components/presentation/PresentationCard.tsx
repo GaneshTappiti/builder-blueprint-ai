@@ -208,7 +208,7 @@ const PresentationCard: React.FC<PresentationCardProps> = ({
   // Grid view
   return (
     <Card 
-      className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 ${
+      className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
         isSelected ? 'ring-2 ring-purple-500' : ''
       }`}
       onClick={handleCardClick}

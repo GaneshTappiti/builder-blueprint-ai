@@ -65,10 +65,10 @@ const QuickStats = () => {
     <div className="w-full max-w-6xl mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, index) => (
-          <Card key={index} className="workspace-card hover:shadow-lg transition-all duration-300">
+          <Card key={index} className="workspace-card hover:shadow-lg transition-all duration-200">
             <CardContent className="p-4 md:p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className={`p-2.5 rounded-xl ${stat.bgColor} transition-transform hover:scale-105`}>
+                <div className={`p-2.5 rounded-xl ${stat.bgColor} transition-transform hover:scale-[1.02] duration-200`}>
                   <div className={stat.color}>
                     {stat.icon}
                   </div>

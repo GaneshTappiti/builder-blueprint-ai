@@ -97,7 +97,7 @@ export const AIBuilders = () => {
                 <CardContent className="p-8 h-full flex flex-col">
                   {/* Header with icon and badge */}
                   <div className="flex items-start justify-between mb-6">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${builder.color} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${builder.color} flex items-center justify-center shadow-lg group-hover:scale-[1.02] transition-transform duration-200`}>
                       <Icon className="w-7 h-7 text-white" />
                     </div>
                     <Badge variant="secondary" className="text-xs px-3 py-1 font-medium">

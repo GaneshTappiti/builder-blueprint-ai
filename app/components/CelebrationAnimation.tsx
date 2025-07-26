@@ -107,7 +107,7 @@ export function CelebrationAnimation({
               {onDownload && (
                 <Button 
                   onClick={onDownload}
-                  className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-transform"
+                  className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02] transition-transform duration-200"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Download Prompts
@@ -117,7 +117,7 @@ export function CelebrationAnimation({
                 <Button 
                   onClick={onShare}
                   variant="outline"
-                  className="flex-1 hover:scale-105 transition-transform"
+                  className="flex-1 hover:scale-[1.02] transition-transform duration-200"
                 >
                   <Share className="w-4 h-4 mr-2" />
                   Share
