@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { TextFormatter } from '@/utils/textFormatting';
+import { getGeminiApiKey } from '@/lib/env-validation';
 import {
   BusinessModelCanvas,
   BMCGenerationRequest,
@@ -8,8 +9,8 @@ import {
   BMC_BLOCK_CONFIGS
 } from '@/types/businessModelCanvas';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
+// Initialize Gemini AI with validation
+const genAI = new GoogleGenerativeAI(getGeminiApiKey());
 
 // Get the Gemini Flash model (updated model name)
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });

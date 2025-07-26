@@ -3,6 +3,15 @@ import { geminiService } from '@/services/geminiService';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Gemini API key is configured
+    if (!process.env.GOOGLE_GEMINI_API_KEY) {
+      console.error('GOOGLE_GEMINI_API_KEY environment variable is not set');
+      return NextResponse.json(
+        { error: 'AI service not configured. Please check environment variables.' },
+        { status: 500 }
+      );
+    }
+
     const { prompt, type, options } = await request.json();
 
     if (!prompt) {
@@ -12,7 +21,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let result;
+    let result: any;
+
+    // Helper function to safely parse JSON
+    const safeJsonParse = (jsonString: string) => {
+      try {
+        return JSON.parse(jsonString);
+      } catch (error) {
+        throw new Error(`Invalid JSON format in prompt: ${error instanceof Error ? error.message : 'Unknown parsing error'}`);
+      }
+    };
 
     switch (type) {
       case 'text':
@@ -34,25 +52,26 @@ export async function POST(request: NextRequest) {
         result = await geminiService.breakdownTasks(prompt, options?.complexity);
         break;
       case 'investors':
-        result = await geminiService.findInvestorMatches(JSON.parse(prompt));
+        result = await geminiService.findInvestorMatches(safeJsonParse(prompt));
         break;
       case 'optimize-prompt':
         result = await geminiService.optimizePrompt(prompt, options?.purpose);
         break;
       case 'insights':
-        result = await geminiService.generateInsights(JSON.parse(prompt));
+        result = await geminiService.generateInsights(safeJsonParse(prompt));
         break;
       case 'recommendations':
-        result = await geminiService.generateRecommendations(JSON.parse(prompt));
+        result = await geminiService.generateRecommendations(safeJsonParse(prompt));
         break;
       case 'improve-writing':
         result = await geminiService.improveWriting(prompt, options?.purpose);
         break;
       case 'business-model-canvas':
-        result = await geminiService.generateBusinessModelCanvas(JSON.parse(prompt));
+        result = await geminiService.generateBusinessModelCanvas(safeJsonParse(prompt));
         break;
       case 'bmc-block':
-        const { blockId, appIdea, existingCanvas } = JSON.parse(prompt);
+        const parsedData = safeJsonParse(prompt);
+        const { blockId, appIdea, existingCanvas } = parsedData;
         result = await geminiService.generateBMCBlock(blockId, appIdea, existingCanvas);
         break;
       default:
@@ -62,9 +81,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error('AI API Error:', error);
+
+    // Provide more specific error messages
+    let errorMessage = 'Failed to process AI request';
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid JSON format')) {
+        errorMessage = 'Invalid request format. Please check your request data.';
+        statusCode = 400;
+      } else if (error.message.includes('API_KEY')) {
+        errorMessage = 'Invalid API key. Please check your Gemini API configuration.';
+        statusCode = 401;
+      } else if (error.message.includes('quota')) {
+        errorMessage = 'API quota exceeded. Please try again later.';
+        statusCode = 429;
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+        statusCode = 503;
+      } else {
+        errorMessage = `AI service error: ${error.message}`;
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Failed to process AI request' },
-      { status: 500 }
+      { error: errorMessage, details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: statusCode }
     );
   }
 }
