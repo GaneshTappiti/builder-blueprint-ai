@@ -23,6 +23,7 @@ import { Badge } from './badge';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
 import { useToast } from '@/hooks/use-toast';
+import { TextFormatter, ParsedSection } from '@/utils/textFormatting';
 
 interface ToolSpecificSection {
   id: string;

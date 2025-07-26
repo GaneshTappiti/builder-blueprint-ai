@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { TextFormatter, ParsedSection } from '@/utils/textFormatting';
 
 interface AIResponseFormatterProps {
   response: string;
@@ -65,52 +66,15 @@ const AIResponseFormatter: React.FC<AIResponseFormatterProps> = ({
     });
   };
 
-  // Parse response into sections
-  const parseResponse = (text: string) => {
-    const sections = [];
-    const lines = text.split('\n');
-    let currentSection = { title: '', content: '', type: 'text' };
-    
-    for (const line of lines) {
-      // Check for headers (markdown style)
-      if (line.match(/^#{1,6}\s/)) {
-        if (currentSection.content) {
-          sections.push({ ...currentSection });
-        }
-        currentSection = {
-          title: line.replace(/^#{1,6}\s/, ''),
-          content: '',
-          type: 'text'
-        };
-      }
-      // Check for code blocks
-      else if (line.match(/^```/)) {
-        currentSection.type = currentSection.type === 'code' ? 'text' : 'code';
-      }
-      // Check for lists
-      else if (line.match(/^[-*+]\s/) || line.match(/^\d+\.\s/)) {
-        if (currentSection.type !== 'list') {
-          if (currentSection.content) {
-            sections.push({ ...currentSection });
-          }
-          currentSection = {
-            title: currentSection.title || 'List',
-            content: line + '\n',
-            type: 'list'
-          };
-        } else {
-          currentSection.content += line + '\n';
-        }
-      } else {
-        currentSection.content += line + '\n';
-      }
-    }
-    
-    if (currentSection.content) {
-      sections.push(currentSection);
-    }
-    
-    return sections;
+  // Parse response into sections using enhanced formatter
+  const parseResponse = (text: string): ParsedSection[] => {
+    return TextFormatter.parseResponse(text, {
+      normalizeLineBreaks: true,
+      trimSections: true,
+      enhanceMarkdown: true,
+      detectCodeBlocks: true,
+      parseNumberedSections: true
+    });
   };
 
   const formatForTool = (text: string, tool: string) => {
@@ -263,16 +227,35 @@ ${text}
               <TabsContent value="formatted" className="mt-4">
                 <div className="space-y-4">
                   {sections.map((section, index) => (
-                    <div key={index} className="space-y-2">
-                      {section.title && (
-                        <h4 className="font-semibold text-white border-b border-gray-700 pb-1">
-                          {section.title}
-                        </h4>
+                    <div key={section.id || index} className="space-y-2">
+                      {/* Header rendering */}
+                      {section.type === 'header' && (
+                        <div className="space-y-2">
+                          {section.level === 1 ? (
+                            <h1 className="text-2xl font-bold text-white border-b-2 border-green-500 pb-2">
+                              {section.title || section.content}
+                            </h1>
+                          ) : section.level === 2 ? (
+                            <h2 className="text-xl font-semibold text-white border-b border-gray-600 pb-1">
+                              {section.title || section.content}
+                            </h2>
+                          ) : (
+                            <h3 className="text-lg font-medium text-white">
+                              {section.title || section.content}
+                            </h3>
+                          )}
+                          {section.metadata?.numbered && (
+                            <Badge variant="outline" className="text-xs">
+                              Section {section.metadata.number}
+                            </Badge>
+                          )}
+                        </div>
                       )}
-                      
-                      {section.type === 'code' ? (
+
+                      {/* Code block rendering */}
+                      {section.type === 'code' && (
                         <SyntaxHighlighter
-                          language="javascript"
+                          language={section.metadata?.language || 'text'}
                           style={oneDark}
                           className="rounded-lg"
                           customStyle={{
@@ -282,17 +265,45 @@ ${text}
                         >
                           {section.content.trim()}
                         </SyntaxHighlighter>
-                      ) : section.type === 'list' ? (
-                        <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-3">
-                          <pre className="whitespace-pre-wrap text-gray-300 text-sm">
-                            {section.content.trim()}
-                          </pre>
+                      )}
+
+                      {/* List rendering */}
+                      {(section.type === 'list' || section.type === 'numbered-list') && (
+                        <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
+                          <div className="prose prose-invert prose-sm max-w-none">
+                            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                              {section.content.trim()}
+                            </div>
+                          </div>
                         </div>
-                      ) : (
+                      )}
+
+                      {/* Quote rendering */}
+                      {section.type === 'quote' && (
+                        <div className="border-l-4 border-blue-500 bg-blue-900/20 pl-4 py-2 rounded-r">
+                          <div className="text-gray-300 italic">
+                            {section.content.replace(/^>\s*/, '').trim()}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Table rendering */}
+                      {section.type === 'table' && (
+                        <div className="overflow-x-auto bg-gray-900/50 border border-gray-700 rounded-lg">
+                          <div className="prose prose-invert prose-sm max-w-none p-4">
+                            <div className="text-gray-300 whitespace-pre-wrap font-mono text-sm">
+                              {section.content.trim()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Text rendering */}
+                      {section.type === 'text' && section.content.trim() && (
                         <div className="prose prose-invert max-w-none">
-                          <p className="text-gray-300 leading-relaxed">
+                          <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
                             {section.content.trim()}
-                          </p>
+                          </div>
                         </div>
                       )}
                     </div>

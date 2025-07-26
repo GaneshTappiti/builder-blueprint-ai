@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { TextFormatter } from '@/utils/textFormatting';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
@@ -30,7 +31,14 @@ export const geminiService = {
     try {
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
+      const rawText = response.text();
+
+      // Clean and format the response text
+      const text = TextFormatter.cleanText(rawText, {
+        normalizeLineBreaks: true,
+        trimSections: true,
+        enhanceMarkdown: true
+      });
 
       return {
         text,
@@ -38,7 +46,9 @@ export const geminiService = {
         metadata: {
           model: 'gemini-1.5-flash',
           tokens: text.length, // Approximate token count
-          temperature: options?.temperature || 0.7
+          temperature: options?.temperature || 0.7,
+          originalLength: rawText.length,
+          cleaned: rawText !== text
         }
       };
     } catch (error) {
