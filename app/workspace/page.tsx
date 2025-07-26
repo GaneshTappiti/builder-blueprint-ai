@@ -500,7 +500,14 @@ export default function WorkspacePage() {
       }
 
       const data = await response.json();
-      const text = data.text || data.result?.text || 'No response generated';
+      
+      if (!data.success) {
+        throw new Error(data.error || 'AI request failed');
+      }
+      
+      const text = data.data?.text || 'No response generated';
+      
+      console.log('AI Response data:', data); // Debug logging
 
       setAiResponse(text);
 
@@ -537,8 +544,14 @@ export default function WorkspacePage() {
       }
 
     } catch (error) {
-      console.error("Detailed error:", error);
-      setAiResponse(`Error: ${error instanceof Error ? (error as Error).message : "Unknown error occurred"}`);
+      console.error("AI Generation Error:", error);
+      
+      let errorMessage = "Failed to generate AI response";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setAiResponse(`❌ ${errorMessage}\n\nPlease try again or check your AI configuration in Settings.`);
     } finally {
       setIsLoading(false);
     }
