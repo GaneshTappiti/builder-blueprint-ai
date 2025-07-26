@@ -89,10 +89,16 @@
 
   .workspace-card {
     @apply bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
   }
 
   .workspace-card-solid {
     @apply bg-card border border-border rounded-xl;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
   }
 
   .workspace-hover {
@@ -100,7 +106,10 @@
   }
 
   .workspace-button {
-    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02];
+    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200 hover:shadow-lg hover:shadow-primary/25;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
   }
 
   .glass-effect {
@@ -137,16 +146,16 @@
 
   /* Animation utilities */
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float-gentle 6s ease-in-out infinite;
   }
 
   .animate-glow {
     animation: glow 2s ease-in-out infinite alternate;
   }
 
-  @keyframes float {
+  @keyframes float-gentle {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-10px); }
   }
 
   @keyframes glow {
@@ -169,7 +178,14 @@
 
   /* Card hover effects */
   .card-hover-lift {
-    @apply transition-transform duration-300 hover:-translate-y-1;
+    @apply transition-transform duration-200;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
+  }
+
+  .card-hover-lift:hover {
+    transform: translateZ(0) translateY(-2px);
   }
 
   /* Status indicators */
@@ -198,15 +214,6 @@
     100% {
       opacity: 1;
       transform: translateY(0);
-    }
-  }
-
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
     }
   }
 
@@ -244,18 +251,30 @@
     animation: slide-in 0.3s ease-out forwards;
   }
 
-  .animate-float {
-    animation: float 5s ease-in-out infinite;
-  }
-
   /* Card hover effects */
   .hover-card-scale {
-    @apply transition-all duration-200 hover:scale-[1.02];
+    @apply transition-all duration-200;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
+  }
+
+  .hover-card-scale:hover {
+    transform: translateZ(0) translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   /* Button hover effects */
   .button-hover-scale {
-    @apply transition-all duration-200 hover:scale-[1.02];
+    @apply transition-all duration-200;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
+  }
+
+  .button-hover-scale:hover {
+    transform: translateZ(0) translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   /* Tab transitions */
@@ -372,6 +391,43 @@
 
   .layout-content {
     @apply flex-1 min-h-0;
+  }
+
+  /* Scroll performance optimizations */
+  .scroll-smooth-fix {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .gpu-optimized {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: auto;
+  }
+
+  .no-transform {
+    transform: none !important;
+  }
+
+  .stable-scroll {
+    position: relative;
+    will-change: auto;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Diagnostic fix for scroll jitter */
+  .diagnostic-no-transform {
+    transform: none !important;
+  }
+
+  /* Diagnostic fix for GPU acceleration issues */
+  .diagnostic-gpu-fix {
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    will-change: auto;
   }
 
   /* Workspace content spacing utilities */

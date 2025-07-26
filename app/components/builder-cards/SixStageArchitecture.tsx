@@ -184,21 +184,22 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
           return (
             <Card
               key={stage.id}
-              className={`relative overflow-hidden transition-all duration-300 cursor-pointer hover:scale-105 animate-in fade-in slide-in-from-bottom-4 ${
+              className={`relative overflow-hidden transition-all duration-200 cursor-pointer transform-none will-change-auto backface-visibility-hidden ${
                 status === 'completed' 
                   ? 'bg-green-500/10 border-green-500/30 shadow-lg shadow-green-500/20' 
                   : status === 'current'
                   ? 'bg-blue-500/10 border-blue-500/30 shadow-lg shadow-blue-500/20 ring-2 ring-blue-500/50'
                   : 'workspace-card hover:border-white/20'
-              } ${!isClickable ? 'opacity-60 cursor-not-allowed' : ''}`}
-              style={{ animationDelay: `${index * 100}ms` }}
+              } ${!isClickable ? 'opacity-60 cursor-not-allowed' : ''} ${
+                isClickable ? 'hover:shadow-xl hover:shadow-black/50 hover:-translate-y-1' : ''
+              }`}
               onClick={() => isClickable && handleStageClick(stage.id)}
             >
               <div className={`absolute inset-0 ${stage.gradient} opacity-20`} />
               
               <CardHeader className="relative pb-3">
                 <div className="flex items-start justify-between">
-                  <div className={`p-3 rounded-xl bg-black/20 backdrop-blur-sm border border-white/10`}>
+                  <div className={`p-3 rounded-xl bg-black/20 border border-white/10 transform-none`}>
                     <Icon className={`h-6 w-6 ${stage.color}`} />
                   </div>
                   <div className="flex flex-col items-end gap-2">
