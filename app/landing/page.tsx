@@ -47,6 +47,45 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* NEW FEATURE HIGHLIGHT */}
+          <div className="glass-effect p-6 rounded-xl border border-green-500/30 mb-12 relative overflow-hidden">
+            <div className="absolute top-4 right-4 bg-green-500 text-black text-xs font-bold px-3 py-1 rounded-full">
+              NEW
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="text-center md:text-left flex-1">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+                  <Target className="h-8 w-8 text-green-400" />
+                  <h3 className="text-2xl font-bold text-white">AI Business Model Canvas</h3>
+                </div>
+                <p className="text-gray-300 mb-4">
+                  Transform your app idea into a complete, professional Business Model Canvas with AI.
+                  Generate expert-level strategic insights across all 9 essential blocks in seconds.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded border border-blue-500/30">
+                    AI-Powered
+                  </span>
+                  <span className="bg-purple-500/20 text-purple-400 text-xs px-2 py-1 rounded border border-purple-500/30">
+                    Export Ready
+                  </span>
+                  <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded border border-yellow-500/30">
+                    Investor Ready
+                  </span>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <Button asChild className="bg-green-600 hover:bg-green-700 text-white px-6 py-3">
+                  <Link href="/workspace/business-model-canvas">
+                    <Target className="mr-2 h-4 w-4" />
+                    Try BMC Generator
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="flex flex-wrap justify-center gap-4 mb-12">
             <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
@@ -60,8 +99,14 @@ export default function LandingPage() {
               <Layers className="mr-2 h-4 w-4" />
               Builder Cards
             </Button>
+            <Button asChild variant="outline" className="border-green-500/30 hover:bg-green-500/10 text-white">
+              <Link href="/workspace/business-model-canvas">
+                <Target className="mr-2 h-4 w-4" />
+                BMC Generator
+              </Link>
+            </Button>
             <Button variant="outline" className="border-green-500/30 hover:bg-green-500/10 text-white">
-              <Target className="mr-2 h-4 w-4" />
+              <Layers className="mr-2 h-4 w-4" />
               Browse Templates
             </Button>
             <Button variant="outline" className="border-green-500/30 hover:bg-green-500/10 text-white">
@@ -79,15 +124,23 @@ export default function LandingPage() {
           </div>
 
           {/* Builder Blueprint AI Section */}
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              <div className="glass-effect p-6 rounded-lg text-center border border-green-500/20 relative">
+                <div className="absolute -top-2 -right-2 bg-green-500 text-black text-xs font-bold px-2 py-1 rounded-full">
+                  NEW
+                </div>
+                <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">🎯 BMC Generator</h3>
+                <p className="text-gray-400 text-sm">AI-powered Business Model Canvas</p>
+              </div>
               <div className="glass-effect p-6 rounded-lg text-center">
                 <Layers className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">🧱 Builder Cards</h3>
                 <p className="text-gray-400 text-sm">Interactive builder recommendations</p>
               </div>
               <div className="glass-effect p-6 rounded-lg text-center">
-                <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <Brain className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">📋 MVP Templates</h3>
                 <p className="text-gray-400 text-sm">Pre-built project templates</p>
               </div>

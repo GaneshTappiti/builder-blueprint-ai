@@ -98,6 +98,8 @@ interface Module {
   description: string;
   path: string;
   icon: React.ReactNode;
+  isNew?: boolean;
+  badge?: string;
 }
 
 interface GPTFeature {
@@ -557,6 +559,15 @@ export default function WorkspacePage() {
       description: "Turn ideas into actionable product frameworks",
       path: "/workspace/ideaforge",
       icon: "⚙️"
+    },
+    {
+      id: "business-model-canvas",
+      name: "AI Business Model Canvas",
+      description: "🆕 Generate professional Business Model Canvas with AI. Transform your idea into a complete strategic framework across all 9 essential blocks. Export-ready for investors and stakeholders.",
+      path: "/workspace/business-model-canvas",
+      icon: "🎯",
+      isNew: true,
+      badge: "AI-Powered"
     },
     {
       id: "mvp-studio",
@@ -1136,11 +1147,25 @@ export default function WorkspacePage() {
                     <Link
                       key={module.id}
                       href={module.path}
-                      className="group bg-black/20 backdrop-blur-xl rounded-xl p-3 md:p-4 border border-white/10 hover:border-green-500/30 transition-all duration-300 h-[100px] md:h-[120px] flex flex-col justify-center hover:scale-105 hover:bg-black/30"
+                      className={`group bg-black/20 backdrop-blur-xl rounded-xl p-3 md:p-4 border transition-all duration-300 h-[100px] md:h-[120px] flex flex-col justify-center hover:scale-105 hover:bg-black/30 relative ${
+                        module.isNew
+                          ? 'border-green-500/40 hover:border-green-500/60 shadow-lg shadow-green-500/10'
+                          : 'border-white/10 hover:border-green-500/30'
+                      }`}
                     >
+                      {module.isNew && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-black text-xs font-bold px-2 py-1 rounded-full">
+                          NEW
+                        </div>
+                      )}
+                      {module.badge && (
+                        <div className="absolute top-2 right-2 bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded border border-blue-500/30">
+                          {module.badge}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 md:gap-3">
                         <span className="text-xl md:text-2xl group-hover:scale-110 transition-transform">{module.icon}</span>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <h3 className="font-medium text-white text-sm md:text-base group-hover:text-green-400 transition-colors">{module.name}</h3>
                           <p className="text-xs md:text-sm text-gray-400 line-clamp-2">{module.description}</p>
                         </div>

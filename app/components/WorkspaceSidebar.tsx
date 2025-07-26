@@ -49,9 +49,10 @@ interface SidebarItemProps {
   onClick?: () => void;
   isBeta?: boolean;
   betaVariant?: 'default' | 'secondary' | 'outline' | 'destructive';
+  isNew?: boolean;
 }
 
-const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaVariant = 'default' }: SidebarItemProps) => {
+const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaVariant = 'default', isNew }: SidebarItemProps) => {
   return (
     <Link
       href={path}
@@ -64,7 +65,12 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaV
     >
       <Icon className="h-5 w-5" />
       <span className="flex-1">{label}</span>
-      {isBeta && (
+      {isNew && (
+        <Badge className="bg-green-500 text-black text-xs font-bold px-2 py-0.5 ml-auto">
+          NEW
+        </Badge>
+      )}
+      {isBeta && !isNew && (
         <BetaLabel
           variant={betaVariant}
           size="sm"
@@ -102,6 +108,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, path: "/workspace" },
     { id: "idea-vault", name: "Idea Vault", icon: Lightbulb, path: "/workspace/idea-vault" },
     { id: "ideaforge", name: "IdeaForge", icon: Target, path: "/workspace/ideaforge", isBeta: true, betaVariant: 'secondary' as const },
+    { id: "business-model-canvas", name: "AI Business Model Canvas", icon: Brain, path: "/workspace/business-model-canvas", isNew: true },
     { id: "mvp-studio", name: "MVP Studio", icon: Code, path: "/workspace/mvp-studio" },
     { id: "ai-features", name: "AI Features", icon: Sparkles, path: "/ai-features", isBeta: true, betaVariant: 'default' as const },
     { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
@@ -141,6 +148,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
               onClick={handleLinkClick}
               isBeta={module.isBeta}
               betaVariant={module.betaVariant}
+              isNew={module.isNew}
               isActive={
                 module.path === "/workspace"
                   ? pathname === "/workspace"

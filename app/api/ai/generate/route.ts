@@ -48,6 +48,13 @@ export async function POST(request: NextRequest) {
       case 'improve-writing':
         result = await geminiService.improveWriting(prompt, options?.purpose);
         break;
+      case 'business-model-canvas':
+        result = await geminiService.generateBusinessModelCanvas(JSON.parse(prompt));
+        break;
+      case 'bmc-block':
+        const { blockId, appIdea, existingCanvas } = JSON.parse(prompt);
+        result = await geminiService.generateBMCBlock(blockId, appIdea, existingCanvas);
+        break;
       default:
         result = await geminiService.generateText(prompt, options);
     }
