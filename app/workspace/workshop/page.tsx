@@ -101,29 +101,45 @@ export default function WorkshopPage() {
 
       Idea: "${ideaInput}"
 
-      Please provide a structured analysis with:
-      1. Clear problem statement
-      2. Target market analysis (TAM/SAM/SOM if possible)
-      3. Key MVP features (3-5 essential features)
-      4. Monetization strategy
-      5. Next actionable steps
-      6. Validation score (1-100)
-      7. Market opportunity assessment
-      8. Risk assessment
-      9. Competitor analysis
+      Please provide a well-formatted structured analysis with clear sections:
 
-      Format your response as JSON with these exact keys:
-      {
-        "problemStatement": "string",
-        "targetMarket": "string", 
-        "keyFeatures": ["feature1", "feature2", "feature3"],
-        "monetizationStrategy": "string",
-        "nextSteps": ["step1", "step2", "step3"],
-        "validationScore": number,
-        "marketOpportunity": "string",
-        "riskAssessment": "string",
-        "competitorAnalysis": "string"
-      }
+      ## VALIDATION SCORE
+      Provide a score from 1-100 with brief justification.
+
+      ## PROBLEM STATEMENT
+      Clearly define the problem being solved and its significance.
+
+      ## TARGET MARKET ANALYSIS
+      Analyze the target market including TAM/SAM/SOM if possible. Include demographics and market size.
+
+      ## KEY MVP FEATURES
+      List 3-5 essential features for the minimum viable product:
+      - Feature 1: Description and importance
+      - Feature 2: Description and importance
+      - Feature 3: Description and importance
+
+      ## MONETIZATION STRATEGY
+      Describe revenue models and pricing strategies with specific examples.
+
+      ## NEXT ACTIONABLE STEPS
+      Provide immediate steps to validate and develop the idea:
+      - Step 1: Specific action with timeline
+      - Step 2: Specific action with timeline
+      - Step 3: Specific action with timeline
+
+      ## MARKET OPPORTUNITY ASSESSMENT
+      Evaluate market size, growth potential, and timing.
+
+      ## RISK ASSESSMENT
+      Identify key risks and mitigation strategies:
+      - Risk 1: Description and mitigation
+      - Risk 2: Description and mitigation
+      - Risk 3: Description and mitigation
+
+      ## COMPETITOR ANALYSIS
+      Analyze existing solutions and differentiation opportunities.
+
+      Use proper markdown formatting with headers (##), bullet points (-), and clear section separation for better readability.
       `;
 
       const result = await model.generateContent(prompt);

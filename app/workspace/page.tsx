@@ -195,19 +195,45 @@ export default function WorkspacePage() {
 
       Idea: "${ideaText}"
 
-      Please provide a structured analysis with:
+      Please provide a structured analysis with clear sections and proper formatting:
 
-      1. VALIDATION SCORE (0-100): Overall viability score
-      2. MARKET OPPORTUNITY: Market size, demand, and potential
-      3. RISK ASSESSMENT: Key risks and challenges
-      4. MONETIZATION STRATEGY: Revenue model suggestions
-      5. KEY FEATURES: Essential features for MVP
-      6. NEXT STEPS: Immediate actionable steps
-      7. COMPETITOR ANALYSIS: Similar solutions and differentiation
-      8. TARGET MARKET: Primary customer segments
-      9. PROBLEM STATEMENT: Core problem being solved
+      ## 1. VALIDATION SCORE (0-100)
+      Provide an overall viability score with brief justification.
 
-      Format your response as a structured analysis with clear sections.
+      ## 2. MARKET OPPORTUNITY
+      Analyze market size, demand, and potential. Include specific data points where possible.
+
+      ## 3. RISK ASSESSMENT
+      List key risks and challenges:
+      - Risk 1: Description
+      - Risk 2: Description
+      - Risk 3: Description
+
+      ## 4. MONETIZATION STRATEGY
+      Describe revenue model suggestions with specific examples.
+
+      ## 5. KEY FEATURES
+      Essential features for MVP:
+      - Feature 1: Description
+      - Feature 2: Description
+      - Feature 3: Description
+
+      ## 6. NEXT STEPS
+      Immediate actionable steps:
+      - Step 1: Description
+      - Step 2: Description
+      - Step 3: Description
+
+      ## 7. COMPETITOR ANALYSIS
+      Similar solutions and differentiation opportunities.
+
+      ## 8. TARGET MARKET
+      Primary customer segments with demographics and characteristics.
+
+      ## 9. PROBLEM STATEMENT
+      Core problem being solved and its significance.
+
+      Use proper markdown formatting with headers (##), bullet points (-), and clear section separation.
       `;
 
       const result = await model.generateContent(prompt);
