@@ -88,14 +88,14 @@
   }
 
   .workspace-card {
-    @apply bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl;
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl;
     transform: translateZ(0);
     backface-visibility: hidden;
     will-change: auto;
   }
 
   .workspace-card-solid {
-    @apply bg-card border border-border rounded-xl;
+    @apply bg-black/30 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl;
     transform: translateZ(0);
     backface-visibility: hidden;
     will-change: auto;
@@ -113,7 +113,7 @@
   }
 
   .glass-effect {
-    @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg;
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg;
   }
 
   .gradient-text {
