@@ -16,7 +16,8 @@ import {
   Menu,
   Target,
   Shield,
-  Sparkles
+  Sparkles,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     { id: "idea-vault", name: "Idea Vault", icon: Lightbulb, path: "/workspace/idea-vault" },
     { id: "ideaforge", name: "IdeaForge", icon: Target, path: "/workspace/ideaforge", isBeta: true, betaVariant: 'secondary' as const },
     { id: "business-model-canvas", name: "AI Business Model Canvas", icon: Brain, path: "/workspace/business-model-canvas", isNew: true },
+    { id: "task-planner", name: "Task Planner", icon: Calendar, path: "/workspace/task-planner" },
     { id: "mvp-studio", name: "MVP Studio", icon: Code, path: "/workspace/mvp-studio" },
     { id: "ai-features", name: "AI Features", icon: Sparkles, path: "/ai-features", isBeta: true, betaVariant: 'default' as const },
     { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
