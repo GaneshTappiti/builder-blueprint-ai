@@ -1122,15 +1122,6 @@ export default function WorkspacePage() {
               <div className="mb-6 md:mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base md:text-xl font-semibold text-white">Quick Access</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-400 hover:text-green-300"
-                    onClick={handleCustomizeModules}
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Customize
-                  </Button>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {modules.map((module) => (
