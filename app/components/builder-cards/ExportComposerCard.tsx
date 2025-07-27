@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -72,14 +72,18 @@ export function ExportComposerCard() {
   const [selectedTool, setSelectedTool] = useState('framer');
   const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set());
   const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationShownForExport, setCelebrationShownForExport] = useState(false);
 
   // Show celebration when component first loads (project is complete)
   React.useEffect(() => {
-    if (state.exportPrompts && !showCelebration) {
-      const timer = setTimeout(() => setShowCelebration(true), 500);
+    if (state.exportPrompts && !showCelebration && !celebrationShownForExport) {
+      const timer = setTimeout(() => {
+        setShowCelebration(true);
+        setCelebrationShownForExport(true);
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [state.exportPrompts, showCelebration]);
+  }, [state.exportPrompts, showCelebration, celebrationShownForExport]);
 
   const copyToClipboard = async (text: string, itemId: string) => {
     try {
@@ -218,36 +222,36 @@ ${getToolSpecificInstructions(selectedTool)}`
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-          <Package className="h-5 w-5 text-blue-500" />
+        <h3 className="text-lg font-semibold flex items-center justify-center gap-2 text-white">
+          <Package className="h-5 w-5 text-blue-400" />
           📦 Prompt Export Composer
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-400">
           Final prompt package ready for your chosen AI builder tool
         </p>
       </div>
 
       {/* Tool Selection */}
-      <Card>
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4" />
+          <CardTitle className="flex items-center gap-2 text-base text-white">
+            <Sparkles className="h-4 w-4 text-yellow-400" />
             Select Target Tool
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Select value={selectedTool} onValueChange={setSelectedTool}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-12">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {builderTools.map(tool => (
-                <SelectItem key={tool.id} value={tool.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{tool.icon}</span>
-                    <div>
-                      <div className="font-medium">{tool.name}</div>
-                      <div className="text-xs text-muted-foreground">{tool.description}</div>
+                <SelectItem key={tool.id} value={tool.id} className="py-3">
+                  <div className="flex items-center gap-3 w-full">
+                    <span className="text-lg flex-shrink-0">{tool.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{tool.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{tool.description}</div>
                     </div>
                   </div>
                 </SelectItem>
@@ -256,13 +260,19 @@ ${getToolSpecificInstructions(selectedTool)}`
           </Select>
           
           {selectedToolData && (
-            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">{selectedToolData.icon}</span>
-                <span className="font-medium">{selectedToolData.name}</span>
-                <Badge variant="secondary">{selectedToolData.promptStyle}</Badge>
+            <div className="mt-4 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/10">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-xl flex-shrink-0">{selectedToolData.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-white text-base">{selectedToolData.name}</span>
+                    <Badge variant="secondary" className="bg-white/20 text-gray-300 border-white/20 text-xs">
+                      {selectedToolData.promptStyle}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-relaxed">{selectedToolData.description}</p>
+                </div>
               </div>
-              <p className="text-sm text-blue-700">{selectedToolData.description}</p>
             </div>
           )}
         </CardContent>
@@ -270,12 +280,12 @@ ${getToolSpecificInstructions(selectedTool)}`
 
       {/* Export Tabs */}
       <Tabs defaultValue={selectedToolData?.promptStyle === 'unified' ? 'unified' : 'screen-by-screen'} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="unified" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 bg-white/10 border-white/10">
+          <TabsTrigger value="unified" className="flex items-center gap-2 data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-400">
             <FileText className="h-4 w-4" />
             Unified Prompt
           </TabsTrigger>
-          <TabsTrigger value="screen-by-screen" className="flex items-center gap-2">
+          <TabsTrigger value="screen-by-screen" className="flex items-center gap-2 data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-400">
             <Layers className="h-4 w-4" />
             Screen-by-Screen
           </TabsTrigger>
@@ -283,20 +293,20 @@ ${getToolSpecificInstructions(selectedTool)}`
 
         {/* Unified Prompt Tab */}
         <TabsContent value="unified" className="space-y-4">
-          <Card>
+          <Card className="bg-black/40 backdrop-blur-sm border-white/10">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Complete App Specification</CardTitle>
+                <CardTitle className="text-base text-white">Complete App Specification</CardTitle>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(generateUnifiedPrompt(), 'unified')}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 border-white/20 hover:bg-white/10 text-gray-300 hover:text-white"
                   >
                     {copiedItems.has('unified') ? (
                       <>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-4 w-4 text-green-400" />
                         Copied
                       </>
                     ) : (
@@ -310,7 +320,7 @@ ${getToolSpecificInstructions(selectedTool)}`
                     variant="outline"
                     size="sm"
                     onClick={() => downloadAsFile(generateUnifiedPrompt(), `${state.appIdea.appName}_unified_prompt.txt`)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 border-white/20 hover:bg-white/10 text-gray-300 hover:text-white"
                   >
                     <Download className="h-4 w-4" />
                     Download
@@ -322,7 +332,7 @@ ${getToolSpecificInstructions(selectedTool)}`
               <Textarea
                 value={generateUnifiedPrompt()}
                 readOnly
-                className="min-h-[400px] text-sm font-mono"
+                className="min-h-[400px] text-sm font-mono bg-white/10 border-white/10 text-gray-300"
               />
             </CardContent>
           </Card>
@@ -331,10 +341,10 @@ ${getToolSpecificInstructions(selectedTool)}`
         {/* Screen-by-Screen Tab */}
         <TabsContent value="screen-by-screen" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h4 className="font-medium">Individual Screen Prompts</h4>
+            <h4 className="font-medium text-white">Individual Screen Prompts</h4>
             <Button
               onClick={downloadAllPrompts}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Download className="h-4 w-4" />
               Download All Screens
@@ -342,22 +352,22 @@ ${getToolSpecificInstructions(selectedTool)}`
           </div>
 
           {generateScreenByScreenPrompts().map((prompt, index) => (
-            <Card key={prompt.screenId}>
+            <Card key={prompt.screenId} className="bg-black/40 backdrop-blur-sm border-white/10">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Badge variant="outline">{index + 1}</Badge>
+                  <CardTitle className="text-base flex items-center gap-2 text-white">
+                    <Badge variant="outline" className="border-white/20 text-gray-300">{index + 1}</Badge>
                     {prompt.title}
                   </CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(prompt.fullPrompt, prompt.screenId)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 border-white/20 hover:bg-white/10 text-gray-300 hover:text-white"
                   >
                     {copiedItems.has(prompt.screenId) ? (
                       <>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-4 w-4 text-green-400" />
                         Copied
                       </>
                     ) : (
@@ -373,7 +383,7 @@ ${getToolSpecificInstructions(selectedTool)}`
                 <Textarea
                   value={prompt.fullPrompt}
                   readOnly
-                  className="min-h-[200px] text-sm font-mono"
+                  className="min-h-[200px] text-sm font-mono bg-white/10 border-white/10 text-gray-300"
                 />
               </CardContent>
             </Card>
@@ -382,19 +392,19 @@ ${getToolSpecificInstructions(selectedTool)}`
       </Tabs>
 
       {/* Success Message */}
-      <Card className="border-2 border-green-200 bg-green-50/50">
+      <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm border-green-500/30">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
               <Check className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h4 className="font-medium text-green-800">🎉 Your Blueprint is Complete!</h4>
-              <p className="text-sm text-green-700 mt-1">
+              <h4 className="font-medium text-green-300">🎉 Your Blueprint is Complete!</h4>
+              <p className="text-sm text-green-200 mt-1">
                 You've successfully created a comprehensive prompt package for "{state.appIdea.appName}". 
                 Your prompts are optimized for {selectedToolData?.name} and ready to use.
               </p>
-              <div className="flex items-center gap-4 mt-3 text-xs text-green-600">
+              <div className="flex items-center gap-4 mt-3 text-xs text-green-200">
                 <span>✅ {state.appBlueprint?.screens.length || 0} Screens</span>
                 <span>✅ {state.screenPrompts.length} Detailed Prompts</span>
                 <span>✅ Complete Flow Logic</span>
@@ -406,30 +416,30 @@ ${getToolSpecificInstructions(selectedTool)}`
       </Card>
 
       {/* Next Steps */}
-      <Card>
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ExternalLink className="h-4 w-4" />
+          <CardTitle className="flex items-center gap-2 text-base text-white">
+            <ExternalLink className="h-4 w-4 text-blue-400" />
             Next Steps
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="mt-0.5">1</Badge>
-              <span>Copy or download your prompts using the buttons above</span>
+              <Badge variant="outline" className="mt-0.5 border-white/20 text-gray-300">1</Badge>
+              <span className="text-gray-300">Copy or download your prompts using the buttons above</span>
             </div>
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="mt-0.5">2</Badge>
-              <span>Open {selectedToolData?.name} and start a new project</span>
+              <Badge variant="outline" className="mt-0.5 border-white/20 text-gray-300">2</Badge>
+              <span className="text-gray-300">Open {selectedToolData?.name} and start a new project</span>
             </div>
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="mt-0.5">3</Badge>
-              <span>Paste the prompts and let AI generate your app structure</span>
+              <Badge variant="outline" className="mt-0.5 border-white/20 text-gray-300">3</Badge>
+              <span className="text-gray-300">Paste the prompts and let AI generate your app structure</span>
             </div>
             <div className="flex items-start gap-2">
-              <Badge variant="outline" className="mt-0.5">4</Badge>
-              <span>Iterate and refine based on the generated output</span>
+              <Badge variant="outline" className="mt-0.5 border-white/20 text-gray-300">4</Badge>
+              <span className="text-gray-300">Iterate and refine based on the generated output</span>
             </div>
           </div>
         </CardContent>
@@ -437,7 +447,7 @@ ${getToolSpecificInstructions(selectedTool)}`
 
       {/* Save Project */}
       <div className="flex justify-center pt-4">
-        <Button onClick={saveProject} className="flex items-center gap-2" size="lg">
+        <Button onClick={saveProject} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white" size="lg">
           <Package className="h-4 w-4" />
           Save Project to History
         </Button>
@@ -459,6 +469,3 @@ ${getToolSpecificInstructions(selectedTool)}`
     </div>
   );
 }
-
-// Import React for hooks
-import React from 'react';

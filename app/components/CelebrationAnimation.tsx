@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Sparkles, Star, Trophy, Download, Share } from "lucide-react";
+import { CheckCircle, Sparkles, Star, Trophy, Download, Share, X } from "lucide-react";
 
 interface CelebrationAnimationProps {
   isVisible: boolean;
@@ -62,14 +62,24 @@ export function CelebrationAnimation({
       )}
 
       {/* Main Celebration Card */}
-      <Card className="w-96 max-w-[90vw] animate-in slide-in-from-bottom-8 duration-700">
+      <Card className="w-96 max-w-[90vw] animate-in slide-in-from-bottom-8 duration-700 relative">
+        {/* Close Button */}
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          size="sm"
+          className="absolute top-4 right-2 h-8 w-8 p-0 hover:bg-white/20 text-gray-400 hover:text-white z-10"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        
         <CardContent className="p-8 text-center space-y-6">
           {/* Trophy Icon with Animation */}
           <div className="relative">
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-pulse">
               <Trophy className="w-10 h-10 text-white" />
             </div>
-            <div className="absolute -top-2 -right-2 animate-spin">
+            <div className="absolute -top-2 -left-2 animate-spin">
               <Sparkles className="w-6 h-6 text-yellow-400" />
             </div>
           </div>
