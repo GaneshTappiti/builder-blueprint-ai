@@ -113,11 +113,12 @@ const stageConfigs: StageConfig[] = [
 interface SixStageArchitectureProps {
   className?: string;
   showOverview?: boolean;
+  forceBuilderMode?: boolean;
 }
 
-export function SixStageArchitecture({ className = "", showOverview = true }: SixStageArchitectureProps) {
+export function SixStageArchitecture({ className = "", showOverview = true, forceBuilderMode = false }: SixStageArchitectureProps) {
   const { state, dispatch } = useBuilder();
-  const [viewMode, setViewMode] = useState<'overview' | 'builder'>('overview');
+  const [viewMode, setViewMode] = useState<'overview' | 'builder'>(forceBuilderMode ? 'builder' : 'overview');
   const router = useRouter();
   
   const currentStage = stageConfigs.find(stage => stage.id === state.currentCard);
@@ -125,13 +126,18 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
   const totalProgress = (completedStages / 6) * 100;
 
   const handleStageClick = (stageId: number) => {
-    // Redirect to MVP Studio page when clicking on any stage
-    router.push('/workspace/mvp-studio');
+    // Set the current stage and redirect to builder page
+    dispatch(builderActions.setCurrentCard(stageId));
+    router.push('/workspace/mvp-studio/builder');
   };
 
   const handleStartBuilder = () => {
-    // Redirect to MVP Studio page when clicking Start/Continue Building
-    router.push('/workspace/mvp-studio');
+    // Set current card to 1 if starting fresh, otherwise keep current progress
+    if (state.currentCard === 1) {
+      dispatch(builderActions.setCurrentCard(1));
+    }
+    // Redirect to MVP Studio builder page when clicking Start/Continue Building
+    router.push('/workspace/mvp-studio/builder');
   };
 
   const getStageStatus = (stageId: number) => {
@@ -320,7 +326,7 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
 
   return (
     <div className={`max-w-7xl mx-auto ${className}`}>
-      {showOverview && viewMode === 'overview' ? renderOverview() : renderBuilder()}
+      {(showOverview && viewMode === 'overview' && !forceBuilderMode) ? renderOverview() : renderBuilder()}
     </div>
   );
 }

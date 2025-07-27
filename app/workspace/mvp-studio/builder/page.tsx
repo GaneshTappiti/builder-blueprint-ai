@@ -93,7 +93,7 @@ export default function BuilderPage() {
 
               {/* 6-Stage Architecture Component */}
               <div className="workspace-card-solid p-6 sm:p-8 lg:p-10">
-                <SixStageArchitecture showOverview={true} />
+                <SixStageArchitecture showOverview={false} forceBuilderMode={true} />
               </div>
 
               {/* Additional Information */}

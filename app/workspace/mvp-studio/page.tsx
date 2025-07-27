@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import WorkspaceSidebar, { SidebarToggle } from "@/components/WorkspaceSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,8 @@ import {
   Brain, 
   ExternalLink,
   Layers,
-  Target
+  Target,
+  ArrowLeft
 } from "lucide-react";
 
 export default function MVPStudioPage() {
@@ -32,6 +34,13 @@ export default function MVPStudioPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <SidebarToggle onClick={() => setSidebarOpen(true)} />
+                <Link
+                  href="/workspace"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back to Workspace</span>
+                </Link>
                 <div className="flex items-center gap-2">
                   <Brain className="h-6 w-6 text-green-400" />
                   <h1 className="text-xl font-bold text-white">MVP Studio</h1>
