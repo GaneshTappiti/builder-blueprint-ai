@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -117,23 +118,20 @@ interface SixStageArchitectureProps {
 export function SixStageArchitecture({ className = "", showOverview = true }: SixStageArchitectureProps) {
   const { state, dispatch } = useBuilder();
   const [viewMode, setViewMode] = useState<'overview' | 'builder'>('overview');
+  const router = useRouter();
   
   const currentStage = stageConfigs.find(stage => stage.id === state.currentCard);
   const completedStages = state.currentCard - 1;
   const totalProgress = (completedStages / 6) * 100;
 
   const handleStageClick = (stageId: number) => {
-    if (stageId <= state.currentCard || stageId === 1) {
-      dispatch(builderActions.setCurrentCard(stageId));
-      setViewMode('builder');
-    }
+    // Redirect to MVP Studio page when clicking on any stage
+    router.push('/workspace/mvp-studio');
   };
 
   const handleStartBuilder = () => {
-    if (state.currentCard === 1 && !state.appIdea.appName) {
-      dispatch(builderActions.setCurrentCard(1));
-    }
-    setViewMode('builder');
+    // Redirect to MVP Studio page when clicking Start/Continue Building
+    router.push('/workspace/mvp-studio');
   };
 
   const getStageStatus = (stageId: number) => {
@@ -236,6 +234,7 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
                     variant="ghost" 
                     size="sm" 
                     className={`w-full ${stage.color} hover:bg-white/5`}
+                    onClick={() => handleStageClick(stage.id)}
                   >
                     {status === 'completed' ? 'Review' : status === 'current' ? 'Continue' : 'Start'}
                     <ArrowRight className="w-4 h-4 ml-2" />
