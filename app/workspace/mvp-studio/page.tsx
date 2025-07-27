@@ -117,15 +117,15 @@ export default function MVPStudioPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="glass-effect p-4 rounded-lg text-center">
+              <div className="glass-effect-theme p-4 rounded-lg text-center">
                 <div className="text-2xl font-bold text-green-400 mb-1">AI-Generated Prompts</div>
                 <div className="text-sm text-gray-400">Tailored for each builder</div>
               </div>
-              <div className="glass-effect p-4 rounded-lg text-center">
+              <div className="glass-effect-theme p-4 rounded-lg text-center">
                 <div className="text-2xl font-bold text-green-400 mb-1">14+ Tools</div>
                 <div className="text-sm text-gray-400">Supported platforms</div>
               </div>
-              <div className="glass-effect p-4 rounded-lg text-center">
+              <div className="glass-effect-theme p-4 rounded-lg text-center">
                 <div className="text-2xl font-bold text-green-400 mb-1">Export Ready</div>
                 <div className="text-sm text-gray-400">Copy & paste prompts</div>
               </div>
@@ -150,7 +150,7 @@ export default function MVPStudioPage() {
               </Button>
             </div>
 
-            <div className="glass-effect p-4 rounded-lg mb-8">
+            <div className="glass-effect-theme p-4 rounded-lg mb-8">
               <p className="text-gray-300 mb-2">Want to see the converted React Router landing page?</p>
               <Button variant="outline" className="border-blue-500/30 hover:bg-blue-500/10 text-blue-300">
                 <ExternalLink className="mr-2 h-4 w-4" />
@@ -162,17 +162,17 @@ export default function MVPStudioPage() {
           {/* Builder Blueprint AI Section */}
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="glass-effect p-6 rounded-lg text-center">
+              <div className="glass-effect-theme p-6 rounded-lg text-center">
                 <Layers className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">🧱 Builder Cards</h3>
                 <p className="text-gray-400 text-sm">Interactive builder recommendations</p>
               </div>
-              <div className="glass-effect p-6 rounded-lg text-center">
+              <div className="glass-effect-theme p-6 rounded-lg text-center">
                 <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">📋 MVP Templates</h3>
                 <p className="text-gray-400 text-sm">Pre-built project templates</p>
               </div>
-              <div className="glass-effect p-6 rounded-lg text-center">
+              <div className="glass-effect-theme p-6 rounded-lg text-center">
                 <Zap className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">🛠️ AI Tools Hub</h3>
                 <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
@@ -180,7 +180,7 @@ export default function MVPStudioPage() {
             </div>
 
             {/* Main Builder Form */}
-            <div className="glass-effect p-8 rounded-xl">
+            <div className="glass-effect-theme p-8 rounded-xl">
               <div className="flex items-center gap-3 mb-6">
                 <Brain className="h-6 w-6 text-green-400" />
                 <h2 className="text-2xl font-bold text-white">🧱 Builder Blueprint AI</h2>
@@ -253,7 +253,7 @@ export default function MVPStudioPage() {
                         className="mt-2"
                       >
                         {designStyles.map((style) => (
-                          <div key={style.id} className="glass-effect p-4 rounded-lg">
+                          <div key={style.id} className="glass-effect-theme p-4 rounded-lg">
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value={style.id} id={style.id} />
                               <div className="flex-1">
@@ -319,7 +319,7 @@ export default function MVPStudioPage() {
                 <h3 className="text-lg font-semibold text-white mb-4">Upcoming Stages</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {stages.slice(1).map((stage) => (
-                    <div key={stage.id} className="glass-effect p-4 rounded-lg">
+                    <div key={stage.id} className="glass-effect-theme p-4 rounded-lg">
                       <h4 className="font-medium text-white">{stage.title}</h4>
                       <p className="text-gray-400 text-sm mt-1">{stage.description}</p>
                     </div>
