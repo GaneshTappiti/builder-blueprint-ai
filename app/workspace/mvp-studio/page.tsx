@@ -87,46 +87,33 @@ export default function MVPStudioPage() {
                 <Layers className="mr-2 h-4 w-4" />
                 Start 6-Stage Builder
               </Button>
-              <Button variant="outline" className="border-green-500/30 hover:bg-green-500/10 text-white">
+              <Button 
+                variant="outline" 
+                className="border-green-500/30 hover:bg-green-500/10 text-white"
+                onClick={() => {
+                  // Scroll to the MVP Templates section at the bottom
+                  const templatesSection = document.querySelector('#mvp-templates-section');
+                  if (templatesSection) {
+                    templatesSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 <Target className="mr-2 h-4 w-4" />
                 Browse Templates
               </Button>
-              <Button variant="outline" className="border-green-500/30 hover:bg-green-500/10 text-white">
+              <Button 
+                variant="outline" 
+                className="border-green-500/30 hover:bg-green-500/10 text-white"
+                onClick={() => router.push('/workspace/ai-tools')}
+              >
                 <Zap className="mr-2 h-4 w-4" />
                 Browse AI Tools
               </Button>
             </div>
-
-            <div className="glass-effect-theme p-4 rounded-lg mb-8">
-              <p className="text-gray-300 mb-2">Want to see the converted React Router landing page?</p>
-              <Button variant="outline" className="border-blue-500/30 hover:bg-blue-500/10 text-blue-300">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View Landing Page Demo
-              </Button>
-            </div>
           </div>
 
-          {/* Working Builder Blueprint AI Section */}
+          {/* 6-Stage Builder Architecture */}
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="glass-effect-theme p-6 rounded-lg text-center">
-                <Layers className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">🧱 Builder Cards</h3>
-                <p className="text-gray-400 text-sm">Interactive builder recommendations</p>
-              </div>
-              <div className="glass-effect-theme p-6 rounded-lg text-center">
-                <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">📋 MVP Templates</h3>
-                <p className="text-gray-400 text-sm">Pre-built project templates</p>
-              </div>
-              <div className="glass-effect-theme p-6 rounded-lg text-center">
-                <Zap className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">🛠️ AI Tools Hub</h3>
-                <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
-              </div>
-            </div>
-
-            {/* 6-Stage Builder Architecture */}
             <section className="mb-6 md:mb-8">
               <div>
                 <BuilderProvider>
@@ -134,6 +121,45 @@ export default function MVPStudioPage() {
                 </BuilderProvider>
               </div>
             </section>
+          </div>
+        </div>
+
+        {/* Bottom Section - Quick Actions and Features */}
+        <div className="px-6 py-12 bg-black/40 backdrop-blur-xl border-t border-white/10">
+          <div className="max-w-4xl mx-auto">
+            {/* Landing Page Demo */}
+            <div className="text-center mb-12">
+              <div className="glass-effect-theme p-4 rounded-lg mb-8">
+                <p className="text-gray-300 mb-2">Want to see the converted React Router landing page?</p>
+                <Button 
+                  variant="outline" 
+                  className="border-blue-500/30 hover:bg-blue-500/10 text-blue-300"
+                  onClick={() => router.push('/landing')}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Landing Page Demo
+                </Button>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
+                <Layers className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">🧱 Builder Cards</h3>
+                <p className="text-gray-400 text-sm">Interactive builder recommendations</p>
+              </div>
+              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
+                <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">� MVP Templates</h3>
+                <p className="text-gray-400 text-sm">Pre-built project templates</p>
+              </div>
+              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
+                <Zap className="h-8 w-8 text-green-400 mx-auto mb-3" />
+                <h3 className="text-lg font-semibold text-white mb-2">🛠️ AI Tools Hub</h3>
+                <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
+              </div>
+            </div>
           </div>
         </div>
       </main>
