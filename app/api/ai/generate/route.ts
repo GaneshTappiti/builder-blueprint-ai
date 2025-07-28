@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
         const { blockId, appIdea, existingCanvas } = parsedData;
         result = await geminiService.generateBMCBlock(blockId, appIdea, existingCanvas);
         break;
+      case 'app-blueprint':
+        result = await geminiService.generateAppBlueprint(safeJsonParse(prompt));
+        break;
       default:
         result = await geminiService.generateText(prompt, options);
     }

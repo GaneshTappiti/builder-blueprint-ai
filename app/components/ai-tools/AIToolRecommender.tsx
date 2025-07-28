@@ -24,63 +24,7 @@ import {
   Target,
   Rocket
 } from 'lucide-react';
-
-// Mock AI Tools Database since the original is missing
-const aiToolsCategories = [
-  { id: 'content', name: 'Content Creation', icon: '✍️' },
-  { id: 'design', name: 'Design & UI', icon: '🎨' },
-  { id: 'development', name: 'Development', icon: '💻' },
-  { id: 'marketing', name: 'Marketing', icon: '📈' },
-  { id: 'productivity', name: 'Productivity', icon: '⚡' }
-];
-
-interface AITool {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  pricing: 'free' | 'freemium' | 'paid';
-  rating: number;
-  website: string;
-  features: string[];
-  useCases: string[];
-}
-
-const aiToolsDatabase: AITool[] = [
-  {
-    id: 'chatgpt',
-    name: 'ChatGPT',
-    description: 'Advanced AI chatbot for conversations and content creation',
-    category: 'content',
-    pricing: 'freemium',
-    rating: 4.8,
-    website: 'https://chat.openai.com',
-    features: ['Text generation', 'Code assistance', 'Creative writing'],
-    useCases: ['Content creation', 'Programming help', 'Research']
-  },
-  {
-    id: 'midjourney',
-    name: 'Midjourney',
-    description: 'AI-powered image generation tool',
-    category: 'design',
-    pricing: 'paid',
-    rating: 4.7,
-    website: 'https://midjourney.com',
-    features: ['Image generation', 'Art creation', 'Style transfer'],
-    useCases: ['Digital art', 'Concept design', 'Marketing visuals']
-  },
-  {
-    id: 'github-copilot',
-    name: 'GitHub Copilot',
-    description: 'AI pair programmer for code completion',
-    category: 'development',
-    pricing: 'paid',
-    rating: 4.6,
-    website: 'https://github.com/features/copilot',
-    features: ['Code completion', 'Function generation', 'Documentation'],
-    useCases: ['Software development', 'Code review', 'Learning']
-  }
-];
+import { aiToolsDatabase, aiToolsCategories, AITool } from '@/lib/aiToolsDatabase';
 
 interface AIToolRecommenderProps {
   className?: string;
@@ -117,7 +61,7 @@ const AIToolRecommender: React.FC<AIToolRecommenderProps> = ({
 
     // Filter by pricing
     if (selectedPricing !== 'all') {
-      filtered = filtered.filter(tool => tool.pricing === selectedPricing);
+      filtered = filtered.filter(tool => tool.pricing.model === selectedPricing);
     }
 
     setFilteredTools(filtered);
@@ -142,7 +86,8 @@ const AIToolRecommender: React.FC<AIToolRecommenderProps> = ({
     }
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (popularity: number) => {
+    const rating = popularity / 20; // Convert popularity (0-100) to rating (0-5)
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
@@ -259,12 +204,12 @@ const AIToolRecommender: React.FC<AIToolRecommenderProps> = ({
                 <div>
                   <CardTitle className="text-white text-lg">{tool.name}</CardTitle>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex">{renderStars(tool.rating)}</div>
-                    <span className="text-sm text-gray-400">({tool.rating})</span>
+                    <div className="flex">{renderStars(tool.popularity)}</div>
+                    <span className="text-sm text-gray-400">({tool.popularity}%)</span>
                   </div>
                 </div>
-                <Badge className={getPricingColor(tool.pricing)}>
-                  {tool.pricing}
+                <Badge className={getPricingColor(tool.pricing.model)}>
+                  {tool.pricing.model}
                 </Badge>
               </div>
               <CardDescription className="text-gray-300">
@@ -287,7 +232,7 @@ const AIToolRecommender: React.FC<AIToolRecommenderProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(tool.website, '_blank')}
+                    onClick={() => window.open(tool.officialUrl, '_blank')}
                     className="flex-1"
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />

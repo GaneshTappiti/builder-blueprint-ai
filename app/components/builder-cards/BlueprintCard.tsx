@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Layout, Users, GitBranch, Database, Eye, Edit3 } from "lucide-react";
+import { ArrowRight, Layout, Users, GitBranch, Database, Eye, Edit3, MessageSquare, Activity, Plug } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -193,14 +193,28 @@ export function BlueprintCard() {
             👤 User Roles
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {state.appBlueprint.userRoles.map((role, index) => (
-              <Badge key={index} variant="secondary" className="bg-white/10 text-gray-300 border-white/20">
-                {role}
-              </Badge>
-            ))}
-          </div>
+        <CardContent className="space-y-3">
+          {state.appBlueprint.userRoles.map((role, index) => (
+            <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="bg-white/10 text-gray-300 border-white/20">
+                  {typeof role === 'string' ? role : role.name}
+                </Badge>
+              </div>
+              {typeof role === 'object' && role.description && (
+                <p className="text-sm text-gray-400 mb-2">{role.description}</p>
+              )}
+              {typeof role === 'object' && role.permissions && (
+                <div className="flex flex-wrap gap-1">
+                  {role.permissions.map((permission: string, idx: number) => (
+                    <span key={idx} className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded backdrop-blur-sm">
+                      {permission}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
           {state.appBlueprint.userRoles.length === 1 && (
             <p className="text-sm text-gray-400 mt-2">
               Single user role detected. Consider if you need different permission levels.
@@ -221,17 +235,155 @@ export function BlueprintCard() {
           {state.appBlueprint.dataModels.map((model, index) => (
             <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
               <h5 className="font-medium text-white">{model.name}</h5>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {model.fields.map((field: string, idx: number) => (
-                  <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
-                    {field}
-                  </span>
-                ))}
+              {model.description && (
+                <p className="text-sm text-gray-400 mt-1 mb-2">{model.description}</p>
+              )}
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {model.fields.map((field: string, idx: number) => (
+                    <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
+                      {field}
+                    </span>
+                  ))}
+                </div>
+                {model.relationships && model.relationships.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {model.relationships.map((relationship: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded backdrop-blur-sm">
+                        {relationship}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* Modals & Popups */}
+      {state.appBlueprint.modals && state.appBlueprint.modals.length > 0 && (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-white">
+              <MessageSquare className="h-4 w-4 text-pink-400" />
+              💬 Modals & Popups
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {state.appBlueprint.modals.map((modal, index) => (
+              <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
+                <h5 className="font-medium text-white">{modal.name}</h5>
+                <p className="text-sm text-gray-400 mt-1">{modal.purpose}</p>
+                <div className="mt-2 space-y-1">
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-gray-400">Triggers:</span>
+                    {modal.triggerScreens.map((screen: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-pink-500/20 text-pink-300 px-2 py-1 rounded backdrop-blur-sm">
+                        {screen}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-gray-400">Components:</span>
+                    {modal.components.map((component: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
+                        {component}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* States & Edge Cases */}
+      {state.appBlueprint.states && state.appBlueprint.states.length > 0 && (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-white">
+              <Activity className="h-4 w-4 text-yellow-400" />
+              🧪 States & Edge Cases
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {state.appBlueprint.states.map((state_item, index) => (
+              <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
+                <h5 className="font-medium text-white">{state_item.name}</h5>
+                <p className="text-sm text-gray-400 mt-1">{state_item.description}</p>
+                <div className="mt-2 space-y-1">
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-gray-400">Screens:</span>
+                    {state_item.screens.map((screen: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded backdrop-blur-sm">
+                        {screen}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className="text-xs text-gray-400">Conditions:</span>
+                    {state_item.conditions.map((condition: string, idx: number) => (
+                      <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
+                        {condition}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 3rd-party Integrations */}
+      {state.appBlueprint.integrations && state.appBlueprint.integrations.length > 0 && (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-white">
+              <Plug className="h-4 w-4 text-cyan-400" />
+              🧩 3rd-party Integrations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {state.appBlueprint.integrations.map((integration, index) => (
+              <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <h5 className="font-medium text-white">{integration.name}</h5>
+                  <Badge variant="outline" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
+                    {integration.type}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-400 mb-2">{integration.description}</p>
+                <div className="bg-white/5 p-2 rounded text-xs text-gray-300">
+                  <span className="font-medium">Implementation:</span> {integration.implementation}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Architecture Pattern */}
+      {state.appBlueprint.architecture && (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-white">
+              <Layout className="h-4 w-4 text-indigo-400" />
+              🏗️ Suggested Architecture Pattern
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+              <p className="font-medium text-white mb-2">{state.appBlueprint.architecture}</p>
+              {state.appBlueprint.suggestedPattern && (
+                <p className="text-sm text-gray-400">{state.appBlueprint.suggestedPattern}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Continue Button */}
       <div className="flex justify-between items-center pt-4">

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, CheckCircle, Users, MessageSquare, Target } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,15 @@ export function ValidationCard() {
   const { state, dispatch } = useBuilder();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Blueprint customization options
+  const [blueprintOptions, setBlueprintOptions] = useState({
+    appType: state.appIdea.platforms.includes('mobile') ? 'mobile' : 'web',
+    depth: 'advanced' as 'mvp' | 'advanced' | 'production',
+    includeStates: true,
+    includeModals: true,
+    includeIntegrations: true
+  });
 
   const handleCheckboxChange = (field: 'hasValidated' | 'hasDiscussed', checked: boolean) => {
     dispatch(builderActions.updateValidation({ [field]: checked }));
@@ -74,44 +84,50 @@ export function ValidationCard() {
       dispatch(builderActions.setGenerationProgress(step.progress));
     }
 
-    // Generate mock blueprint based on the app idea
-    const mockBlueprint = {
-      screens: [
-        {
-          id: 'login',
-          name: 'Login/Signup',
-          purpose: 'User authentication and onboarding',
-          components: ['Email input', 'Password input', 'Social login buttons', 'Forgot password link'],
-          navigation: ['Dashboard', 'Onboarding']
+    // Generate comprehensive blueprint using AI
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: 'dashboard',
-          name: 'Dashboard',
-          purpose: 'Main hub showing overview and quick actions',
-          components: ['Header with user info', 'Quick stats cards', 'Recent activity', 'Action buttons'],
-          navigation: ['Profile', 'Main features', 'Settings']
-        },
-        {
-          id: 'main-feature',
-          name: getMainFeatureName(),
-          purpose: 'Core functionality of the app',
-          components: ['Feature interface', 'Action buttons', 'Data display', 'Navigation menu'],
-          navigation: ['Dashboard', 'Details', 'Settings']
-        },
-        {
-          id: 'profile',
-          name: 'Profile',
-          purpose: 'User profile management and settings',
-          components: ['Profile picture', 'User info form', 'Preferences', 'Account settings'],
-          navigation: ['Dashboard', 'Settings']
-        }
-      ],
-      userRoles: getUserRoles(),
-      navigationFlow: 'Login → Dashboard → Main Features → Profile/Settings',
-      dataModels: getDataModels()
-    };
+        body: JSON.stringify({
+          type: 'app-blueprint',
+          prompt: JSON.stringify({
+            appIdea: state.appIdea.ideaDescription,
+            appName: state.appIdea.appName,
+            platforms: state.appIdea.platforms,
+            designStyle: state.appIdea.designStyle,
+            targetAudience: state.appIdea.targetAudience,
+            ...blueprintOptions
+          })
+        }),
+      });
 
-    dispatch(builderActions.setAppBlueprint(mockBlueprint));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.blueprint) {
+        dispatch(builderActions.setAppBlueprint(result.blueprint));
+      } else {
+        throw new Error(result.error || 'Failed to generate blueprint');
+      }
+    } catch (error) {
+      console.error('Error generating blueprint:', error);
+
+      // Fallback to enhanced mock blueprint if AI fails
+      const fallbackBlueprint = createEnhancedFallbackBlueprint();
+      dispatch(builderActions.setAppBlueprint(fallbackBlueprint));
+
+      toast({
+        title: "Blueprint Generated (Fallback)",
+        description: "AI generation failed, using enhanced fallback blueprint.",
+        variant: "default"
+      });
+    }
     dispatch(builderActions.setGenerating(false));
     dispatch(builderActions.setCurrentCard(3));
     setIsGenerating(false);
@@ -122,6 +138,165 @@ export function ValidationCard() {
     });
   };
 
+  const createEnhancedFallbackBlueprint = () => {
+    const idea = state.appIdea.ideaDescription.toLowerCase();
+    const mainFeatureName = getMainFeatureName();
+
+    return {
+      screens: [
+        {
+          id: 'splash',
+          name: 'Splash Screen',
+          purpose: 'App loading and branding',
+          type: 'loading',
+          components: ['App logo', 'Loading indicator', 'Version info'],
+          navigation: ['onboarding', 'login', 'dashboard'],
+          subPages: [],
+          edgeCases: ['Network error', 'App update required']
+        },
+        {
+          id: 'onboarding',
+          name: 'Onboarding Flow',
+          purpose: 'Introduce app features and benefits',
+          type: 'onboarding',
+          components: ['Feature highlights', 'Skip button', 'Next/Previous buttons', 'Progress indicator'],
+          navigation: ['login', 'signup'],
+          subPages: ['welcome', 'features', 'permissions'],
+          edgeCases: ['Skip onboarding', 'Return user']
+        },
+        {
+          id: 'login',
+          name: 'Login/Authentication',
+          purpose: 'User authentication and account access',
+          type: 'auth',
+          components: ['Email input', 'Password input', 'Login button', 'Social login options', 'Forgot password link'],
+          navigation: ['dashboard', 'signup', 'forgot-password'],
+          subPages: ['forgot-password', 'reset-password'],
+          edgeCases: ['Invalid credentials', 'Account locked', 'Network error']
+        },
+        {
+          id: 'signup',
+          name: 'Sign Up',
+          purpose: 'New user registration',
+          type: 'auth',
+          components: ['Name input', 'Email input', 'Password input', 'Confirm password', 'Terms checkbox', 'Sign up button'],
+          navigation: ['dashboard', 'login', 'email-verification'],
+          subPages: ['email-verification', 'profile-setup'],
+          edgeCases: ['Email already exists', 'Weak password', 'Terms not accepted']
+        },
+        {
+          id: 'dashboard',
+          name: 'Dashboard/Home',
+          purpose: 'Main hub with overview and quick actions',
+          type: 'main',
+          components: ['Header with user info', 'Quick stats/metrics', 'Recent activity', 'Action buttons', 'Navigation menu'],
+          navigation: ['profile', 'settings', 'main-features'],
+          subPages: ['notifications', 'search'],
+          edgeCases: ['No data available', 'Loading state', 'Error state']
+        },
+        {
+          id: 'main-feature',
+          name: mainFeatureName,
+          purpose: 'Core functionality of the application',
+          type: 'feature',
+          components: ['Feature interface', 'Action buttons', 'Data display', 'Filter/sort options'],
+          navigation: ['dashboard', 'details', 'create-edit'],
+          subPages: ['details', 'create', 'edit', 'list'],
+          edgeCases: ['Empty state', 'Loading', 'Error', 'No permissions']
+        },
+        {
+          id: 'profile',
+          name: 'User Profile',
+          purpose: 'User profile management and personal information',
+          type: 'feature',
+          components: ['Profile picture', 'User info display', 'Edit profile button', 'Activity history'],
+          navigation: ['dashboard', 'settings', 'edit-profile'],
+          subPages: ['edit-profile', 'activity-history', 'achievements'],
+          edgeCases: ['Profile incomplete', 'Image upload error']
+        },
+        {
+          id: 'settings',
+          name: 'Settings',
+          purpose: 'App configuration and user preferences',
+          type: 'settings',
+          components: ['Preference toggles', 'Account settings', 'Privacy controls', 'Logout button'],
+          navigation: ['dashboard', 'profile', 'privacy', 'notifications'],
+          subPages: ['account', 'privacy', 'notifications', 'about'],
+          edgeCases: ['Settings save error', 'Permission denied']
+        }
+      ],
+      userRoles: getEnhancedUserRoles(),
+      dataModels: getEnhancedDataModels(),
+      pageFlow: [
+        { from: 'splash', to: 'onboarding', condition: 'first_time_user', action: 'navigate' },
+        { from: 'splash', to: 'login', condition: 'returning_user_not_logged_in', action: 'navigate' },
+        { from: 'splash', to: 'dashboard', condition: 'user_logged_in', action: 'navigate' },
+        { from: 'onboarding', to: 'signup', condition: 'user_wants_to_register', action: 'navigate' },
+        { from: 'login', to: 'dashboard', condition: 'successful_login', action: 'navigate' },
+        { from: 'signup', to: 'dashboard', condition: 'successful_registration', action: 'navigate' }
+      ],
+      modals: [
+        {
+          id: 'confirmation',
+          name: 'Confirmation Dialog',
+          purpose: 'Confirm destructive actions',
+          triggerScreens: ['dashboard', 'profile', 'settings'],
+          components: ['Message text', 'Confirm button', 'Cancel button']
+        },
+        {
+          id: 'loading',
+          name: 'Loading Modal',
+          purpose: 'Show loading state for long operations',
+          triggerScreens: ['dashboard', 'main-feature'],
+          components: ['Loading spinner', 'Progress text', 'Cancel button']
+        }
+      ],
+      states: [
+        {
+          name: 'Loading',
+          description: 'Data is being fetched or processed',
+          screens: ['dashboard', 'main-feature', 'profile'],
+          conditions: ['api_request_pending', 'data_processing']
+        },
+        {
+          name: 'Empty',
+          description: 'No data available to display',
+          screens: ['dashboard', 'main-feature'],
+          conditions: ['no_data_found', 'first_time_user', 'filtered_results_empty']
+        },
+        {
+          name: 'Error',
+          description: 'An error occurred during operation',
+          screens: ['dashboard', 'main-feature', 'profile', 'settings'],
+          conditions: ['network_error', 'server_error', 'permission_denied']
+        }
+      ],
+      integrations: [
+        {
+          name: 'Authentication',
+          type: 'auth',
+          description: 'User authentication and authorization',
+          implementation: 'Firebase Auth or Auth0 for social login and user management'
+        },
+        {
+          name: 'Cloud Storage',
+          type: 'storage',
+          description: 'File and data storage',
+          implementation: 'Firebase Storage or AWS S3 for user-generated content'
+        },
+        {
+          name: 'Push Notifications',
+          type: 'notification',
+          description: 'Real-time user notifications',
+          implementation: 'Firebase Cloud Messaging for cross-platform notifications'
+        }
+      ],
+      architecture: 'Component-based architecture with state management',
+      suggestedPattern: 'Feature-based folder structure with shared components and utilities',
+      navigationFlow: 'Splash → Onboarding/Login → Dashboard → Feature Screens → Settings/Profile'
+    };
+  };
+
   const getMainFeatureName = () => {
     const idea = state.appIdea.ideaDescription.toLowerCase();
     if (idea.includes('habit') || idea.includes('track')) return 'Habit Tracker';
@@ -129,23 +304,73 @@ export function ValidationCard() {
     if (idea.includes('social') || idea.includes('chat')) return 'Social Feed';
     if (idea.includes('shop') || idea.includes('store')) return 'Product Catalog';
     if (idea.includes('learn') || idea.includes('course')) return 'Learning Hub';
+    if (idea.includes('fitness') || idea.includes('workout')) return 'Fitness Tracker';
+    if (idea.includes('finance') || idea.includes('budget') || idea.includes('money')) return 'Finance Manager';
+    if (idea.includes('recipe') || idea.includes('food') || idea.includes('cooking')) return 'Recipe Collection';
+    if (idea.includes('travel') || idea.includes('trip')) return 'Travel Planner';
+    if (idea.includes('event') || idea.includes('calendar')) return 'Event Manager';
     return 'Main Feature';
   };
 
-  const getUserRoles = () => {
+  const getEnhancedUserRoles = () => {
     const idea = state.appIdea.ideaDescription.toLowerCase();
-    const roles = ['User'];
-    if (idea.includes('admin') || idea.includes('manage')) roles.push('Admin');
-    if (idea.includes('teacher') || idea.includes('instructor')) roles.push('Instructor');
-    if (idea.includes('business') || idea.includes('owner')) roles.push('Business Owner');
+    const roles = [
+      {
+        name: 'User',
+        permissions: ['view_content', 'create_content', 'edit_own_content', 'delete_own_content'],
+        description: 'Standard app user with basic functionality access'
+      }
+    ];
+
+    if (idea.includes('admin') || idea.includes('manage')) {
+      roles.push({
+        name: 'Admin',
+        permissions: ['view_all_content', 'create_content', 'edit_any_content', 'delete_any_content', 'manage_users', 'view_analytics'],
+        description: 'Administrator with full app management capabilities'
+      });
+    }
+
+    if (idea.includes('teacher') || idea.includes('instructor')) {
+      roles.push({
+        name: 'Instructor',
+        permissions: ['view_content', 'create_content', 'edit_own_content', 'manage_students', 'view_progress'],
+        description: 'Educational content creator and student manager'
+      });
+    }
+
+    if (idea.includes('business') || idea.includes('owner')) {
+      roles.push({
+        name: 'Business Owner',
+        permissions: ['view_analytics', 'manage_content', 'manage_users', 'view_reports'],
+        description: 'Business owner with analytics and management access'
+      });
+    }
+
     return roles;
   };
 
-  const getDataModels = () => {
+  const getEnhancedDataModels = () => {
+    const mainFeatureName = getMainFeatureName().replace(/\s+/g, '');
+
     return [
-      { name: 'User', fields: ['id', 'email', 'name', 'avatar', 'preferences'] },
-      { name: 'Session', fields: ['id', 'userId', 'createdAt', 'expiresAt'] },
-      { name: getMainFeatureName().replace(' ', ''), fields: ['id', 'userId', 'title', 'description', 'createdAt', 'updatedAt'] }
+      {
+        name: 'User',
+        fields: ['id', 'email', 'name', 'avatar', 'createdAt', 'updatedAt', 'preferences', 'role'],
+        relationships: ['hasMany: UserSessions', 'hasMany: UserActivities'],
+        description: 'Core user entity with authentication and profile data'
+      },
+      {
+        name: 'UserSession',
+        fields: ['id', 'userId', 'token', 'createdAt', 'expiresAt', 'deviceInfo'],
+        relationships: ['belongsTo: User'],
+        description: 'User authentication sessions and device tracking'
+      },
+      {
+        name: mainFeatureName,
+        fields: ['id', 'userId', 'title', 'description', 'status', 'createdAt', 'updatedAt'],
+        relationships: ['belongsTo: User'],
+        description: `Main feature entity for ${getMainFeatureName().toLowerCase()}`
+      }
     ];
   };
 
@@ -241,6 +466,90 @@ export function ValidationCard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Blueprint Customization Options */}
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+        <CardHeader>
+          <CardTitle className="text-base text-white">
+            🎛️ Blueprint Generation Options
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* App Type Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-300">App Type</Label>
+            <Select
+              value={blueprintOptions.appType}
+              onValueChange={(value) => setBlueprintOptions(prev => ({ ...prev, appType: value as 'web' | 'mobile' | 'hybrid' }))}
+            >
+              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectValue placeholder="Select app type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="web">Web App</SelectItem>
+                <SelectItem value="mobile">Mobile App</SelectItem>
+                <SelectItem value="hybrid">Hybrid (Web + Mobile)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Depth Level Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-300">Blueprint Depth</Label>
+            <Select
+              value={blueprintOptions.depth}
+              onValueChange={(value) => setBlueprintOptions(prev => ({ ...prev, depth: value as 'mvp' | 'advanced' | 'production' }))}
+            >
+              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <SelectValue placeholder="Select depth level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mvp">MVP (Basic Structure)</SelectItem>
+                <SelectItem value="advanced">Advanced (Comprehensive)</SelectItem>
+                <SelectItem value="production">Production-Ready (Full Detail)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Feature Toggles */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-300">Include Additional Components</Label>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="includeStates"
+                checked={blueprintOptions.includeStates}
+                onCheckedChange={(checked) => setBlueprintOptions(prev => ({ ...prev, includeStates: checked as boolean }))}
+              />
+              <Label htmlFor="includeStates" className="text-sm text-gray-300 cursor-pointer">
+                ☑ Add error/loading/empty states
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="includeModals"
+                checked={blueprintOptions.includeModals}
+                onCheckedChange={(checked) => setBlueprintOptions(prev => ({ ...prev, includeModals: checked as boolean }))}
+              />
+              <Label htmlFor="includeModals" className="text-sm text-gray-300 cursor-pointer">
+                ☑ Include modals/popups
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="includeIntegrations"
+                checked={blueprintOptions.includeIntegrations}
+                onCheckedChange={(checked) => setBlueprintOptions(prev => ({ ...prev, includeIntegrations: checked as boolean }))}
+              />
+              <Label htmlFor="includeIntegrations" className="text-sm text-gray-300 cursor-pointer">
+                ☑ Suggest 3rd-party integrations
+              </Label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Generate Blueprint Button */}
       <div className="flex justify-end pt-4">

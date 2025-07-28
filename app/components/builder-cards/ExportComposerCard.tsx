@@ -23,44 +23,51 @@ import { CelebrationAnimation } from "../CelebrationAnimation";
 
 const builderTools = [
   {
-    id: 'framer',
-    name: 'Framer',
-    description: 'Unified prompt for interactive web designs',
-    icon: '🎨',
+    id: 'cursor',
+    name: 'Cursor',
+    description: 'AI-powered code editor with intelligent completions',
+    icon: '💻',
     promptStyle: 'unified'
   },
   {
     id: 'uizard',
     name: 'Uizard',
-    description: 'Screen-by-screen for AI wireframes',
+    description: 'AI design tool with text-to-design generation',
     icon: '🤖',
     promptStyle: 'screen-by-screen'
   },
   {
-    id: 'adalo',
-    name: 'Adalo',
-    description: 'Screen-by-screen for no-code apps',
+    id: 'adalo-ai',
+    name: 'Adalo AI',
+    description: 'No-code app builder with AI assistant',
     icon: '📱',
     promptStyle: 'screen-by-screen'
   },
   {
-    id: 'flutterflow',
-    name: 'FlutterFlow',
-    description: 'Unified prompt for Flutter apps',
+    id: 'lovable-dev',
+    name: 'Lovable.dev',
+    description: 'AI-powered full-stack app builder',
     icon: '🚀',
     promptStyle: 'unified'
   },
   {
-    id: 'bubble',
-    name: 'Bubble',
-    description: 'Screen-by-screen for web apps',
+    id: 'softr-ai',
+    name: 'Softr AI',
+    description: 'Prompt-based app generation with Airtable integration',
     icon: '💭',
-    promptStyle: 'screen-by-screen'
+    promptStyle: 'unified'
   },
   {
-    id: 'webflow',
-    name: 'Webflow',
-    description: 'Unified prompt for responsive websites',
+    id: 'buzzy-ai',
+    name: 'Buzzy.ai',
+    description: 'Convert Figma designs to full-stack applications',
+    icon: '🎨',
+    promptStyle: 'unified'
+  },
+  {
+    id: 'replit-ghostwriter',
+    name: 'Replit Ghostwriter',
+    description: 'AI coding assistant with full development environment',
     icon: '🌐',
     promptStyle: 'unified'
   }

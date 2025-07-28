@@ -1253,5 +1253,453 @@ Generate completely different and unique content that doesn't overlap with the a
   hasRepeatedContent(content: string, repeatedPhrases: string[]): boolean {
     const lowerContent = content.toLowerCase();
     return repeatedPhrases.some(phrase => lowerContent.includes(phrase));
+  },
+
+  // Generate comprehensive app blueprint
+  async generateAppBlueprint(request: {
+    appIdea: string;
+    appName: string;
+    platforms: string[];
+    designStyle: string;
+    targetAudience?: string;
+    appType?: 'web' | 'mobile' | 'hybrid';
+    depth?: 'mvp' | 'advanced' | 'production';
+    includeStates?: boolean;
+    includeModals?: boolean;
+    includeIntegrations?: boolean;
+  }): Promise<any> {
+    try {
+      const {
+        appIdea,
+        appName,
+        platforms,
+        designStyle,
+        targetAudience,
+        appType = 'mobile',
+        depth = 'advanced',
+        includeStates = true,
+        includeModals = true,
+        includeIntegrations = true
+      } = request;
+
+      const universalPrompt = this.buildUniversalBlueprintPrompt(request);
+
+      console.log('Generating comprehensive app blueprint with Gemini...');
+
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const result = await model.generateContent(universalPrompt);
+      const response = await result.response;
+      const text = response.text();
+
+      console.log('Raw Gemini response received, parsing...');
+
+      // Parse the structured response
+      const blueprint = this.parseAppBlueprintResponse(text, request);
+
+      return {
+        success: true,
+        blueprint,
+        confidence: 0.9,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          depth,
+          features: {
+            states: includeStates,
+            modals: includeModals,
+            integrations: includeIntegrations
+          }
+        }
+      };
+    } catch (error) {
+      console.error('Error generating app blueprint:', error);
+
+      // Return fallback blueprint
+      const fallbackBlueprint = this.createFallbackAppBlueprint(request);
+
+      return {
+        success: false,
+        blueprint: fallbackBlueprint,
+        confidence: 0,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  },
+
+  // Build the universal prompt template
+  buildUniversalBlueprintPrompt(request: any): string {
+    const {
+      appIdea,
+      appName,
+      platforms,
+      designStyle,
+      targetAudience,
+      appType = 'mobile',
+      depth = 'advanced',
+      includeStates = true,
+      includeModals = true,
+      includeIntegrations = true
+    } = request;
+
+    return `You're an expert mobile and web app architect. Given a user's app idea, generate a full-scale app structure.
+
+[User Idea]: ${appIdea}
+[App Name]: ${appName}
+[Platforms]: ${platforms.join(', ')}
+[App Type]: ${appType}
+[Design Style]: ${designStyle}
+[Target Audience]: ${targetAudience || 'General users'}
+[Depth Level]: ${depth}
+
+Respond with a complete, professional app skeleton including:
+
+1. 🖥️ **Screens List**
+   - All user-facing pages (login, dashboard, feed, settings, etc.)
+   - Sub-pages, onboarding flows, and edge cases (error, empty, loading)
+   - Categorize each screen by type (main, auth, onboarding, feature, settings, error)
+
+2. 🧭 **Page Flow (Navigation)**
+   - Route structure or flowchart-style connection between screens
+   - Mention nested screens and tab/bottom nav flows
+   - Include conditional routing based on user state
+
+3. 🧑‍🤝‍🧑 **User Roles**
+   - List all user types (admin, guest, creator, etc.)
+   - Define permissions per role
+   - Describe role-specific features and access
+
+4. 🗃️ **Data Models (Entities)**
+   - Each screen's backend entities and how they relate
+   - Include field names and relationships
+   - Example: User, Post, Comment, Settings, etc.
+
+${includeModals ? `5. 💬 **Modals & Popups**
+   - Any dialog boxes, overlays, confirmation prompts, etc.
+   - Specify which screens trigger each modal
+   - Include modal components and purposes` : ''}
+
+${includeStates ? `6. 🧪 **States & Edge Cases**
+   - Empty states, loading states, error handling, no data UI
+   - Specify conditions for each state
+   - Include state management requirements` : ''}
+
+${includeIntegrations ? `7. 🧩 **3rd-party Integrations** (if applicable)
+   - Auth (Google, GitHub, etc.), Storage, Payments, Notifications
+   - Specify integration type and implementation approach
+   - Include API requirements` : ''}
+
+8. 🏗️ **Suggested Architecture Pattern**
+   - Based on app type, suggest MVC, MVVM, Clean Arch, or feature foldering
+   - Recommend folder structure and organization
+
+IMPORTANT: Format your response as valid JSON with the following structure:
+{
+  "screens": [
+    {
+      "id": "unique-id",
+      "name": "Screen Name",
+      "purpose": "What this screen does",
+      "type": "main|auth|onboarding|feature|settings|error|loading|empty",
+      "components": ["component1", "component2"],
+      "navigation": ["screen1", "screen2"],
+      "subPages": ["subpage1", "subpage2"],
+      "edgeCases": ["error case", "empty case"]
+    }
+  ],
+  "userRoles": [
+    {
+      "name": "Role Name",
+      "permissions": ["permission1", "permission2"],
+      "description": "Role description"
+    }
+  ],
+  "dataModels": [
+    {
+      "name": "Model Name",
+      "fields": ["field1", "field2"],
+      "relationships": ["relationship1"],
+      "description": "Model description"
+    }
+  ],
+  "pageFlow": [
+    {
+      "from": "screen1",
+      "to": "screen2",
+      "condition": "optional condition",
+      "action": "navigation action"
+    }
+  ],
+  ${includeModals ? `"modals": [
+    {
+      "id": "modal-id",
+      "name": "Modal Name",
+      "purpose": "Modal purpose",
+      "triggerScreens": ["screen1", "screen2"],
+      "components": ["component1", "component2"]
+    }
+  ],` : ''}
+  ${includeStates ? `"states": [
+    {
+      "name": "State Name",
+      "description": "State description",
+      "screens": ["screen1", "screen2"],
+      "conditions": ["condition1", "condition2"]
+    }
+  ],` : ''}
+  ${includeIntegrations ? `"integrations": [
+    {
+      "name": "Integration Name",
+      "type": "auth|storage|payment|notification|analytics|social|api",
+      "description": "Integration description",
+      "implementation": "Implementation approach"
+    }
+  ],` : ''}
+  "architecture": "Recommended architecture pattern",
+  "suggestedPattern": "Detailed pattern explanation",
+  "navigationFlow": "High-level navigation description"
+}
+
+Respond ONLY with valid JSON. Be comprehensive for ${depth} level. Don't repeat info. Be concise and modular.`;
+  },
+
+  // Parse the AI response into structured blueprint
+  parseAppBlueprintResponse(text: string, request: any): any {
+    try {
+      // Clean the response to extract JSON
+      let cleanedText = text.trim();
+
+      // Remove markdown code blocks if present
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      const parsed = JSON.parse(cleanedText);
+
+      // Validate and enhance the parsed data
+      return {
+        screens: parsed.screens || [],
+        userRoles: parsed.userRoles || [],
+        dataModels: parsed.dataModels || [],
+        pageFlow: parsed.pageFlow || [],
+        modals: parsed.modals || [],
+        states: parsed.states || [],
+        integrations: parsed.integrations || [],
+        architecture: parsed.architecture || 'Component-based architecture',
+        suggestedPattern: parsed.suggestedPattern || 'Feature-based folder structure',
+        navigationFlow: parsed.navigationFlow || 'Standard app navigation flow'
+      };
+    } catch (error) {
+      console.error('Error parsing blueprint response:', error);
+      console.log('Raw response:', text);
+
+      // Return fallback if parsing fails
+      return this.createFallbackAppBlueprint(request);
+    }
+  },
+
+  // Create fallback blueprint when AI fails
+  createFallbackAppBlueprint(request: any): any {
+    const { appIdea, appName, platforms, designStyle } = request;
+
+    return {
+      screens: [
+        {
+          id: 'splash',
+          name: 'Splash Screen',
+          purpose: 'App loading and branding',
+          type: 'loading',
+          components: ['App logo', 'Loading indicator', 'Version info'],
+          navigation: ['onboarding', 'login', 'dashboard'],
+          subPages: [],
+          edgeCases: ['Network error', 'App update required']
+        },
+        {
+          id: 'onboarding',
+          name: 'Onboarding Flow',
+          purpose: 'Introduce app features and benefits',
+          type: 'onboarding',
+          components: ['Feature highlights', 'Skip button', 'Next/Previous buttons', 'Progress indicator'],
+          navigation: ['login', 'signup'],
+          subPages: ['welcome', 'features', 'permissions'],
+          edgeCases: ['Skip onboarding', 'Return user']
+        },
+        {
+          id: 'login',
+          name: 'Login/Authentication',
+          purpose: 'User authentication and account access',
+          type: 'auth',
+          components: ['Email input', 'Password input', 'Login button', 'Social login options', 'Forgot password link'],
+          navigation: ['dashboard', 'signup', 'forgot-password'],
+          subPages: ['forgot-password', 'reset-password'],
+          edgeCases: ['Invalid credentials', 'Account locked', 'Network error']
+        },
+        {
+          id: 'signup',
+          name: 'Sign Up',
+          purpose: 'New user registration',
+          type: 'auth',
+          components: ['Name input', 'Email input', 'Password input', 'Confirm password', 'Terms checkbox', 'Sign up button'],
+          navigation: ['dashboard', 'login', 'email-verification'],
+          subPages: ['email-verification', 'profile-setup'],
+          edgeCases: ['Email already exists', 'Weak password', 'Terms not accepted']
+        },
+        {
+          id: 'dashboard',
+          name: 'Dashboard/Home',
+          purpose: 'Main hub with overview and quick actions',
+          type: 'main',
+          components: ['Header with user info', 'Quick stats/metrics', 'Recent activity', 'Action buttons', 'Navigation menu'],
+          navigation: ['profile', 'settings', 'main-features'],
+          subPages: ['notifications', 'search'],
+          edgeCases: ['No data available', 'Loading state', 'Error state']
+        },
+        {
+          id: 'main-feature',
+          name: this.getMainFeatureName(appIdea),
+          purpose: 'Core functionality of the application',
+          type: 'feature',
+          components: ['Feature interface', 'Action buttons', 'Data display', 'Filter/sort options'],
+          navigation: ['dashboard', 'details', 'create-edit'],
+          subPages: ['details', 'create', 'edit', 'list'],
+          edgeCases: ['Empty state', 'Loading', 'Error', 'No permissions']
+        },
+        {
+          id: 'profile',
+          name: 'User Profile',
+          purpose: 'User profile management and personal information',
+          type: 'feature',
+          components: ['Profile picture', 'User info display', 'Edit profile button', 'Activity history'],
+          navigation: ['dashboard', 'settings', 'edit-profile'],
+          subPages: ['edit-profile', 'activity-history', 'achievements'],
+          edgeCases: ['Profile incomplete', 'Image upload error']
+        },
+        {
+          id: 'settings',
+          name: 'Settings',
+          purpose: 'App configuration and user preferences',
+          type: 'settings',
+          components: ['Preference toggles', 'Account settings', 'Privacy controls', 'Logout button'],
+          navigation: ['dashboard', 'profile', 'privacy', 'notifications'],
+          subPages: ['account', 'privacy', 'notifications', 'about'],
+          edgeCases: ['Settings save error', 'Permission denied']
+        }
+      ],
+      userRoles: [
+        {
+          name: 'User',
+          permissions: ['view_content', 'create_content', 'edit_own_content', 'delete_own_content'],
+          description: 'Standard app user with basic functionality access'
+        },
+        {
+          name: 'Admin',
+          permissions: ['view_all_content', 'create_content', 'edit_any_content', 'delete_any_content', 'manage_users', 'view_analytics'],
+          description: 'Administrator with full app management capabilities'
+        }
+      ],
+      dataModels: [
+        {
+          name: 'User',
+          fields: ['id', 'email', 'name', 'avatar', 'createdAt', 'updatedAt', 'preferences', 'role'],
+          relationships: ['hasMany: UserSessions', 'hasMany: UserActivities'],
+          description: 'Core user entity with authentication and profile data'
+        },
+        {
+          name: 'UserSession',
+          fields: ['id', 'userId', 'token', 'createdAt', 'expiresAt', 'deviceInfo'],
+          relationships: ['belongsTo: User'],
+          description: 'User authentication sessions and device tracking'
+        },
+        {
+          name: this.getMainFeatureName(appIdea).replace(/\s+/g, ''),
+          fields: ['id', 'userId', 'title', 'description', 'status', 'createdAt', 'updatedAt'],
+          relationships: ['belongsTo: User'],
+          description: `Main feature entity for ${this.getMainFeatureName(appIdea).toLowerCase()}`
+        }
+      ],
+      pageFlow: [
+        { from: 'splash', to: 'onboarding', condition: 'first_time_user', action: 'navigate' },
+        { from: 'splash', to: 'login', condition: 'returning_user_not_logged_in', action: 'navigate' },
+        { from: 'splash', to: 'dashboard', condition: 'user_logged_in', action: 'navigate' },
+        { from: 'onboarding', to: 'signup', condition: 'user_wants_to_register', action: 'navigate' },
+        { from: 'login', to: 'dashboard', condition: 'successful_login', action: 'navigate' },
+        { from: 'signup', to: 'dashboard', condition: 'successful_registration', action: 'navigate' }
+      ],
+      modals: [
+        {
+          id: 'confirmation',
+          name: 'Confirmation Dialog',
+          purpose: 'Confirm destructive actions',
+          triggerScreens: ['dashboard', 'profile', 'settings'],
+          components: ['Message text', 'Confirm button', 'Cancel button']
+        },
+        {
+          id: 'loading',
+          name: 'Loading Modal',
+          purpose: 'Show loading state for long operations',
+          triggerScreens: ['dashboard', 'main-feature'],
+          components: ['Loading spinner', 'Progress text', 'Cancel button']
+        }
+      ],
+      states: [
+        {
+          name: 'Loading',
+          description: 'Data is being fetched or processed',
+          screens: ['dashboard', 'main-feature', 'profile'],
+          conditions: ['api_request_pending', 'data_processing']
+        },
+        {
+          name: 'Empty',
+          description: 'No data available to display',
+          screens: ['dashboard', 'main-feature'],
+          conditions: ['no_data_found', 'first_time_user', 'filtered_results_empty']
+        },
+        {
+          name: 'Error',
+          description: 'An error occurred during operation',
+          screens: ['dashboard', 'main-feature', 'profile', 'settings'],
+          conditions: ['network_error', 'server_error', 'permission_denied']
+        }
+      ],
+      integrations: [
+        {
+          name: 'Authentication',
+          type: 'auth',
+          description: 'User authentication and authorization',
+          implementation: 'Firebase Auth or Auth0 for social login and user management'
+        },
+        {
+          name: 'Cloud Storage',
+          type: 'storage',
+          description: 'File and data storage',
+          implementation: 'Firebase Storage or AWS S3 for user-generated content'
+        },
+        {
+          name: 'Push Notifications',
+          type: 'notification',
+          description: 'Real-time user notifications',
+          implementation: 'Firebase Cloud Messaging for cross-platform notifications'
+        }
+      ],
+      architecture: 'Component-based architecture with state management',
+      suggestedPattern: 'Feature-based folder structure with shared components and utilities',
+      navigationFlow: 'Splash → Onboarding/Login → Dashboard → Feature Screens → Settings/Profile'
+    };
+  },
+
+  // Helper to determine main feature name based on app idea
+  getMainFeatureName(appIdea: string): string {
+    const idea = appIdea.toLowerCase();
+    if (idea.includes('habit') || idea.includes('track')) return 'Habit Tracker';
+    if (idea.includes('task') || idea.includes('todo')) return 'Task Manager';
+    if (idea.includes('social') || idea.includes('chat')) return 'Social Feed';
+    if (idea.includes('shop') || idea.includes('store') || idea.includes('ecommerce')) return 'Product Catalog';
+    if (idea.includes('learn') || idea.includes('course') || idea.includes('education')) return 'Learning Hub';
+    if (idea.includes('fitness') || idea.includes('workout')) return 'Fitness Tracker';
+    if (idea.includes('finance') || idea.includes('budget') || idea.includes('money')) return 'Finance Manager';
+    if (idea.includes('recipe') || idea.includes('food') || idea.includes('cooking')) return 'Recipe Collection';
+    if (idea.includes('travel') || idea.includes('trip')) return 'Travel Planner';
+    if (idea.includes('event') || idea.includes('calendar')) return 'Event Manager';
+    return 'Main Feature';
   }
 };

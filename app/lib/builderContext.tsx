@@ -24,13 +24,64 @@ export interface Screen {
   purpose: string;
   components: string[];
   navigation: string[];
+  type?: 'main' | 'onboarding' | 'auth' | 'settings' | 'feature' | 'error' | 'loading' | 'empty';
+  subPages?: string[];
+  edgeCases?: string[];
+}
+
+export interface UserRole {
+  name: string;
+  permissions: string[];
+  description: string;
+}
+
+export interface DataModel {
+  name: string;
+  fields: string[];
+  relationships?: string[];
+  description?: string;
+}
+
+export interface Modal {
+  id: string;
+  name: string;
+  purpose: string;
+  triggerScreens: string[];
+  components: string[];
+}
+
+export interface AppState {
+  name: string;
+  description: string;
+  screens: string[];
+  conditions: string[];
+}
+
+export interface Integration {
+  name: string;
+  type: 'auth' | 'storage' | 'payment' | 'notification' | 'analytics' | 'social' | 'api';
+  description: string;
+  implementation: string;
+}
+
+export interface PageFlow {
+  from: string;
+  to: string;
+  condition?: string;
+  action: string;
 }
 
 export interface AppBlueprint {
   screens: Screen[];
-  userRoles: string[];
+  userRoles: UserRole[];
   navigationFlow: string;
-  dataModels: any[];
+  dataModels: DataModel[];
+  modals?: Modal[];
+  states?: AppState[];
+  integrations?: Integration[];
+  pageFlow?: PageFlow[];
+  architecture?: string;
+  suggestedPattern?: string;
 }
 
 export interface ScreenPrompt {
