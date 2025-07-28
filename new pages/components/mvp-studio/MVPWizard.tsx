@@ -46,13 +46,22 @@ import {
   BuilderTool
 } from "@/types/ideaforge";
 import { aiProviderService } from "@/services/aiProviderService";
-import { MVPPromptTemplateService, EnhancedWizardData } from "@/services/mvpPromptTemplates";
+import { MVPPromptTemplateService } from "@/services/mvpPromptTemplates";
 import { FrameworkGeneratorService, FrameworkGenerationRequest, GeneratedFramework } from "@/services/frameworkGenerator";
 import PagePromptGenerator from "./PagePromptGenerator";
 import ExportablePromptsSystem from "./ExportablePromptsSystem";
 import { useAnalytics } from "@/services/mvpStudioAnalytics";
 import { AIRequest } from "@/types/aiProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  PromptHistoryItem,
+  CompletedPrompts,
+  EnhancedWizardData,
+  PromptFlow,
+  PromptStage,
+  validateWizardStep,
+  safePagePromptAccess
+} from './MVPWizardTypes';
 
 interface MVPWizardProps {
   isOpen: boolean;
@@ -75,18 +84,18 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
   });
 
   // Enhanced wizard state for better UX
-  const [enhancedData, setEnhancedData] = useState({
+  const [enhancedData, setEnhancedData] = useState<EnhancedWizardData>({
     description: "",
     colorPreference: "",
     targetAudience: "",
     promptStyle: "detailed",
-    keyFeatures: [] as string[],
+    keyFeatures: [],
     targetUsers: "",
     currentStepValid: false
   });
 
   // Enhanced prompt-by-prompt state for sequential delivery
-  const [promptFlow, setPromptFlow] = useState<'setup' | 'framework' | 'pages' | 'linking' | 'complete'>('setup');
+  const [promptFlow, setPromptFlow] = useState<PromptFlow>('setup');
   const [frameworkPrompt, setFrameworkPrompt] = useState<string>('');
   const [pagePrompts, setPagePrompts] = useState<PagePrompt[]>([]);
   const [linkingPrompt, setLinkingPrompt] = useState<string>('');
@@ -95,24 +104,14 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
   const [generatedFramework, setGeneratedFramework] = useState<GeneratedFramework | null>(null);
 
   // Sequential prompt delivery state
-  const [promptStage, setPromptStage] = useState<'framework' | 'page' | 'linking' | 'complete'>('framework');
-  const [completedPrompts, setCompletedPrompts] = useState<{
-    framework: boolean;
-    pages: boolean[];
-    linking: boolean;
-  }>({
+  const [promptStage, setPromptStage] = useState<PromptStage>('framework');
+  const [completedPrompts, setCompletedPrompts] = useState<CompletedPrompts>({
     framework: false,
     pages: [],
     linking: false
   });
   const [focusedPrompt, setFocusedPrompt] = useState<string>('');
-  const [promptHistory, setPromptHistory] = useState<Array<{
-    type: 'framework' | 'page' | 'linking';
-    title: string;
-    prompt: string;
-    timestamp: Date;
-    pageIndex?: number;
-  }>>([]);
+  const [promptHistory, setPromptHistory] = useState<PromptHistoryItem[]>([]);
 
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
@@ -432,6 +431,17 @@ Structure this as actionable implementation steps that can be directly applied i
   };
 
   const handleNext = () => {
+    // Validate current step before proceeding
+    const validation = validateWizardStep(currentStep, wizardData);
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.errors.join(', '),
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -454,6 +464,25 @@ Structure this as actionable implementation steps that can be directly applied i
   };
 
   const handleGenerateFramework = async () => {
+    // Validation before generation
+    if (!wizardData.step1.appName.trim()) {
+      toast({
+        title: "Missing App Name",
+        description: "Please provide an app name before generating framework.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!wizardData.step4.selectedAI) {
+      toast({
+        title: "Missing AI Provider",
+        description: "Please select an AI provider before generating framework.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
     const startTime = Date.now();
 
@@ -489,7 +518,7 @@ Structure this as actionable implementation steps that can be directly applied i
       });
 
       // Add framework prompt to history
-      setPromptHistory(prev => [...prev, {
+      setPromptHistory((prev: PromptHistoryItem[]) => [...prev, {
         type: 'framework',
         title: 'Project Framework',
         prompt: framework.prompts.framework,
@@ -501,7 +530,7 @@ Structure this as actionable implementation steps that can be directly applied i
       setPromptStage('framework');
 
       // Set recommended tools from framework
-      const toolsForRecommendation: BuilderTool[] = framework.builderTools.map(bt => ({
+      const toolsForRecommendation: BuilderTool[] = framework.builderTools.map((bt: any) => ({
         name: bt.tool.name,
         type: (wizardData.step1.appType === 'mobile-app' ? 'mobile' : 'web') as 'web' | 'mobile' | 'cross-platform',
         description: bt.tool.description,
@@ -523,7 +552,7 @@ Structure this as actionable implementation steps that can be directly applied i
       // Track tool recommendations
       analytics.trackToolRecommendation(
         wizardData.step1.appType,
-        framework.builderTools.map(bt => bt.tool.name)
+        framework.builderTools.map((bt: any) => bt.tool.name)
       );
 
       setPromptFlow('pages');
@@ -534,6 +563,15 @@ Structure this as actionable implementation steps that can be directly applied i
     } catch (error) {
       console.error("Framework generation error:", error);
 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      // Show user-friendly error message
+      toast({
+        title: "Framework Generation Failed",
+        description: `Failed to generate framework: ${errorMessage}. Please try again.`,
+        variant: "destructive"
+      });
+
       // Track failed framework generation
       analytics.trackFrameworkGeneration(
         wizardData.step1.appType,
@@ -541,14 +579,8 @@ Structure this as actionable implementation steps that can be directly applied i
         enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple',
         startTime,
         false,
-        error instanceof Error ? (error as Error).message : 'Unknown error'
+        errorMessage
       );
-
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate framework. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setIsGenerating(false);
     }
@@ -560,16 +592,20 @@ Structure this as actionable implementation steps that can be directly applied i
       // Move to first page prompt
       setPromptStage('page');
       setCurrentPageIndex(0);
-      if (pagePrompts.length > 0) {
+      if (pagePrompts.length > 0 && pagePrompts[0]) {
         setFocusedPrompt(pagePrompts[0].prompt);
         // Add page prompt to history
-        setPromptHistory(prev => [...prev, {
+        setPromptHistory((prev: PromptHistoryItem[]) => [...prev, {
           type: 'page',
           title: pagePrompts[0].pageName,
           prompt: pagePrompts[0].prompt,
           timestamp: new Date(),
           pageIndex: 0
         }]);
+      } else {
+        // No pages available, skip to linking
+        setPromptStage('linking');
+        setFocusedPrompt(linkingPrompt);
       }
     } else if (promptStage === 'page') {
       const nextPageIndex = currentPageIndex + 1;
@@ -582,7 +618,13 @@ Structure this as actionable implementation steps that can be directly applied i
         updatedCompleted.pages[currentPageIndex] = true;
         setCompletedPrompts(updatedCompleted);
         // Add page prompt to history
-        setPromptHistory(prev => [...prev, {
+        setPromptHistory((prev: Array<{
+          type: 'framework' | 'page' | 'linking';
+          title: string;
+          prompt: string;
+          timestamp: Date;
+          pageIndex?: number;
+        }>) => [...prev, {
           type: 'page',
           title: pagePrompts[nextPageIndex].pageName,
           prompt: pagePrompts[nextPageIndex].prompt,
@@ -598,7 +640,7 @@ Structure this as actionable implementation steps that can be directly applied i
         updatedCompleted.pages[currentPageIndex] = true;
         setCompletedPrompts(updatedCompleted);
         // Add linking prompt to history
-        setPromptHistory(prev => [...prev, {
+        setPromptHistory((prev: PromptHistoryItem[]) => [...prev, {
           type: 'linking',
           title: 'Navigation & Linking',
           prompt: linkingPrompt,
@@ -659,13 +701,13 @@ Structure this as actionable implementation steps that can be directly applied i
 
   const handleComplete = () => {
     const result: MVPAnalysisResult = {
-      pages: pagePrompts.map(p => ({
+      pages: pagePrompts.map((p: any) => ({
         name: p.pageName,
         description: `${p.pageName} page`,
         components: p.components,
         layout: p.layout
       })),
-      navigation: { type: "sidebar", structure: pagePrompts.map(p => ({ name: p.pageName })) },
+      navigation: { type: "sidebar", structure: pagePrompts.map((p: any) => ({ name: p.pageName })) },
       components: [],
       styling: {
         theme: wizardData.step2.theme,
@@ -711,7 +753,10 @@ Structure this as actionable implementation steps that can be directly applied i
 
   const getCurrentPromptTitle = () => {
     if (promptStage === 'framework') return 'Project Framework';
-    if (promptStage === 'page') return `${pagePrompts[currentPageIndex]?.pageName || 'Page'} UI`;
+    if (promptStage === 'page') {
+      const currentPage = pagePrompts[currentPageIndex];
+      return currentPage ? `${currentPage.pageName} UI` : 'Page UI';
+    }
     if (promptStage === 'linking') return 'Navigation & Linking';
     return 'Complete';
   };

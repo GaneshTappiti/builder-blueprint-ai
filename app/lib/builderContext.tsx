@@ -143,7 +143,7 @@ type BuilderAction =
   | { type: 'UPDATE_VALIDATION'; payload: Partial<ValidationQuestions> }
   | { type: 'SET_APP_BLUEPRINT'; payload: AppBlueprint }
   | { type: 'ADD_SCREEN_PROMPT'; payload: ScreenPrompt }
-  | { type: 'UPDATE_SCREEN_PROMPT'; payload: { index: number; prompt: ScreenPrompt } }
+  | { type: 'UPDATE_SCREEN_PROMPT'; payload: ScreenPrompt }
   | { type: 'SET_APP_FLOW'; payload: AppFlow }
   | { type: 'SET_EXPORT_PROMPTS'; payload: ExportPrompts }
   | { type: 'SET_GENERATING'; payload: boolean }
@@ -343,8 +343,9 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
       };
     
     case 'UPDATE_SCREEN_PROMPT':
-      const updatedPrompts = [...state.screenPrompts];
-      updatedPrompts[action.payload.index] = action.payload.prompt;
+      const updatedPrompts = state.screenPrompts.map(prompt =>
+        prompt.screenId === action.payload.screenId ? action.payload : prompt
+      );
       return { ...state, screenPrompts: updatedPrompts };
     
     case 'SET_APP_FLOW':
@@ -466,7 +467,7 @@ export const builderActions = {
   updateValidation: (validation: Partial<ValidationQuestions>) => ({ type: 'UPDATE_VALIDATION' as const, payload: validation }),
   setAppBlueprint: (blueprint: AppBlueprint) => ({ type: 'SET_APP_BLUEPRINT' as const, payload: blueprint }),
   addScreenPrompt: (prompt: ScreenPrompt) => ({ type: 'ADD_SCREEN_PROMPT' as const, payload: prompt }),
-  updateScreenPrompt: (index: number, prompt: ScreenPrompt) => ({ type: 'UPDATE_SCREEN_PROMPT' as const, payload: { index, prompt } }),
+  updateScreenPrompt: (prompt: ScreenPrompt) => ({ type: 'UPDATE_SCREEN_PROMPT' as const, payload: prompt }),
   setAppFlow: (flow: AppFlow) => ({ type: 'SET_APP_FLOW' as const, payload: flow }),
   setExportPrompts: (prompts: ExportPrompts) => ({ type: 'SET_EXPORT_PROMPTS' as const, payload: prompts }),
   setGenerating: (generating: boolean) => ({ type: 'SET_GENERATING' as const, payload: generating }),
