@@ -154,11 +154,11 @@ export function ValidationCard() {
       {/* Validation Questions */}
       <div className="space-y-4">
         <div className="text-center space-y-2">
-          <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-            <Target className="h-5 w-5 text-blue-500" />
+          <h3 className="text-lg font-semibold flex items-center justify-center gap-2 text-white">
+            <Target className="h-5 w-5 text-blue-400" />
             Product Maturity Assessment
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-400">
             Help us understand where you are in your product journey
           </p>
         </div>
@@ -169,7 +169,7 @@ export function ValidationCard() {
           const isChecked = state.validationQuestions[fieldName];
 
           return (
-            <Card key={q.id} className={`transition-all duration-200 ${isChecked ? 'ring-1 ring-green-500 bg-green-50/50' : ''}`}>
+            <Card key={q.id} className={`bg-black/40 backdrop-blur-sm border-white/10 transition-all duration-200 ${isChecked ? 'ring-1 ring-green-500/50 bg-green-500/10' : ''}`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex items-center space-x-2 mt-1">
@@ -180,16 +180,16 @@ export function ValidationCard() {
                     />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <Label htmlFor={q.id} className="flex items-center gap-2 cursor-pointer text-base font-medium">
-                      <Icon className="h-4 w-4 text-blue-500" />
+                    <Label htmlFor={q.id} className="flex items-center gap-2 cursor-pointer text-base font-medium text-white">
+                      <Icon className="h-4 w-4 text-blue-400" />
                       {q.question}
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-400">
                       {q.description}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {q.examples.map((example, index) => (
-                        <span key={index} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        <span key={index} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
                           {example}
                         </span>
                       ))}
@@ -204,8 +204,8 @@ export function ValidationCard() {
 
       {/* Motivation */}
       <div className="space-y-2">
-        <Label htmlFor="motivation" className="text-base font-medium flex items-center gap-2">
-          <Users className="h-4 w-4 text-purple-500" />
+        <Label htmlFor="motivation" className="text-base font-medium flex items-center gap-2 text-white">
+          <Users className="h-4 w-4 text-purple-400" />
           What motivates you to build this app? *
         </Label>
         <Textarea
@@ -213,22 +213,22 @@ export function ValidationCard() {
           placeholder="Share your personal motivation, the problem you're solving, or the impact you want to make. For example: 'I struggled with habit tracking myself and existing apps are too complex. I want to create something simple that actually helps people build lasting habits...'"
           value={state.validationQuestions.motivation}
           onChange={(e) => dispatch(builderActions.updateValidation({ motivation: e.target.value }))}
-          className="min-h-[100px]"
+          className="min-h-[100px] bg-black/40 backdrop-blur-sm border-white/10 text-white placeholder:text-gray-500"
         />
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-gray-400">
           {state.validationQuestions.motivation.length}/30 characters minimum
         </div>
       </div>
 
       {/* Validation Summary */}
       {(state.validationQuestions.hasValidated || state.validationQuestions.hasDiscussed) && (
-        <Card className="bg-blue-50/50 border-blue-200">
+        <Card className="bg-green-500/10 backdrop-blur-sm border-green-500/20">
           <CardContent className="p-4">
             <div className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+              <CheckCircle className="h-5 w-5 text-green-400 mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900">Great progress!</h4>
-                <p className="text-sm text-blue-700">
+                <h4 className="font-medium text-green-300">Great progress!</h4>
+                <p className="text-sm text-gray-300">
                   {state.validationQuestions.hasValidated && state.validationQuestions.hasDiscussed
                     ? "You've both validated your idea and discussed it with others. This gives you a strong foundation for building."
                     : state.validationQuestions.hasValidated
@@ -247,7 +247,7 @@ export function ValidationCard() {
         <Button 
           onClick={generateBlueprint}
           disabled={isGenerating}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
           size="lg"
         >
           {isGenerating ? (

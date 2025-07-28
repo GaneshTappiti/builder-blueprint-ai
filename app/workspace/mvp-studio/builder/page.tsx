@@ -76,15 +76,15 @@ export default function BuilderPage() {
 
                 {/* Features Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="glass-effect p-4 rounded-lg text-center">
+                  <div className="glass-effect-theme p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-green-400 mb-1">6 Stages</div>
                     <div className="text-sm text-gray-400">Systematic approach</div>
                   </div>
-                  <div className="glass-effect p-4 rounded-lg text-center">
+                  <div className="glass-effect-theme p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-green-400 mb-1">AI-Generated</div>
                     <div className="text-sm text-gray-400">Smart prompts</div>
                   </div>
-                  <div className="glass-effect p-4 rounded-lg text-center">
+                  <div className="glass-effect-theme p-4 rounded-lg text-center">
                     <div className="text-2xl font-bold text-green-400 mb-1">Export Ready</div>
                     <div className="text-sm text-gray-400">Copy & paste</div>
                   </div>
@@ -93,12 +93,12 @@ export default function BuilderPage() {
 
               {/* 6-Stage Architecture Component */}
               <div className="workspace-card-solid p-6 sm:p-8 lg:p-10">
-                <SixStageArchitecture showOverview={true} />
+                <SixStageArchitecture showOverview={false} forceBuilderMode={true} />
               </div>
 
               {/* Additional Information */}
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="glass-effect p-6 rounded-lg">
+                <div className="glass-effect-theme p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-white mb-3">How It Works</h3>
                   <div className="space-y-3 text-sm text-gray-300">
                     <div className="flex items-start gap-3">
@@ -125,7 +125,7 @@ export default function BuilderPage() {
                   </div>
                 </div>
 
-                <div className="glass-effect p-6 rounded-lg">
+                <div className="glass-effect-theme p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-white mb-3">Supported Platforms</h3>
                   <div className="space-y-2 text-sm text-gray-300">
                     <div className="flex items-center gap-2">

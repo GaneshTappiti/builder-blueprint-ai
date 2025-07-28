@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -112,28 +113,31 @@ const stageConfigs: StageConfig[] = [
 interface SixStageArchitectureProps {
   className?: string;
   showOverview?: boolean;
+  forceBuilderMode?: boolean;
 }
 
-export function SixStageArchitecture({ className = "", showOverview = true }: SixStageArchitectureProps) {
+export function SixStageArchitecture({ className = "", showOverview = true, forceBuilderMode = false }: SixStageArchitectureProps) {
   const { state, dispatch } = useBuilder();
-  const [viewMode, setViewMode] = useState<'overview' | 'builder'>('overview');
+  const [viewMode, setViewMode] = useState<'overview' | 'builder'>(forceBuilderMode ? 'builder' : 'overview');
+  const router = useRouter();
   
   const currentStage = stageConfigs.find(stage => stage.id === state.currentCard);
   const completedStages = state.currentCard - 1;
   const totalProgress = (completedStages / 6) * 100;
 
   const handleStageClick = (stageId: number) => {
-    if (stageId <= state.currentCard || stageId === 1) {
-      dispatch(builderActions.setCurrentCard(stageId));
-      setViewMode('builder');
-    }
+    // Set the current stage and redirect to builder page
+    dispatch(builderActions.setCurrentCard(stageId));
+    router.push('/workspace/mvp-studio/builder');
   };
 
   const handleStartBuilder = () => {
-    if (state.currentCard === 1 && !state.appIdea.appName) {
+    // Set current card to 1 if starting fresh, otherwise keep current progress
+    if (state.currentCard === 1) {
       dispatch(builderActions.setCurrentCard(1));
     }
-    setViewMode('builder');
+    // Redirect to MVP Studio builder page when clicking Start/Continue Building
+    router.push('/workspace/mvp-studio/builder');
   };
 
   const getStageStatus = (stageId: number) => {
@@ -236,6 +240,7 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
                     variant="ghost" 
                     size="sm" 
                     className={`w-full ${stage.color} hover:bg-white/5`}
+                    onClick={() => handleStageClick(stage.id)}
                   >
                     {status === 'completed' ? 'Review' : status === 'current' ? 'Continue' : 'Start'}
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -321,7 +326,7 @@ export function SixStageArchitecture({ className = "", showOverview = true }: Si
 
   return (
     <div className={`max-w-7xl mx-auto ${className}`}>
-      {showOverview && viewMode === 'overview' ? renderOverview() : renderBuilder()}
+      {(showOverview && viewMode === 'overview' && !forceBuilderMode) ? renderOverview() : renderBuilder()}
     </div>
   );
 }

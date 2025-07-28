@@ -500,7 +500,14 @@ export default function WorkspacePage() {
       }
 
       const data = await response.json();
-      const text = data.text || data.result?.text || 'No response generated';
+      
+      if (!data.success) {
+        throw new Error(data.error || 'AI request failed');
+      }
+      
+      const text = data.data?.text || 'No response generated';
+      
+      console.log('AI Response data:', data); // Debug logging
 
       setAiResponse(text);
 
@@ -537,8 +544,14 @@ export default function WorkspacePage() {
       }
 
     } catch (error) {
-      console.error("Detailed error:", error);
-      setAiResponse(`Error: ${error instanceof Error ? (error as Error).message : "Unknown error occurred"}`);
+      console.error("AI Generation Error:", error);
+      
+      let errorMessage = "Failed to generate AI response";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setAiResponse(`❌ ${errorMessage}\n\nPlease try again or check your AI configuration in Settings.`);
     } finally {
       setIsLoading(false);
     }
@@ -574,8 +587,7 @@ export default function WorkspacePage() {
       description: "🆕 Generate professional Business Model Canvas with AI. Transform your idea into a complete strategic framework across all 9 essential blocks. Export-ready for investors and stakeholders.",
       path: "/workspace/business-model-canvas",
       icon: "🎯",
-      isNew: true,
-      badge: "AI-Powered"
+      isNew: true
     },
     {
       id: "mvp-studio",
@@ -984,14 +996,6 @@ export default function WorkspacePage() {
                   <div className="w-full mb-6 md:mb-8">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-base md:text-lg font-semibold text-white">Quick Actions</h3>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setShowTemplates(true)}
-                        className="text-green-400 hover:text-green-300 text-sm md:text-base"
-                      >
-                        <Layers className="h-4 w-4 mr-2" />
-                        View Templates
-                      </Button>
                     </div>
                     <Tabs
                       defaultValue="ideation"
@@ -1114,50 +1118,17 @@ export default function WorkspacePage() {
                 </div>
               </section>
 
-              {/* 6-Stage Builder Architecture */}
-              <section className="mb-6 md:mb-8 stable-scroll">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-base md:text-xl font-semibold text-white mb-2">Builder Blueprint AI</h2>
-                    <p className="text-gray-400 text-sm">Transform your ideas into AI-ready prompts with our 6-stage modular architecture</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/30 hover:border-green-500/50 transform-none"
-                    onClick={() => router.push('/workspace/mvp-studio')}
-                  >
-                    <Layers className="h-4 w-4 mr-2" />
-                    Open Full Builder
-                  </Button>
-                </div>
-
-                <div className="stable-scroll gpu-optimized">
-                  <BuilderProvider>
-                    <SixStageArchitecture className="px-0" showOverview={true} />
-                  </BuilderProvider>
-                </div>
-              </section>
-
               {/* Quick Access Modules */}
               <div className="mb-6 md:mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base md:text-xl font-semibold text-white">Quick Access</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-400 hover:text-green-300"
-                    onClick={handleCustomizeModules}
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Customize
-                  </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {modules.map((module) => (
                     <Link
                       key={module.id}
                       href={module.path}
-                      className={`group bg-black/20 backdrop-blur-xl rounded-xl p-3 md:p-4 border transition-all duration-200 h-[100px] md:h-[120px] flex flex-col justify-center hover:scale-[1.02] hover:bg-black/30 relative transform-gpu ${
+                      className={`group bg-black/20 backdrop-blur-xl rounded-xl p-4 md:p-4 border transition-all duration-200 h-[120px] md:h-[120px] flex flex-col justify-center hover:scale-[1.02] hover:bg-black/30 relative transform-gpu ${
                         module.isNew
                           ? 'border-green-500/40 hover:border-green-500/60 shadow-lg shadow-green-500/10'
                           : 'border-white/10 hover:border-green-500/30'
@@ -1173,11 +1144,11 @@ export default function WorkspacePage() {
                           {module.badge}
                         </div>
                       )}
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <span className="text-xl md:text-2xl group-hover:scale-105 transition-transform duration-200">{module.icon}</span>
+                      <div className="flex flex-col items-center text-center md:flex-row md:items-center md:text-left gap-2 md:gap-3">
+                        <span className="text-2xl md:text-2xl group-hover:scale-105 transition-transform duration-200 mb-1 md:mb-0">{module.icon}</span>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-white text-sm md:text-base group-hover:text-green-400 transition-colors">{module.name}</h3>
-                          <p className="text-xs md:text-sm text-gray-400 line-clamp-2">{module.description}</p>
+                          <h3 className="font-medium text-white text-sm md:text-base group-hover:text-green-400 transition-colors leading-tight">{module.name}</h3>
+                          <p className="text-xs md:text-sm text-gray-400 line-clamp-2 mt-1">{module.description}</p>
                         </div>
                       </div>
                     </Link>
@@ -1293,6 +1264,15 @@ export default function WorkspacePage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* 6-Stage Builder Architecture */}
+              <section className="mb-6 md:mb-8 stable-scroll">
+                <div className="stable-scroll gpu-optimized">
+                  <BuilderProvider>
+                    <SixStageArchitecture className="px-0" showOverview={true} />
+                  </BuilderProvider>
+                </div>
+              </section>
             </div>
           </div>
         </div>

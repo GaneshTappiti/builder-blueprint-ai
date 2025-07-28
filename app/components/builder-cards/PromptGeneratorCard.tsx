@@ -166,9 +166,9 @@ Design Style: ${state.appIdea.designStyle}`;
   if (screenPrompts.length === 0) {
     return (
       <div className="text-center py-8">
-        <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-muted-foreground">No Screen Prompts Generated</h3>
-        <p className="text-sm text-muted-foreground">
+        <Brain className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-300">No Screen Prompts Generated</h3>
+        <p className="text-sm text-gray-400">
           Complete the blueprint generation to create detailed screen prompts.
         </p>
       </div>
@@ -179,11 +179,11 @@ Design Style: ${state.appIdea.designStyle}`;
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-          <Brain className="h-5 w-5 text-blue-500" />
+        <h3 className="text-lg font-semibold flex items-center justify-center gap-2 text-white">
+          <Brain className="h-5 w-5 text-blue-400" />
           🎨 Page-Level Prompt Generator
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-400">
           Detailed prompts for each screen ({screenPrompts.length} screens)
         </p>
       </div>
@@ -195,17 +195,17 @@ Design Style: ${state.appIdea.designStyle}`;
           size="sm"
           onClick={handlePreviousScreen}
           disabled={currentScreenIndex === 0}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
         >
           <ChevronLeft className="h-4 w-4" />
           Previous Screen
         </Button>
 
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="bg-white/10 text-gray-300 border-white/20">
             {currentScreenIndex + 1} of {screenPrompts.length}
           </Badge>
-          <span className="text-sm font-medium">{currentPrompt?.title}</span>
+          <span className="text-sm font-medium text-white">{currentPrompt?.title}</span>
         </div>
 
         <Button
@@ -213,7 +213,7 @@ Design Style: ${state.appIdea.designStyle}`;
           size="sm"
           onClick={handleNextScreen}
           disabled={currentScreenIndex === screenPrompts.length - 1}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
         >
           Next Screen
           <ChevronRight className="h-4 w-4" />
@@ -222,18 +222,18 @@ Design Style: ${state.appIdea.designStyle}`;
 
       {/* Current Screen Prompt */}
       {currentPrompt && (
-        <Card className="border-2 border-blue-200">
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Layout className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Layout className="h-5 w-5 text-blue-400" />
                 {currentPrompt.title}
               </CardTitle>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => copyPromptToClipboard(generateFullPrompt(currentPrompt), currentPrompt.screenId)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
               >
                 {copiedPrompts.has(currentPrompt.screenId) ? (
                   <>
@@ -252,55 +252,55 @@ Design Style: ${state.appIdea.designStyle}`;
           <CardContent className="space-y-4">
             {/* Layout */}
             <div>
-              <h5 className="font-medium flex items-center gap-2 mb-2">
-                <Layout className="h-4 w-4 text-blue-500" />
+              <h5 className="font-medium flex items-center gap-2 mb-2 text-white">
+                <Layout className="h-4 w-4 text-blue-400" />
                 Layout & Structure
               </h5>
-              <div className="bg-gray-50 p-3 rounded text-sm">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
                 {currentPrompt.layout}
               </div>
             </div>
 
             {/* Components */}
             <div>
-              <h5 className="font-medium flex items-center gap-2 mb-2">
-                <Settings className="h-4 w-4 text-green-500" />
+              <h5 className="font-medium flex items-center gap-2 mb-2 text-white">
+                <Settings className="h-4 w-4 text-green-400" />
                 Components
               </h5>
-              <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-line">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 whitespace-pre-line border border-white/10">
                 {currentPrompt.components}
               </div>
             </div>
 
             {/* Behavior */}
             <div>
-              <h5 className="font-medium flex items-center gap-2 mb-2">
-                <Brain className="h-4 w-4 text-purple-500" />
+              <h5 className="font-medium flex items-center gap-2 mb-2 text-white">
+                <Brain className="h-4 w-4 text-purple-400" />
                 Behavior & Interactions
               </h5>
-              <div className="bg-gray-50 p-3 rounded text-sm">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
                 {currentPrompt.behavior}
               </div>
             </div>
 
             {/* Conditional Logic */}
             <div>
-              <h5 className="font-medium flex items-center gap-2 mb-2">
-                <ArrowRight className="h-4 w-4 text-orange-500" />
+              <h5 className="font-medium flex items-center gap-2 mb-2 text-white">
+                <ArrowRight className="h-4 w-4 text-orange-400" />
                 Conditional Logic
               </h5>
-              <div className="bg-gray-50 p-3 rounded text-sm">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
                 {currentPrompt.conditionalLogic}
               </div>
             </div>
 
             {/* Style Hints */}
             <div>
-              <h5 className="font-medium flex items-center gap-2 mb-2">
-                <Palette className="h-4 w-4 text-pink-500" />
+              <h5 className="font-medium flex items-center gap-2 mb-2 text-white">
+                <Palette className="h-4 w-4 text-pink-400" />
                 Style Guidelines
               </h5>
-              <div className="bg-gray-50 p-3 rounded text-sm">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
                 {currentPrompt.styleHints}
               </div>
             </div>
@@ -313,7 +313,7 @@ Design Style: ${state.appIdea.designStyle}`;
         <Button
           variant="outline"
           onClick={() => setShowAllScreens(!showAllScreens)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
         >
           {showAllScreens ? 'Hide' : 'Show'} All Screens
           <Layout className="h-4 w-4" />
@@ -323,17 +323,17 @@ Design Style: ${state.appIdea.designStyle}`;
       {/* All Screens Accordion */}
       {showAllScreens && (
         <div className="space-y-3">
-          <h4 className="font-medium">All Screen Prompts</h4>
+          <h4 className="font-medium text-white">All Screen Prompts</h4>
           {screenPrompts.map((prompt, index) => (
-            <Card key={prompt.screenId} className="border">
+            <Card key={prompt.screenId} className="bg-black/40 backdrop-blur-sm border-white/10">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{prompt.title}</CardTitle>
+                  <CardTitle className="text-base text-white">{prompt.title}</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyPromptToClipboard(generateFullPrompt(prompt), prompt.screenId)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
                   >
                     {copiedPrompts.has(prompt.screenId) ? (
                       <>
@@ -353,7 +353,7 @@ Design Style: ${state.appIdea.designStyle}`;
                 <Textarea
                   value={generateFullPrompt(prompt)}
                   readOnly
-                  className="min-h-[200px] text-sm"
+                  className="min-h-[200px] text-sm bg-black/40 backdrop-blur-sm border-white/10 text-gray-300"
                 />
               </CardContent>
             </Card>
@@ -366,7 +366,7 @@ Design Style: ${state.appIdea.designStyle}`;
         <Button 
           onClick={continueToFlow}
           disabled={isGeneratingFlow}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
           size="lg"
         >
           {isGeneratingFlow ? (
