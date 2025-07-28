@@ -41,15 +41,40 @@ export function BlueprintCard() {
       dispatch(builderActions.setGenerationProgress(step.progress));
     }
 
-    // Generate screen prompts based on blueprint
+    // Generate enhanced screen prompts based on blueprint
     const screenPrompts = state.appBlueprint.screens.map(screen => ({
       screenId: screen.id,
       title: screen.name,
+      purpose: screen.purpose,
+      screenType: screen.type || 'standard',
       layout: generateLayoutPrompt(screen),
       components: generateComponentsPrompt(screen),
       behavior: generateBehaviorPrompt(screen),
       conditionalLogic: generateConditionalLogic(screen),
-      styleHints: generateStyleHints(screen)
+      styleHints: generateStyleHints(screen),
+      // Enhanced fields for comprehensive prompts
+      responsiveNotes: generateResponsiveNotes(screen),
+      visualHierarchy: generateVisualHierarchy(screen),
+      componentSpecs: generateComponentSpecs(screen),
+      dataDisplay: generateDataDisplay(screen),
+      userInteractions: generateUserInteractions(screen),
+      animations: generateAnimations(screen),
+      stateManagement: generateStateManagement(screen),
+      edgeCases: generateEdgeCases(screen),
+      colorScheme: generateColorScheme(screen),
+      typography: generateTypography(screen),
+      spacing: generateSpacing(screen),
+      accessibility: generateAccessibility(screen),
+      entryPoints: generateEntryPoints(screen),
+      exitActions: generateExitActions(screen),
+      deepLinking: generateDeepLinking(screen),
+      performance: generatePerformance(screen),
+      dataRequirements: generateDataRequirements(screen),
+      integrations: generateIntegrations(screen),
+      acceptanceCriteria: generateAcceptanceCriteria(screen),
+      apiEndpoints: generateApiEndpoints(screen),
+      performanceNotes: generatePerformanceNotes(screen),
+      framework: getRecommendedFramework()
     }));
 
     // Add screen prompts to state
@@ -94,6 +119,114 @@ export function BlueprintCard() {
     const style = state.appIdea.designStyle;
     const platform = state.appIdea.platforms.join(' and ');
     return `${style} design for ${platform}. ${state.appIdea.styleDescription || 'Follow modern UI/UX best practices.'}`;
+  };
+
+  // Enhanced prompt generation helpers
+  const generateResponsiveNotes = (screen: any) => {
+    return `- Mobile-first responsive design\n- Tablet and desktop adaptations\n- Flexible grid layouts\n- Scalable typography and spacing\n- Touch-friendly interactive elements\n- Orientation change handling`;
+  };
+
+  const generateVisualHierarchy = (screen: any) => {
+    return `- Primary CTA prominently positioned\n- Clear information architecture\n- Consistent visual weight distribution\n- Logical reading flow (Z-pattern/F-pattern)\n- Appropriate use of whitespace\n- Color and typography for emphasis`;
+  };
+
+  const generateComponentSpecs = (screen: any) => {
+    return `- Reusable component architecture\n- Consistent props and API design\n- Built-in accessibility features\n- Loading and error states\n- Customizable theming support\n- Performance-optimized rendering`;
+  };
+
+  const generateDataDisplay = (screen: any) => {
+    return `- Structured data presentation\n- Loading skeletons for async content\n- Empty state illustrations and messaging\n- Pagination or infinite scroll\n- Search and filtering capabilities\n- Data refresh mechanisms`;
+  };
+
+  const generateUserInteractions = (screen: any) => {
+    return `- Intuitive gesture recognition\n- Immediate visual feedback\n- Contextual action menus\n- Drag and drop functionality\n- Multi-touch support\n- Voice interaction compatibility`;
+  };
+
+  const generateAnimations = (screen: any) => {
+    return `- Micro-interactions for engagement\n- Page transition animations\n- Loading state animations\n- Hover and focus effects\n- Parallax scrolling where appropriate\n- Reduced motion accessibility option`;
+  };
+
+  const generateStateManagement = (screen: any) => {
+    return `- Clear loading indicators\n- Comprehensive error boundaries\n- Success confirmation feedback\n- Undo/redo functionality\n- Form validation states\n- Offline mode handling`;
+  };
+
+  const generateEdgeCases = (screen: any) => {
+    return `- Network connectivity loss\n- API timeout scenarios\n- Invalid or corrupted data\n- Permission denied states\n- Device storage limitations\n- Browser compatibility issues`;
+  };
+
+  const generateColorScheme = (screen: any) => {
+    const styleMap = {
+      minimal: 'Neutral palette with accent colors',
+      playful: 'Vibrant colors with high contrast',
+      business: 'Professional color scheme with brand colors'
+    };
+    return styleMap[state.appIdea.designStyle as keyof typeof styleMap] || 'Consistent brand color palette';
+  };
+
+  const generateTypography = (screen: any) => {
+    return `- Clear font hierarchy (H1-H6)\n- Readable body text sizing\n- Consistent line heights\n- Platform-native font stacks\n- Accessibility-compliant sizing\n- Responsive typography scaling`;
+  };
+
+  const generateSpacing = (screen: any) => {
+    return `- 8px grid system for consistency\n- Adequate touch target sizes (44px minimum)\n- Logical content grouping\n- Breathing room between elements\n- Consistent margins and padding\n- Responsive spacing adjustments`;
+  };
+
+  const generateAccessibility = (screen: any) => {
+    return `- WCAG 2.1 AA compliance\n- Screen reader compatibility\n- Keyboard navigation support\n- High contrast mode support\n- Focus indicators for all interactive elements\n- Alternative text for images`;
+  };
+
+  const generateEntryPoints = (screen: any) => {
+    const navigation = screen.navigation || [];
+    return navigation.length > 0
+      ? `Accessible from: ${navigation.join(', ')}\nDirect URL routing supported`
+      : 'Standard app navigation flow with deep linking support';
+  };
+
+  const generateExitActions = (screen: any) => {
+    return `- Hardware/software back button handling\n- Navigation drawer or tab bar\n- Breadcrumb navigation\n- Modal dismissal gestures\n- Save state on exit\n- Confirmation for unsaved changes`;
+  };
+
+  const generateDeepLinking = (screen: any) => {
+    return `- Unique URL structure for web\n- Universal links for mobile\n- State preservation on deep link\n- Fallback handling for invalid links\n- Analytics tracking for link usage\n- SEO-friendly URL patterns`;
+  };
+
+  const generatePerformance = (screen: any) => {
+    return `- Lazy loading for non-critical content\n- Image optimization and caching\n- Minimal bundle size\n- Efficient re-rendering strategies\n- Memory leak prevention\n- Battery usage optimization`;
+  };
+
+  const generateDataRequirements = (screen: any) => {
+    return `- RESTful API endpoints definition\n- GraphQL schema if applicable\n- Local storage requirements\n- Caching strategy implementation\n- Data synchronization logic\n- Offline data handling`;
+  };
+
+  const generateIntegrations = (screen: any) => {
+    return `- Third-party service APIs\n- Analytics and tracking\n- Push notification services\n- Social media integrations\n- Payment processing if needed\n- Authentication providers`;
+  };
+
+  const generateAcceptanceCriteria = (screen: any) => {
+    return `- Screen loads within 2 seconds\n- All interactive elements respond correctly\n- Design matches approved mockups\n- Accessibility requirements met\n- Cross-platform compatibility verified\n- Performance benchmarks achieved`;
+  };
+
+  const generateApiEndpoints = (screen: any) => {
+    return `- GET /api/${screen.id.toLowerCase()}/data\n- POST /api/${screen.id.toLowerCase()}/action\n- PUT /api/${screen.id.toLowerCase()}/update\n- DELETE /api/${screen.id.toLowerCase()}/remove\n- Error handling for all endpoints\n- Rate limiting and authentication`;
+  };
+
+  const generatePerformanceNotes = (screen: any) => {
+    return `- Component memoization strategies\n- Virtual scrolling for large lists\n- Image lazy loading and compression\n- Bundle splitting and code splitting\n- Service worker caching\n- Performance monitoring integration`;
+  };
+
+  const getRecommendedFramework = () => {
+    const platformFrameworks = {
+      web: 'React/Next.js, Vue/Nuxt.js, or Angular',
+      mobile: 'React Native, Flutter, or native development'
+    };
+
+    if (state.appIdea.platforms.includes('web') && state.appIdea.platforms.includes('mobile')) {
+      return 'Cross-platform: React Native or Flutter';
+    } else if (state.appIdea.platforms.includes('web')) {
+      return platformFrameworks.web;
+    } else {
+      return platformFrameworks.mobile;
+    }
   };
 
   if (!state.appBlueprint) {
