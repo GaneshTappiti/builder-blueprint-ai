@@ -36,13 +36,15 @@ export default function BMCViewPage() {
       try {
         // For now, load from localStorage - in production, this would be an API call
         const savedCanvas = localStorage.getItem(`bmc-${params.id}`);
+        let loadedCanvas = null;
+        
         if (savedCanvas) {
-          setCanvas(JSON.parse(savedCanvas));
+          loadedCanvas = JSON.parse(savedCanvas);
         } else {
           // Fallback to general saved canvas
           const generalCanvas = localStorage.getItem('bmc-canvas');
           if (generalCanvas) {
-            setCanvas(JSON.parse(generalCanvas));
+            loadedCanvas = JSON.parse(generalCanvas);
           } else {
             toast({
               title: "Canvas not found",
@@ -50,7 +52,27 @@ export default function BMCViewPage() {
               variant: "destructive"
             });
             router.push('/workspace/business-model-canvas');
+            return;
           }
+        }
+
+        // Clean up any error content
+        if (loadedCanvas) {
+          const cleanedCanvas = {
+            ...loadedCanvas,
+            blocks: Object.fromEntries(
+              Object.entries(loadedCanvas.blocks).map(([key, block]: [string, any]) => [
+                key,
+                {
+                  ...block,
+                  content: block.content?.includes('Error generating content') 
+                    ? '' 
+                    : block.content
+                }
+              ])
+            )
+          };
+          setCanvas(cleanedCanvas);
         }
       } catch (error) {
         console.error('Error loading canvas:', error);
@@ -70,10 +92,26 @@ export default function BMCViewPage() {
   }, [params.id, router, toast]);
 
   const handleCanvasUpdate = (updatedCanvas: BusinessModelCanvas) => {
-    setCanvas(updatedCanvas);
+    // Clean up any error content in blocks
+    const cleanedCanvas = {
+      ...updatedCanvas,
+      blocks: Object.fromEntries(
+        Object.entries(updatedCanvas.blocks).map(([key, block]) => [
+          key,
+          {
+            ...block,
+            content: block.content?.includes('Error generating content') 
+              ? '' 
+              : block.content
+          }
+        ])
+      )
+    } as BusinessModelCanvas;
+
+    setCanvas(cleanedCanvas);
     // Save to localStorage
-    localStorage.setItem(`bmc-${params.id}`, JSON.stringify(updatedCanvas));
-    localStorage.setItem('bmc-canvas', JSON.stringify(updatedCanvas));
+    localStorage.setItem(`bmc-${params.id}`, JSON.stringify(cleanedCanvas));
+    localStorage.setItem('bmc-canvas', JSON.stringify(cleanedCanvas));
   };
 
   const handleRegenerate = async () => {
@@ -144,11 +182,11 @@ export default function BMCViewPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-        <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-900/20 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen p-4">
           <div className="text-center space-y-4">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto text-green-600" />
-            <p className="text-gray-600">Loading your Business Model Canvas...</p>
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto text-green-400" />
+            <p className="text-gray-300">Loading your Business Model Canvas...</p>
           </div>
         </div>
       </div>
@@ -157,12 +195,12 @@ export default function BMCViewPage() {
 
   if (!canvas) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-        <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-900/20 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen p-4">
           <div className="text-center space-y-4">
-            <p className="text-gray-600">Canvas not found</p>
+            <p className="text-gray-300">Canvas not found</p>
             <Link href="/workspace/business-model-canvas">
-              <Button variant="outline">
+              <Button variant="outline" className="border-green-400/30 text-green-400 hover:bg-green-400/10">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Generator
               </Button>
@@ -174,25 +212,25 @@ export default function BMCViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-900/20 overflow-y-auto">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
+      <div className="bg-black/50 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Link href="/workspace/business-model-canvas">
-                <Button variant="ghost" size="sm" className="text-green-700 hover:text-green-800 hover:bg-green-50">
+                <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-400/10">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Your Business Model Canvas</h1>
-                <p className="text-sm text-gray-600 mt-1">Review and refine each block. Click edit to customize or regenerate for new AI suggestions.</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">Your Business Model Canvas</h1>
+                <p className="text-sm text-gray-400 mt-1">Review and refine each block. Click edit to customize or regenerate for new AI suggestions.</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+              <Badge variant="secondary" className="bg-green-400/20 text-green-400 border-green-400/30">
                 <Sparkles className="h-3 w-3 mr-1" />
                 AI Generated
               </Badge>
@@ -202,27 +240,27 @@ export default function BMCViewPage() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-8 py-6 sm:py-8">
+      <div className="container mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-16">
         {/* Business Idea Display */}
-        <Card className="mb-6 sm:mb-8 bg-white/60 backdrop-blur-sm border-green-200 shadow-lg">
+        <Card className="mb-6 sm:mb-8 bg-black/40 backdrop-blur-md border-white/20 shadow-xl">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-green-800 flex items-center gap-2">
+            <CardTitle className="text-lg text-green-400 flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
               Business Idea
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 leading-relaxed">{canvas.appIdea}</p>
+            <p className="text-gray-200 leading-relaxed">{canvas.appIdea}</p>
             {canvas.metadata && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {canvas.metadata.industry && (
-                  <Badge variant="outline" className="text-xs">Industry: {canvas.metadata.industry}</Badge>
+                  <Badge variant="outline" className="text-xs border-green-400/30 text-green-400">Industry: {canvas.metadata.industry}</Badge>
                 )}
                 {canvas.metadata.targetMarket && (
-                  <Badge variant="outline" className="text-xs">Market: {canvas.metadata.targetMarket}</Badge>
+                  <Badge variant="outline" className="text-xs border-green-400/30 text-green-400">Market: {canvas.metadata.targetMarket}</Badge>
                 )}
                 {canvas.metadata.businessType && (
-                  <Badge variant="outline" className="text-xs">Type: {canvas.metadata.businessType.toUpperCase()}</Badge>
+                  <Badge variant="outline" className="text-xs border-green-400/30 text-green-400">Type: {canvas.metadata.businessType.toUpperCase()}</Badge>
                 )}
               </div>
             )}
@@ -241,7 +279,7 @@ export default function BMCViewPage() {
           <Button
             onClick={handleRegenerate}
             disabled={isRegenerating}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 shadow-lg shadow-green-600/20"
           >
             {isRegenerating ? (
               <>
@@ -259,7 +297,7 @@ export default function BMCViewPage() {
           <Button
             variant="outline"
             onClick={() => setShowExportPanel(true)}
-            className="border-green-200 text-green-700 hover:bg-green-50"
+            className="border-green-400/30 text-green-400 hover:bg-green-400/10 hover:border-green-400/50"
           >
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -268,7 +306,7 @@ export default function BMCViewPage() {
           <Button
             variant="outline"
             onClick={handleShare}
-            className="border-green-200 text-green-700 hover:bg-green-50"
+            className="border-green-400/30 text-green-400 hover:bg-green-400/10 hover:border-green-400/50"
           >
             <Share2 className="h-4 w-4 mr-2" />
             Share

@@ -150,12 +150,22 @@ function BMCBlockCard({ block, config, onUpdate, onRegenerate, isRegenerating }:
         ) : (
           <>
             <div className="text-white text-sm leading-relaxed min-h-[100px] flex-1">
-              {block.content ? (
+              {block.content && !block.content.includes('Error generating content') ? (
                 <div className="whitespace-pre-wrap">{block.content}</div>
               ) : (
-                <span className="text-gray-400 italic">
-                  {config.placeholder}
-                </span>
+                <div className="space-y-3">
+                  <span className="text-gray-400 italic block">
+                    {config.placeholder}
+                  </span>
+                  <div className="text-xs text-gray-500">
+                    <p className="font-medium mb-1">Consider including:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {config.examples.slice(0, 3).map((example, idx) => (
+                        <li key={idx}>{example}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               )}
             </div>
 
