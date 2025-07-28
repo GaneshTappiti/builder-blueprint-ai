@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,27 +12,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import WorkspaceSidebar, { SidebarToggle } from "@/components/WorkspaceSidebar";
-import { 
-  Brain, 
-  Sparkles, 
-  Download, 
-  Copy, 
-  RefreshCw, 
+import {
+  Brain,
+  Sparkles,
+  Download,
+  Copy,
+  RefreshCw,
   ArrowLeft,
   Lightbulb,
   Target,
   Users,
   DollarSign,
   Settings,
-  Zap
+  Zap,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { BusinessModelCanvas, BMCGenerationRequest } from "@/types/businessModelCanvas";
-import { BMCBlockGrid } from "@/components/bmc/BMCBlockGrid";
-import { BMCExportPanel } from "@/components/bmc/BMCExportPanel";
 
 export default function BusinessModelCanvasPage() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [appIdea, setAppIdea] = useState('');
   const [industry, setIndustry] = useState('');
@@ -39,40 +41,17 @@ export default function BusinessModelCanvasPage() {
   const [additionalContext, setAdditionalContext] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [canvas, setCanvas] = useState<BusinessModelCanvas | null>(null);
-  const [showExportPanel, setShowExportPanel] = useState(false);
+  const [generationStep, setGenerationStep] = useState('');
+  // Canvas will be handled on the new page after generation
   const { toast } = useToast();
 
-  // Auto-save and restore canvas from localStorage
-  useEffect(() => {
-    const savedCanvas = localStorage.getItem('bmc-canvas');
-    if (savedCanvas) {
-      try {
-        const parsedCanvas = JSON.parse(savedCanvas);
-        // Restore dates as Date objects
-        parsedCanvas.createdAt = new Date(parsedCanvas.createdAt);
-        parsedCanvas.updatedAt = new Date(parsedCanvas.updatedAt);
-        Object.values(parsedCanvas.blocks).forEach((block: any) => {
-          block.lastUpdated = new Date(block.lastUpdated);
-        });
-        setCanvas(parsedCanvas);
-      } catch (error) {
-        console.error('Error loading saved canvas:', error);
-        localStorage.removeItem('bmc-canvas');
-      }
-    }
-  }, []);
+  // Check for recent canvas
+  const [hasRecentCanvas, setHasRecentCanvas] = useState(false);
 
-  // Auto-save canvas when it changes
   useEffect(() => {
-    if (canvas) {
-      try {
-        localStorage.setItem('bmc-canvas', JSON.stringify(canvas));
-      } catch (error) {
-        console.error('Error saving canvas:', error);
-      }
-    }
-  }, [canvas]);
+    const recentCanvas = localStorage.getItem('bmc-canvas');
+    setHasRecentCanvas(!!recentCanvas);
+  }, []);
 
   const handleGenerate = async () => {
     const trimmedIdea = appIdea.trim();
@@ -106,14 +85,28 @@ export default function BusinessModelCanvasPage() {
 
     setIsGenerating(true);
     setGenerationProgress(0);
+    setGenerationStep('Initializing AI generation...');
 
-    // Simulate progress for better UX
+    // Enhanced progress simulation with steps
+    const progressSteps = [
+      { progress: 10, step: 'Analyzing business idea...' },
+      { progress: 25, step: 'Generating customer segments...' },
+      { progress: 40, step: 'Creating value proposition...' },
+      { progress: 55, step: 'Defining channels and relationships...' },
+      { progress: 70, step: 'Structuring revenue and costs...' },
+      { progress: 85, step: 'Checking for content duplication...' },
+      { progress: 95, step: 'Finalizing business model canvas...' }
+    ];
+
+    let stepIndex = 0;
     const progressInterval = setInterval(() => {
-      setGenerationProgress(prev => {
-        if (prev >= 90) return prev;
-        return prev + Math.random() * 15;
-      });
-    }, 500);
+      if (stepIndex < progressSteps.length) {
+        const currentStep = progressSteps[stepIndex];
+        setGenerationProgress(currentStep.progress);
+        setGenerationStep(currentStep.step);
+        stepIndex++;
+      }
+    }, 800);
 
     try {
       const request: BMCGenerationRequest = {
@@ -147,22 +140,42 @@ export default function BusinessModelCanvasPage() {
       if (!data.success) {
         // Even if AI failed, we might have fallback content
         if (data.data?.canvas) {
-          setCanvas(data.data.canvas);
+          const canvas = data.data.canvas;
+          const canvasId = canvas.id || `bmc_${Date.now()}`;
+
+          // Save canvas to localStorage
+          localStorage.setItem(`bmc-${canvasId}`, JSON.stringify(canvas));
+          localStorage.setItem('bmc-canvas', JSON.stringify(canvas));
+
           toast({
             title: "Business Model Canvas Created",
-            description: "AI generation encountered issues, but we've created a template for you to customize.",
-            variant: "destructive"
+            description: "Redirecting to your canvas...",
           });
+
+          // Redirect to the new page
+          setTimeout(() => {
+            router.push(`/bmc/${canvasId}`);
+          }, 1000);
         } else {
           throw new Error(data.error || 'Failed to generate Business Model Canvas');
         }
       } else {
-        setCanvas(data.data.canvas);
+        const canvas = data.data.canvas;
+        const canvasId = canvas.id || `bmc_${Date.now()}`;
+
+        // Save canvas to localStorage
+        localStorage.setItem(`bmc-${canvasId}`, JSON.stringify(canvas));
+        localStorage.setItem('bmc-canvas', JSON.stringify(canvas));
 
         toast({
           title: "Business Model Canvas Generated!",
-          description: "Your AI-powered business model canvas is ready. Review and edit as needed.",
+          description: "Redirecting to your canvas...",
         });
+
+        // Redirect to the new page
+        setTimeout(() => {
+          router.push(`/bmc/${canvasId}`);
+        }, 1000);
       }
     } catch (error) {
       clearInterval(progressInterval);
@@ -174,25 +187,23 @@ export default function BusinessModelCanvasPage() {
       });
     } finally {
       setIsGenerating(false);
-      setTimeout(() => setGenerationProgress(0), 1000);
+      setTimeout(() => {
+        setGenerationProgress(0);
+        setGenerationStep('');
+      }, 1000);
     }
   };
 
-  const handleClearAll = () => {
-    setCanvas(null);
+  const handleClearForm = () => {
     setAppIdea('');
     setIndustry('');
     setTargetMarket('');
     setBusinessType('b2c');
     setAdditionalContext('');
-    setShowExportPanel(false);
-
-    // Clear saved canvas from localStorage
-    localStorage.removeItem('bmc-canvas');
 
     toast({
-      title: "Canvas cleared",
-      description: "All data has been cleared. You can start fresh with a new idea.",
+      title: "Form cleared",
+      description: "All form data has been cleared. You can start fresh with a new idea.",
     });
   };
 
@@ -243,7 +254,7 @@ export default function BusinessModelCanvasPage() {
         </div>
 
         {/* Main Content */}
-        <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+        <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
           {/* Header Section */}
           <div className="text-center space-y-6 mb-12">
             <div className="flex flex-col items-center gap-4">
@@ -395,10 +406,17 @@ export default function BusinessModelCanvasPage() {
                 {isGenerating && (
                   <div className="space-y-3 max-w-md mx-auto">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-white font-medium">Generating your Business Model Canvas...</span>
+                      <span className="text-white font-medium">
+                        {generationStep || 'Generating your Business Model Canvas...'}
+                      </span>
                       <span className="text-gray-400 font-mono">{Math.round(generationProgress)}%</span>
                     </div>
                     <Progress value={generationProgress} className="h-3" />
+                    {generationProgress >= 85 && generationProgress < 100 && (
+                      <div className="text-center text-xs text-green-400 animate-pulse">
+                        ✨ Applying deduplication for professional quality
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -406,29 +424,47 @@ export default function BusinessModelCanvasPage() {
                   <Button
                     onClick={handleGenerate}
                     disabled={isGenerating || !appIdea.trim()}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg font-medium min-w-[280px] h-12"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-medium w-full sm:w-auto sm:min-w-[280px] h-10 sm:h-12"
                   >
                     {isGenerating ? (
                       <>
-                        <RefreshCw className="h-5 w-5 mr-3 animate-spin" />
-                        Generating Canvas...
+                        <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 animate-spin" />
+                        <span className="hidden sm:inline">Generating Canvas...</span>
+                        <span className="sm:hidden">Generating...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles className="h-5 w-5 mr-3" />
-                        Generate Business Model Canvas
+                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3" />
+                        <span className="hidden sm:inline">Generate Business Model Canvas</span>
+                        <span className="sm:hidden">Generate Canvas</span>
                       </>
                     )}
                   </Button>
 
-                  {canvas && (
+                  <Button
+                    variant="outline"
+                    onClick={handleClearForm}
+                    className="border-white/20 text-white hover:bg-white/10 px-4 py-2 text-sm sm:text-base"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Clear Form
+                  </Button>
+
+                  {hasRecentCanvas && (
                     <Button
                       variant="outline"
-                      onClick={handleClearAll}
-                      className="border-white/20 text-white hover:bg-white/10 px-6 py-3 h-12"
+                      onClick={() => {
+                        const recentCanvas = localStorage.getItem('bmc-canvas');
+                        if (recentCanvas) {
+                          const canvas = JSON.parse(recentCanvas);
+                          const canvasId = canvas.id || `bmc_${Date.now()}`;
+                          router.push(`/bmc/${canvasId}`);
+                        }
+                      }}
+                      className="border-green-500/30 text-green-400 hover:bg-green-500/10 px-4 py-2 text-sm sm:text-base"
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Start Over
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Recent Canvas
                     </Button>
                   )}
                 </div>
@@ -436,22 +472,7 @@ export default function BusinessModelCanvasPage() {
             </CardContent>
           </Card>
 
-          {/* Generated Canvas */}
-          {canvas && (
-            <div className="space-y-8">
-              <BMCBlockGrid
-                canvas={canvas}
-                onCanvasUpdate={setCanvas}
-                isGenerating={isGenerating}
-              />
-
-              <BMCExportPanel
-                canvas={canvas}
-                isVisible={showExportPanel}
-                onToggle={() => setShowExportPanel(!showExportPanel)}
-              />
-            </div>
-          )}
+          {/* Canvas will be displayed on the new page after generation */}
         </div>
       </main>
     </div>
