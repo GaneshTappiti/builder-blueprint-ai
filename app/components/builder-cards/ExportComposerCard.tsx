@@ -165,7 +165,7 @@ export function ExportComposerCard() {
       // Reset copied state after 2 seconds
       setTimeout(() => {
         setCopiedItems(prev => {
-          const newSet = new Set(prev);
+          const newSet = new Set([...prev]);
           newSet.delete(itemId);
           return newSet;
         });
@@ -648,6 +648,7 @@ ${getToolSpecificInstructions(selectedTool)}`
               ))}
             </SelectContent>
           </Select>
+          </div>
           
           {selectedToolData && (
             <div className="mt-4 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-sm rounded-lg border border-green-500/30">
@@ -700,105 +701,6 @@ ${getToolSpecificInstructions(selectedTool)}`
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Batch Export Options */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
-            <Archive className="h-4 w-4 text-purple-400" />
-            Batch Export & Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button
-              onClick={() => {
-                const content = generateUnifiedPrompt();
-                copyToClipboard(content, 'batch-unified');
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-12 flex flex-col items-center justify-center"
-            >
-              <Copy className="h-4 w-4 mb-1" />
-              Copy Unified
-            </Button>
-            <Button
-              onClick={() => {
-                const allScreens = generateScreenByScreenPrompts();
-                const content = allScreens.map(s => s.fullPrompt).join('\n\n---\n\n');
-                copyToClipboard(content, 'batch-screens');
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white text-xs h-12 flex flex-col items-center justify-center"
-            >
-              <Layers className="h-4 w-4 mb-1" />
-              Copy All Screens
-            </Button>
-            <Button
-              onClick={() => {
-                const content = generateJSONFormat();
-                copyToClipboard(content, 'batch-json');
-              }}
-              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-12 flex flex-col items-center justify-center"
-            >
-              <FileJson className="h-4 w-4 mb-1" />
-              Copy JSON
-            </Button>
-            <Button
-              onClick={downloadAllPrompts}
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-12 flex flex-col items-center justify-center"
-            >
-              <Download className="h-4 w-4 mb-1" />
-              Download All
-            </Button>
-          </div>
-
-          <div className="mt-4 p-3 bg-white/5 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium text-white">Quick Export Package</span>
-            </div>
-            <p className="text-xs text-gray-400 mb-3">
-              Generate a complete export package with all formats for maximum compatibility
-            </p>
-            <Button
-              onClick={() => {
-                // Generate all formats
-                const standardContent = generateUnifiedPrompt();
-                const markdownContent = generateMarkdownFormat(standardContent);
-                const jsonContent = generateJSONFormat();
-                const pdfContent = generatePDFReadyFormat(standardContent);
-
-                // Create a combined package
-                const packageContent = `# ${state.appIdea.appName} - Complete Export Package
-
-## Standard Format
-${standardContent}
-
-## Markdown Format
-${markdownContent}
-
-## JSON Format
-\`\`\`json
-${jsonContent}
-\`\`\`
-
-## PDF-Ready Format
-${pdfContent}`;
-
-                downloadAsFile(packageContent, `${state.appIdea.appName}_complete_package.txt`);
-
-                toast({
-                  title: "Complete Package Downloaded!",
-                  description: "All export formats included in one file.",
-                });
-              }}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm w-full"
-            >
-              <Package className="h-4 w-4 mr-2" />
-              Download Complete Package
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

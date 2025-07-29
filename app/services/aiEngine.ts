@@ -161,4 +161,3 @@ Our platform leverages cutting-edge technology to deliver superior user experien
     }
   }
 }
-};

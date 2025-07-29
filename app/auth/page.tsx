@@ -376,7 +376,7 @@ export default function AuthPage() {
       {/* Auth Form */}
       <div className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md space-y-8 workspace-card p-8">
-        <div className="text-center">
+          <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="h-8 w-8 text-green-400" />
             <h1 className="text-3xl font-bold text-white">MVP Studio</h1>
@@ -670,6 +670,7 @@ export default function AuthPage() {
             </form>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
