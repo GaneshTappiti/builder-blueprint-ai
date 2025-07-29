@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { EnhancedAIDisplay } from '@/components/ui/enhanced-ai-display';
-import { AIResponseFormatter } from '@/components/AIResponseFormatter';
+// import { EnhancedAIDisplay } from '@/components/ui/enhanced-ai-display';
+// import AIResponseFormatter from '@/components/AIResponseFormatter';
 import { TextFormatter } from '@/utils/textFormatting';
 
 const TestFormattingPage = () => {
@@ -120,11 +120,14 @@ This analysis shows strong potential for success with proper execution and marke
             <CardTitle>Enhanced AI Display</CardTitle>
           </CardHeader>
           <CardContent>
-            <EnhancedAIDisplay 
+            <div className="p-4 bg-muted rounded">
+              Enhanced AI Display component temporarily disabled for debugging
+            </div>
+            {/* <EnhancedAIDisplay
               content={testContent}
               variant="detailed"
               showCopyButton={true}
-            />
+            /> */}
           </CardContent>
         </Card>
       </div>
@@ -135,12 +138,15 @@ This analysis shows strong potential for success with proper execution and marke
           <CardTitle>Original AIResponseFormatter</CardTitle>
         </CardHeader>
         <CardContent>
-          <AIResponseFormatter
+          <div className="p-4 bg-muted rounded">
+            AIResponseFormatter component temporarily disabled for debugging
+          </div>
+          {/* <AIResponseFormatter
             response={testContent}
             title="Test Response"
             toolType="general"
             showToolSpecific={false}
-          />
+          /> */}
         </CardContent>
       </Card>
 
