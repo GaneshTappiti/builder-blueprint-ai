@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Error Boundary Component
  * Catches JavaScript errors anywhere in the child component tree
