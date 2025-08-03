@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
+import { RAGContextInjector } from "@/services/ragContextInjector";
 
 export function PromptGeneratorCard() {
   const { state, dispatch } = useBuilder();
@@ -31,9 +32,17 @@ export function PromptGeneratorCard() {
   const [isGeneratingFlow, setIsGeneratingFlow] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [selectedPromptFormat, setSelectedPromptFormat] = useState<'comprehensive' | 'concise' | 'technical'>('comprehensive');
+  const [generatedPrompts, setGeneratedPrompts] = useState<Map<string, string>>(new Map());
 
   const screenPrompts = state.screenPrompts;
   const currentPrompt = screenPrompts[currentScreenIndex];
+
+  // Preload current prompt with RAG context
+  useEffect(() => {
+    if (currentPrompt) {
+      getPromptText(currentPrompt).catch(console.warn);
+    }
+  }, [currentScreenIndex, selectedPromptFormat, currentPrompt]);
 
   const handlePreviousScreen = () => {
     if (currentScreenIndex > 0) {
@@ -45,6 +54,48 @@ export function PromptGeneratorCard() {
     if (currentScreenIndex < screenPrompts.length - 1) {
       setCurrentScreenIndex(currentScreenIndex + 1);
     }
+  };
+
+  // Get or generate prompt with caching
+  const getPromptText = async (prompt: any): Promise<string> => {
+    const cacheKey = `${prompt.screenId}_${selectedPromptFormat}`;
+
+    if (generatedPrompts.has(cacheKey)) {
+      return generatedPrompts.get(cacheKey)!;
+    }
+
+    const promptText = await generateFullPrompt(prompt);
+    setGeneratedPrompts(prev => new Map(prev).set(cacheKey, promptText));
+    return promptText;
+  };
+
+  // Synchronous version for immediate display (uses cache or fallback)
+  const getPromptTextSync = (prompt: any): string => {
+    const cacheKey = `${prompt.screenId}_${selectedPromptFormat}`;
+
+    if (generatedPrompts.has(cacheKey)) {
+      return generatedPrompts.get(cacheKey)!;
+    }
+
+    // Fallback to basic prompt while RAG context loads
+    return `# ${prompt.title} - ${state.appIdea.appName}
+## Loading enhanced prompt with RAG context...
+
+### Basic Information
+**Purpose**: ${prompt.purpose || 'Primary user interface screen'}
+**Platform(s)**: ${state.appIdea.platforms.join(' and ')}
+**Design Style**: ${state.appIdea.designStyle}
+
+### Layout
+${prompt.layout}
+
+### Components
+${prompt.components}
+
+### Behavior
+${prompt.behavior}
+
+*Enhanced prompt with RAG context will load shortly...*`;
   };
 
   const copyPromptToClipboard = async (promptText: string, promptId: string) => {
@@ -73,44 +124,81 @@ export function PromptGeneratorCard() {
     }
   };
 
-  const generateFullPrompt = (prompt: any) => {
+  const generateFullPrompt = async (prompt: any) => {
     const formatType = selectedPromptFormat;
 
+    // Get RAG context for prompt enhancement
+    let ragContext = null;
+    if (state.validationQuestions.selectedTool) {
+      try {
+        ragContext = await RAGContextInjector.getContextForStage({
+          stage: 'prompt_generation',
+          toolId: state.validationQuestions.selectedTool,
+          appIdea: state.appIdea.ideaDescription,
+          appType: state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app',
+          platforms: state.appIdea.platforms,
+          screenName: prompt.title
+        });
+      } catch (error) {
+        console.warn('Failed to load RAG context for prompt generation:', error);
+      }
+    }
+
     if (formatType === 'comprehensive') {
-      return generateComprehensivePrompt(prompt);
+      return generateComprehensivePrompt(prompt, ragContext);
     } else if (formatType === 'technical') {
-      return generateTechnicalPrompt(prompt);
+      return generateTechnicalPrompt(prompt, ragContext);
     } else {
-      return generateConcisePrompt(prompt);
+      return generateConcisePrompt(prompt, ragContext);
     }
   };
 
-  const generateComprehensivePrompt = (prompt: any) => {
-    return `# ${prompt.title} - ${state.appIdea.appName}
+  const generateComprehensivePrompt = (prompt: any, ragContext?: any) => {
+    let promptText = `# ${prompt.title} - ${state.appIdea.appName}
 ## Screen Specification & Implementation Guide
 
 ### 🎯 Screen Overview
 **Purpose**: ${prompt.purpose || 'Primary user interface screen'}
 **Screen Type**: ${prompt.screenType || 'Standard'}
 **Platform(s)**: ${state.appIdea.platforms.join(' and ')}
-**Design Style**: ${state.appIdea.designStyle}
+**Design Style**: ${state.appIdea.designStyle}`;
 
-### 📐 Layout & Structure
-${prompt.layout}
+    // Add RAG-enhanced tool-specific context
+    if (ragContext?.toolSpecificContext) {
+      promptText += `\n**Tool-Specific Guidance**: ${ragContext.toolSpecificContext.substring(0, 300)}`;
+    }
 
-**Responsive Behavior**:
+    promptText += `\n\n### 📐 Layout & Structure
+${prompt.layout}`;
+
+    // Add RAG-enhanced architecture patterns
+    if (ragContext?.architecturePatterns) {
+      promptText += `\n\n**Architecture Patterns**: ${ragContext.architecturePatterns.substring(0, 200)}`;
+    }
+
+    promptText += `\n\n**Responsive Behavior**:
 ${prompt.responsiveNotes || '- Adapts to different screen sizes\n- Maintains usability across devices\n- Key elements remain accessible'}
 
 **Visual Hierarchy**:
-${prompt.visualHierarchy || '- Primary actions prominently displayed\n- Secondary elements appropriately sized\n- Clear content organization'}
+${prompt.visualHierarchy || '- Primary actions prominently displayed\n- Secondary elements appropriately sized\n- Clear content organization'}`;
 
 ### 🧩 Components & Elements
-${prompt.components}
+${prompt.components}`;
 
-**Component Specifications**:
-${prompt.componentSpecs || '- All interactive elements have clear affordances\n- Consistent styling across components\n- Proper spacing and alignment'}
+    // Add RAG-enhanced component recommendations
+    if (ragContext?.codeExamples?.length > 0) {
+      promptText += `\n\n**RAG-Enhanced Examples**: ${ragContext.codeExamples.slice(0, 2).join(', ')}`;
+    }
 
-**Data Display**:
+    promptText += `\n\n**Component Specifications**:
+${prompt.componentSpecs || '- All interactive elements have clear affordances\n- Consistent styling across components\n- Proper spacing and alignment'}`;
+
+    // Add RAG best practices
+    if (ragContext?.bestPractices?.length > 0) {
+      promptText += `\n\n**Best Practices**: ${ragContext.bestPractices.slice(0, 3).join('\n- ')}`;
+    }
+
+    promptText += `\n\n**Data Display**:
 ${prompt.dataDisplay || '- Information presented clearly\n- Loading states for dynamic content\n- Empty states handled gracefully'}
 
 ### ⚡ Behavior & Interactions
@@ -148,22 +236,41 @@ ${prompt.styleHints}
 ### 🛠 Technical Implementation Notes
 **Performance**: ${prompt.performance || 'Optimize for smooth rendering'}
 **Data Requirements**: ${prompt.dataRequirements || 'Define API endpoints and data structure'}
-**Third-party Integrations**: ${prompt.integrations || 'List any external services needed'}
+**Third-party Integrations**: ${prompt.integrations || 'List any external services needed'}`;
 
-### ✅ Acceptance Criteria
+    // Add RAG-enhanced optimization tips
+    if (ragContext?.optimizationTips?.length > 0) {
+      promptText += `\n\n**Optimization Tips**: ${ragContext.optimizationTips.slice(0, 3).join('\n- ')}`;
+    }
+
+    // Add RAG constraints if any
+    if (ragContext?.constraints?.length > 0) {
+      promptText += `\n\n**Constraints**: ${ragContext.constraints.slice(0, 2).join('\n- ')}`;
+    }
+
+    promptText += `\n\n### ✅ Acceptance Criteria
 ${prompt.acceptanceCriteria || '- Screen loads within 2 seconds\n- All interactive elements respond correctly\n- Design matches specifications\n- Accessibility requirements met'}
 
 ---
-*Generated by Builder Blueprint AI - ${new Date().toLocaleDateString()}*`;
+*Generated by Builder Blueprint AI with RAG Enhancement - ${new Date().toLocaleDateString()}*`;
+
+    return promptText;
   };
 
-  const generateTechnicalPrompt = (prompt: any) => {
-    return `# ${prompt.title} - Technical Specification
+  const generateTechnicalPrompt = (prompt: any, ragContext?: any) => {
+    let techPrompt = `# ${prompt.title} - Technical Specification
 
 ## Implementation Requirements
 **Platform**: ${state.appIdea.platforms.join(' and ')}
 **Framework**: ${prompt.framework || 'Platform-specific'}
-**Design System**: ${state.appIdea.designStyle}
+**Design System**: ${state.appIdea.designStyle}`;
+
+    // Add RAG-enhanced tool-specific technical guidance
+    if (ragContext?.toolSpecificContext) {
+      techPrompt += `\n**Tool-Specific Implementation**: ${ragContext.toolSpecificContext.substring(0, 200)}`;
+    }
+
+    return techPrompt + `
 
 ## Layout Architecture
 ${prompt.layout}
@@ -623,7 +730,10 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => copyPromptToClipboard(generateFullPrompt(currentPrompt), currentPrompt.screenId)}
+                  onClick={async () => {
+                    const promptText = await getPromptText(currentPrompt);
+                    copyPromptToClipboard(promptText, currentPrompt.screenId);
+                  }}
                   className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
                 >
                   {copiedPrompts.has(currentPrompt.screenId) ? (
@@ -650,11 +760,11 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
                   Generated Prompt ({selectedPromptFormat})
                 </h5>
                 <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
-                  {generateFullPrompt(currentPrompt).length} characters
+                  {getPromptTextSync(currentPrompt).length} characters
                 </Badge>
               </div>
               <Textarea
-                value={generateFullPrompt(currentPrompt)}
+                value={getPromptTextSync(currentPrompt)}
                 readOnly
                 className="min-h-[400px] text-sm bg-black/40 backdrop-blur-sm border-white/10 text-gray-300 font-mono"
                 placeholder="Generated prompt will appear here..."

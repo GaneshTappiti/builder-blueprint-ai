@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowRight, Layout, Users, GitBranch, Database, Eye, Edit3, MessageSquare, Activity, Plug } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
+import { RAGContextInjector } from "@/services/ragContextInjector";
 
 export function BlueprintCard() {
   const { state, dispatch } = useBuilder();
@@ -41,17 +42,33 @@ export function BlueprintCard() {
       dispatch(builderActions.setGenerationProgress(step.progress));
     }
 
-    // Generate enhanced screen prompts based on blueprint
+    // Get RAG context for blueprint enhancement
+    let ragContext = null;
+    if (state.validationQuestions.selectedTool) {
+      try {
+        ragContext = await RAGContextInjector.getContextForStage({
+          stage: 'blueprint_generation',
+          toolId: state.validationQuestions.selectedTool,
+          appIdea: state.appIdea.ideaDescription,
+          appType: state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app',
+          platforms: state.appIdea.platforms
+        });
+      } catch (error) {
+        console.warn('Failed to load RAG context for blueprint:', error);
+      }
+    }
+
+    // Generate enhanced screen prompts based on blueprint with RAG context
     const screenPrompts = state.appBlueprint.screens.map(screen => ({
       screenId: screen.id,
       title: screen.name,
       purpose: screen.purpose,
       screenType: screen.type || 'standard',
-      layout: generateLayoutPrompt(screen),
-      components: generateComponentsPrompt(screen),
-      behavior: generateBehaviorPrompt(screen),
+      layout: generateLayoutPrompt(screen, ragContext),
+      components: generateComponentsPrompt(screen, ragContext),
+      behavior: generateBehaviorPrompt(screen, ragContext),
       conditionalLogic: generateConditionalLogic(screen),
-      styleHints: generateStyleHints(screen),
+      styleHints: generateStyleHints(screen, ragContext),
       // Enhanced fields for comprehensive prompts
       responsiveNotes: generateResponsiveNotes(screen),
       visualHierarchy: generateVisualHierarchy(screen),
@@ -92,21 +109,45 @@ export function BlueprintCard() {
     });
   };
 
-  const generateLayoutPrompt = (screen: any) => {
+  const generateLayoutPrompt = (screen: any, ragContext?: any) => {
     const baseLayout = `${screen.name} screen with ${screen.purpose.toLowerCase()}. `;
     const components = screen.components.join(', ').toLowerCase();
-    return `${baseLayout}Layout includes: ${components}. Use ${state.appIdea.designStyle} design style.`;
+    let prompt = `${baseLayout}Layout includes: ${components}. Use ${state.appIdea.designStyle} design style.`;
+
+    // Inject RAG context for tool-specific layout guidance
+    if (ragContext?.toolSpecificContext) {
+      prompt += `\n\nTool-specific guidance: ${ragContext.toolSpecificContext.substring(0, 200)}`;
+    }
+    if (ragContext?.architecturePatterns) {
+      prompt += `\n\nArchitecture patterns: ${ragContext.architecturePatterns.substring(0, 150)}`;
+    }
+
+    return prompt;
   };
 
-  const generateComponentsPrompt = (screen: any) => {
-    return screen.components.map((comp: string, index: number) => 
+  const generateComponentsPrompt = (screen: any, ragContext?: any) => {
+    let prompt = screen.components.map((comp: string, index: number) =>
       `${index + 1}. ${comp}: Interactive element with appropriate styling and functionality`
     ).join('\n');
+
+    // Add RAG-enhanced component recommendations
+    if (ragContext?.bestPractices?.length > 0) {
+      prompt += `\n\nBest practices: ${ragContext.bestPractices.slice(0, 3).join(', ')}`;
+    }
+
+    return prompt;
   };
 
-  const generateBehaviorPrompt = (screen: any) => {
+  const generateBehaviorPrompt = (screen: any, ragContext?: any) => {
     const navigation = screen.navigation.join(', ');
-    return `User interactions: Tap/click actions for navigation to ${navigation}. Include loading states and error handling.`;
+    let prompt = `User interactions: Tap/click actions for navigation to ${navigation}. Include loading states and error handling.`;
+
+    // Add RAG-enhanced behavior guidance
+    if (ragContext?.optimizationTips?.length > 0) {
+      prompt += `\n\nOptimization tips: ${ragContext.optimizationTips.slice(0, 2).join(', ')}`;
+    }
+
+    return prompt;
   };
 
   const generateConditionalLogic = (screen: any) => {
@@ -115,10 +156,17 @@ export function BlueprintCard() {
     return 'Standard navigation and state management based on user permissions and data availability.';
   };
 
-  const generateStyleHints = (screen: any) => {
+  const generateStyleHints = (screen: any, ragContext?: any) => {
     const style = state.appIdea.designStyle;
     const platform = state.appIdea.platforms.join(' and ');
-    return `${style} design for ${platform}. ${state.appIdea.styleDescription || 'Follow modern UI/UX best practices.'}`;
+    let prompt = `${style} design for ${platform}. ${state.appIdea.styleDescription || 'Follow modern UI/UX best practices.'}`;
+
+    // Add RAG-enhanced styling guidance
+    if (ragContext?.codeExamples?.length > 0) {
+      prompt += `\n\nStyling examples: ${ragContext.codeExamples.slice(0, 2).join(', ')}`;
+    }
+
+    return prompt;
   };
 
   // Enhanced prompt generation helpers

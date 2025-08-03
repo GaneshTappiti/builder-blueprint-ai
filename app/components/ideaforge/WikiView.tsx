@@ -137,7 +137,7 @@ const WikiView: React.FC<WikiViewProps> = ({ idea, onUpdate }) => {
     <div className="space-y-6">
       {/* Progress Overview */}
       <IdeaProgressOverview
-        wikiProgress={Math.round((sections.length / 10) * 100)} // Dynamic progress based on sections
+        wikiProgress={Math.round((sections.length / 10) * 100)} {/* Dynamic progress based on sections */}
         blueprintProgress={60}
         journeyProgress={40}
         feedbackProgress={30}
