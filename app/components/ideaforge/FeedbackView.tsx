@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { 
-  MessageSquare, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Send, 
+import {
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
+  Send,
   Star,
   Users,
   TrendingUp
 } from "lucide-react";
+import IdeaProgressOverview from "./IdeaProgressOverview";
 
 interface FeedbackItem {
   id: string;
@@ -89,9 +90,18 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
 
   return (
     <div className="space-y-6">
+      {/* Progress Overview */}
+      <IdeaProgressOverview
+        wikiProgress={75}
+        blueprintProgress={60}
+        journeyProgress={40}
+        feedbackProgress={30}
+        showOverallProgress={true}
+      />
+
       {/* Feedback Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="workspace-card">
+        <Card className="glass-effect-theme workspace-hover">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-500/20">
@@ -105,11 +115,11 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
           </CardContent>
         </Card>
 
-        <Card className="workspace-card">
+        <Card className="glass-effect-theme workspace-hover">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/20">
-                <Star className="h-5 w-5 text-yellow-400" />
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <Star className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-white">12</p>
@@ -119,7 +129,7 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
           </CardContent>
         </Card>
 
-        <Card className="workspace-card">
+        <Card className="glass-effect-theme workspace-hover">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/20">
@@ -135,10 +145,10 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
       </div>
 
       {/* Add New Feedback */}
-      <Card className="workspace-card">
+      <Card className="glass-effect-theme">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5 text-green-400" />
             Share Your Feedback
           </CardTitle>
         </CardHeader>
@@ -150,25 +160,28 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
                 variant={feedbackType === type ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFeedbackType(type)}
-                className={feedbackType === type ? getFeedbackBadgeColor(type) : ''}
+                className={feedbackType === type ?
+                  'workspace-button' :
+                  'border-green-500/30 text-green-400 hover:bg-green-600/10'
+                }
               >
                 {getFeedbackIcon(type)}
                 <span className="ml-2 capitalize">{type}</span>
               </Button>
             ))}
           </div>
-          
+
           <Textarea
             placeholder="Share your thoughts, suggestions, or concerns about this idea..."
             value={newFeedback}
             onChange={(e) => setNewFeedback(e.target.value)}
-            className="min-h-[100px] bg-black/20 border-white/10 text-white placeholder:text-gray-400"
+            className="min-h-[100px] bg-black/30 border-green-500/20 text-white placeholder:text-gray-500 focus:border-green-500/40"
           />
-          
-          <Button 
+
+          <Button
             onClick={handleSubmitFeedback}
             disabled={!newFeedback.trim()}
-            className="bg-green-600 hover:bg-green-700"
+            className="workspace-button"
           >
             <Send className="h-4 w-4 mr-2" />
             Submit Feedback
@@ -178,13 +191,13 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
 
       {/* Feedback List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+        <h3 className="workspace-heading flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-green-400" />
           Community Feedback
         </h3>
-        
+
         {feedback.map((item) => (
-          <Card key={item.id} className="workspace-card">
+          <Card key={item.id} className="glass-effect-theme workspace-hover">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8">
@@ -192,7 +205,7 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
                     {item.author.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-white">{item.author}</span>
@@ -202,15 +215,15 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ ideaId }) => {
                     </Badge>
                     <span className="text-sm text-gray-400">{item.timestamp}</span>
                   </div>
-                  
+
                   <p className="text-gray-300">{item.content}</p>
-                  
+
                   <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-green-400 hover:bg-green-600/10">
                       <ThumbsUp className="h-4 w-4 mr-1" />
                       {item.likes}
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <Button variant="ghost" size="sm" className="text-gray-400 hover:text-green-400 hover:bg-green-600/10">
                       <MessageSquare className="h-4 w-4 mr-1" />
                       Reply
                     </Button>
