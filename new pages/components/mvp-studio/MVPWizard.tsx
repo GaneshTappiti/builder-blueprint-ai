@@ -43,11 +43,17 @@ import {
   Platform,
   MVPAnalysisResult,
   PagePrompt,
-  BuilderTool
+  BuilderTool,
+  RAGTool,
+  RAGToolProfile
 } from "@/types/ideaforge";
-import { aiProviderService } from "@/services/aiProviderService";
+import { getAllRAGToolProfiles, getRecommendedTools } from "@/services/ragToolProfiles";
+import { generateRAGEnhancedPrompt } from "@/services/ragEnhancedGenerator";
+import { geminiService } from "@/services/geminiService";
+import { UniversalPromptTemplateService, DEFAULT_CONFIGS } from "@/services/universalPromptTemplate";
+import { ComprehensiveResponseParser } from "@/services/comprehensiveResponseParser";
 import { MVPPromptTemplateService } from "@/services/mvpPromptTemplates";
-import { FrameworkGeneratorService, FrameworkGenerationRequest, GeneratedFramework } from "@/services/frameworkGenerator";
+import { FrameworkGeneratorService, FrameworkGenerationRequest, GeneratedFramework, parseFrameworkResponse } from "@/services/frameworkGenerator";
 import PagePromptGenerator from "./PagePromptGenerator";
 import ExportablePromptsSystem from "./ExportablePromptsSystem";
 import { useAnalytics } from "@/services/mvpStudioAnalytics";
@@ -77,11 +83,15 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
   const [isGenerating, setIsGenerating] = useState(false);
   const [wizardData, setWizardData] = useState<MVPWizardData>({
     step1: { appName: "", appType: "web-app" },
-    step2: { theme: "dark", designStyle: "minimal" },
+    step2: { theme: "dark", designStyle: "minimal", selectedTool: undefined },
     step3: { platforms: ["web"] },
     step4: { selectedAI: "" },
     userPrompt: ""
   });
+
+  // RAG tool state
+  const [availableTools, setAvailableTools] = useState<RAGToolProfile[]>([]);
+  const [filteredTools, setFilteredTools] = useState<RAGToolProfile[]>([]);
 
   // Enhanced wizard state for better UX
   const [enhancedData, setEnhancedData] = useState<EnhancedWizardData>({
@@ -94,13 +104,23 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     currentStepValid: false
   });
 
+  // Universal Prompt Template configuration
+  const [universalConfig, setUniversalConfig] = useState({
+    includeErrorStates: true,
+    includeBackendModels: true,
+    includeUIComponents: true,
+    includeModalsPopups: true,
+    appDepth: 'advanced' as 'mvp' | 'advanced' | 'production',
+    appType: 'web' as 'web' | 'mobile' | 'hybrid'
+  });
+
   // Enhanced prompt-by-prompt state for sequential delivery
   const [promptFlow, setPromptFlow] = useState<PromptFlow>('setup');
   const [frameworkPrompt, setFrameworkPrompt] = useState<string>('');
   const [pagePrompts, setPagePrompts] = useState<PagePrompt[]>([]);
   const [linkingPrompt, setLinkingPrompt] = useState<string>('');
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [recommendedTools, setRecommendedTools] = useState<BuilderTool[]>([]);
+  const [recommendedBuilderTools, setRecommendedBuilderTools] = useState<BuilderTool[]>([]);
   const [generatedFramework, setGeneratedFramework] = useState<GeneratedFramework | null>(null);
 
   // Sequential prompt delivery state
@@ -116,6 +136,235 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
   const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
+  // Helper function to parse comprehensive framework response from Universal Prompt Template
+  const parseComprehensiveFrameworkResponse = (aiResponse: string, config: any): GeneratedFramework => {
+    try {
+      // Use the comprehensive parser to extract all data
+      const blueprint = ComprehensiveResponseParser.parseResponse(aiResponse, wizardData);
+
+      // Create page prompts from parsed screens
+      const pages: PagePrompt[] = blueprint.screens.map((screen) => ({
+        pageName: screen.name,
+        prompt: generatePagePrompt(screen.name, {
+          description: screen.description,
+          components: screen.components,
+          layout: screen.type === 'main' ? 'main' : 'secondary',
+          userRoles: screen.userRoles,
+          dataRequired: screen.dataRequired
+        }, wizardData),
+        components: screen.components || [],
+        layout: screen.type === 'main' ? 'main' : 'secondary',
+        interactions: []
+      }));
+
+      // Use existing recommended builder tools or create from blueprint
+      const builderTools: BuilderTool[] = recommendedBuilderTools.length > 0 ? recommendedBuilderTools : [];
+
+      return {
+        prompts: {
+          framework: aiResponse, // Store the full comprehensive response
+          pages: pages,
+          linking: generateLinkingPrompt(pages.map(p => p.pageName), wizardData)
+        },
+        recommendedTools: builderTools,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          toolUsed: wizardData.step2.selectedTool,
+          confidence: blueprint.metadata.confidence,
+          totalScreens: blueprint.metadata.totalScreens,
+          complexity: blueprint.metadata.complexity,
+          userRoles: blueprint.userRoles.length,
+          dataModels: blueprint.dataModels.length,
+          estimatedDevTime: blueprint.metadata.estimatedDevTime,
+          blueprint: blueprint // Store the full parsed blueprint for advanced features
+        }
+      };
+    } catch (error) {
+      console.error('Failed to parse comprehensive framework response:', error);
+
+      // Fallback to basic parsing
+      return parseBasicFrameworkResponse(aiResponse);
+    }
+  };
+
+  // Helper function to extract screens from AI response
+  const extractScreensFromResponse = (response: string): any[] => {
+    const screens = [];
+
+    // Look for screen sections in the response
+    const screenSections = response.match(/(?:##?\s*1\..*?SCREENS.*?)([\s\S]*?)(?=##?\s*2\.|$)/i);
+    if (screenSections && screenSections[1]) {
+      const screenText = screenSections[1];
+
+      // Extract individual screens (look for bullet points or numbered items)
+      const screenMatches = screenText.match(/[-*•]\s*\*\*(.*?)\*\*:?\s*(.*?)(?=\n[-*•]|\n\n|$)/g);
+
+      if (screenMatches) {
+        screenMatches.forEach((match, index) => {
+          const nameMatch = match.match(/\*\*(.*?)\*\*/);
+          const descMatch = match.replace(/\*\*(.*?)\*\*:?\s*/, '');
+
+          if (nameMatch) {
+            screens.push({
+              name: nameMatch[1].trim(),
+              description: descMatch.trim(),
+              type: index < 5 ? 'main' : 'sub',
+              components: [],
+              userRoles: ['user'],
+              dataRequired: []
+            });
+          }
+        });
+      }
+    }
+
+    // If no screens found, create default comprehensive set
+    if (screens.length === 0) {
+      screens.push(
+        { name: 'Landing Page', description: 'Main entry point', type: 'main', components: [], userRoles: ['guest'], dataRequired: [] },
+        { name: 'Login', description: 'User authentication', type: 'auth', components: [], userRoles: ['guest'], dataRequired: [] },
+        { name: 'Register', description: 'User registration', type: 'auth', components: [], userRoles: ['guest'], dataRequired: [] },
+        { name: 'Dashboard', description: 'Main user interface', type: 'main', components: [], userRoles: ['user'], dataRequired: [] },
+        { name: 'Profile', description: 'User profile management', type: 'sub', components: [], userRoles: ['user'], dataRequired: [] },
+        { name: 'Settings', description: 'App configuration', type: 'sub', components: [], userRoles: ['user'], dataRequired: [] },
+        { name: 'Help', description: 'User support', type: 'sub', components: [], userRoles: ['user'], dataRequired: [] },
+        { name: '404 Error', description: 'Page not found', type: 'error', components: [], userRoles: ['all'], dataRequired: [] }
+      );
+    }
+
+    return screens;
+  };
+
+  // Helper function to extract user roles from response
+  const extractUserRolesFromResponse = (response: string): any[] => {
+    const roles = [];
+    const roleSection = response.match(/(?:##?\s*3\..*?USER ROLES.*?)([\s\S]*?)(?=##?\s*4\.|$)/i);
+
+    if (roleSection && roleSection[1]) {
+      const roleMatches = roleSection[1].match(/[-*•]\s*\*\*(.*?)\*\*:?\s*(.*?)(?=\n[-*•]|\n\n|$)/g);
+      if (roleMatches) {
+        roleMatches.forEach(match => {
+          const nameMatch = match.match(/\*\*(.*?)\*\*/);
+          if (nameMatch) {
+            roles.push({
+              name: nameMatch[1].trim(),
+              permissions: [],
+              accessibleScreens: []
+            });
+          }
+        });
+      }
+    }
+
+    return roles.length > 0 ? roles : [{ name: 'User', permissions: [], accessibleScreens: [] }];
+  };
+
+  // Helper function to extract data models from response
+  const extractDataModelsFromResponse = (response: string): any[] => {
+    const models = [];
+    const modelSection = response.match(/(?:##?\s*4\..*?DATA MODELS.*?)([\s\S]*?)(?=##?\s*5\.|$)/i);
+
+    if (modelSection && modelSection[1]) {
+      const modelMatches = modelSection[1].match(/[-*•]\s*\*\*(.*?)\*\*:?\s*(.*?)(?=\n[-*•]|\n\n|$)/g);
+      if (modelMatches) {
+        modelMatches.forEach(match => {
+          const nameMatch = match.match(/\*\*(.*?)\*\*/);
+          if (nameMatch) {
+            models.push({
+              name: nameMatch[1].trim(),
+              fields: [],
+              relationships: []
+            });
+          }
+        });
+      }
+    }
+
+    return models.length > 0 ? models : [{ name: 'User', fields: [], relationships: [] }];
+  };
+
+  // Helper function to extract tools from response
+  const extractToolsFromResponse = (response: string): BuilderTool[] => {
+    // Return recommended builder tools based on current selection
+    return recommendedBuilderTools.length > 0 ? recommendedBuilderTools : [];
+  };
+
+  // Fallback basic parsing function
+  const parseBasicFrameworkResponse = (aiResponse: string): GeneratedFramework => {
+    return {
+      prompts: {
+        framework: aiResponse,
+        pages: [],
+        linking: ''
+      },
+      recommendedTools: [],
+      metadata: {
+        generatedAt: new Date().toISOString(),
+        toolUsed: wizardData.step2.selectedTool,
+        confidence: 0.6
+      }
+    };
+  };
+
+  // Load available RAG tools on component mount
+  useEffect(() => {
+    const loadAvailableTools = async () => {
+      try {
+        const tools = getAllRAGToolProfiles();
+        setAvailableTools(tools);
+        setFilteredTools(tools); // Initially show all tools
+      } catch (error) {
+        console.error('Failed to load RAG tools:', error);
+        toast({
+          title: "Error Loading Tools",
+          description: "Failed to load available development tools. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadAvailableTools();
+  }, []);
+
+  // Filter tools based on app type and platforms
+  useEffect(() => {
+    if (availableTools.length === 0) return;
+
+    const filtered = availableTools.filter(tool => {
+      // Filter by app type compatibility
+      const appTypeMatch = tool.appTypes.includes(wizardData.step1.appType);
+
+      // Filter by platform compatibility
+      const platformMatch = wizardData.step3.platforms.length === 0 ||
+        wizardData.step3.platforms.some(platform => tool.platforms.includes(platform));
+
+      return appTypeMatch && platformMatch;
+    });
+
+    setFilteredTools(filtered);
+
+    // Get recommended tools for current selection
+    if (wizardData.step1.appType && wizardData.step3.platforms.length > 0) {
+      const recommended = getRecommendedTools(
+        wizardData.step1.appType,
+        wizardData.step3.platforms,
+        enhancedData.description
+      );
+      // Note: This would be RAGToolProfile[], but we're keeping the existing logic
+    }
+  }, [wizardData.step1.appType, wizardData.step3.platforms, availableTools, enhancedData.description]);
+
+  // Update universal config based on app type selection
+  useEffect(() => {
+    if (wizardData.step1.appType && DEFAULT_CONFIGS[wizardData.step1.appType]) {
+      setUniversalConfig(prev => ({
+        ...prev,
+        ...DEFAULT_CONFIGS[wizardData.step1.appType],
+        appType: wizardData.step1.appType === 'mobile-app' ? 'mobile' : 'web'
+      }));
+    }
+  }, [wizardData.step1.appType]);
+
   // Enhanced step configuration
   const stepConfig = [
     {
@@ -127,10 +376,10 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     },
     {
       id: 2,
-      title: "Visual Identity",
-      description: "Choose your app's look and feel",
+      title: "Visual Identity & Tool Selection",
+      description: "Choose your app's look, feel, and development tool",
       icon: <Palette className="h-5 w-5" />,
-      fields: ["theme", "designStyle", "colorPreference"]
+      fields: ["theme", "designStyle", "colorPreference", "selectedTool"]
     },
     {
       id: 3,
@@ -487,23 +736,22 @@ Structure this as actionable implementation steps that can be directly applied i
     const startTime = Date.now();
 
     try {
-      // Create framework generation request
-      const frameworkRequest: FrameworkGenerationRequest = {
-        appName: wizardData.step1.appName,
-        appType: wizardData.step1.appType,
-        description: enhancedData.description,
-        platforms: wizardData.step3.platforms,
-        theme: wizardData.step2.theme,
-        designStyle: wizardData.step2.designStyle,
-        targetAudience: enhancedData.targetAudience,
-        keyFeatures: enhancedData.keyFeatures,
-        complexity: enhancedData.keyFeatures.length > 5 ? 'complex' :
-                   enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple'
-      };
+      // Generate Universal Prompt Template for comprehensive app blueprint
+      const universalPrompt = UniversalPromptTemplateService.generateUniversalPrompt(
+        wizardData.userPrompt,
+        wizardData,
+        universalConfig,
+        wizardData.step2.selectedTool
+      );
 
-      // Generate comprehensive framework
-      const framework = await FrameworkGeneratorService.generateFramework(frameworkRequest);
-      setGeneratedFramework(framework);
+      // Use the universal prompt to generate comprehensive framework via AI
+      const aiResponse = await geminiService.generateText(universalPrompt, {
+        maxTokens: 4000, // Increased for comprehensive response
+        temperature: 0.7
+      });
+
+      // Parse the comprehensive AI response
+      const framework = parseComprehensiveFrameworkResponse(aiResponse.text, universalConfig);
 
       // Set the generated prompts
       setFrameworkPrompt(framework.prompts.framework);
@@ -539,12 +787,14 @@ Structure this as actionable implementation steps that can be directly applied i
         icon: "🛠️",
         bestFor: bt.tool.bestFor
       }));
-      setRecommendedTools(toolsForRecommendation);
+      setRecommendedBuilderTools(toolsForRecommendation);
 
       // Track successful framework generation
+      const complexity = enhancedData.keyFeatures.length > 5 ? 'complex' :
+                        enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple';
       analytics.trackFrameworkGeneration(
         wizardData.step1.appType,
-        frameworkRequest.complexity,
+        complexity,
         startTime,
         true
       );
@@ -671,32 +921,89 @@ Structure this as actionable implementation steps that can be directly applied i
     }
   };
 
-  const handleGeneratePagePrompt = (pageIndex: number) => {
-    const updatedPrompts = [...pagePrompts];
-    updatedPrompts[pageIndex].generated = true;
-    setPagePrompts(updatedPrompts);
+  const handleGeneratePagePrompt = async (pageIndex: number) => {
+    const currentPage = pagePrompts[pageIndex];
+    if (!currentPage) return;
 
-    toast({
-      title: "Page Prompt Ready!",
-      description: `UI prompt for ${updatedPrompts[pageIndex].pageName} is ready to copy.`
-    });
+    try {
+      // Generate RAG-enhanced page prompt
+      const ragResult = await generateRAGEnhancedPrompt({
+        type: 'page',
+        wizardData,
+        selectedTool: wizardData.step2.selectedTool,
+        additionalContext: {
+          pageName: currentPage.pageName,
+          pageData: {
+            description: `UI design for ${currentPage.pageName}`,
+            components: currentPage.components,
+            layout: currentPage.layout
+          }
+        }
+      });
+
+      // Update the page prompt with RAG-enhanced version
+      const updatedPrompts = [...pagePrompts];
+      updatedPrompts[pageIndex] = {
+        ...updatedPrompts[pageIndex],
+        prompt: ragResult.prompt,
+        generated: true
+      };
+      setPagePrompts(updatedPrompts);
+
+      toast({
+        title: "Enhanced Page Prompt Ready!",
+        description: `RAG-enhanced UI prompt for ${currentPage.pageName} is ready to copy.`
+      });
+    } catch (error) {
+      console.error('Failed to generate enhanced page prompt:', error);
+
+      // Fallback to marking as generated
+      const updatedPrompts = [...pagePrompts];
+      updatedPrompts[pageIndex].generated = true;
+      setPagePrompts(updatedPrompts);
+
+      toast({
+        title: "Page Prompt Ready!",
+        description: `UI prompt for ${currentPage.pageName} is ready to copy.`,
+        variant: "default"
+      });
+    }
   };
 
-  const handleGenerateLinking = () => {
-    // Use enhanced template system for navigation
-    const prompt = MVPPromptTemplateService.generateNavigationPrompt(
-      pagePrompts,
-      wizardData,
-      'sidebar', // Default navigation type - could be dynamic based on app type
-      recommendedTools[0]?.name.toLowerCase() || 'framer'
-    );
-    setLinkingPrompt(prompt);
-    setPromptFlow('linking');
+  const handleGenerateLinking = async () => {
+    try {
+      // Generate RAG-enhanced linking prompt
+      const ragResult = await generateRAGEnhancedPrompt({
+        type: 'linking',
+        wizardData,
+        selectedTool: wizardData.step2.selectedTool,
+        additionalContext: {
+          pageNames: pagePrompts.map(p => p.pageName)
+        }
+      });
 
-    toast({
-      title: "Navigation Prompt Generated!",
-      description: "Your comprehensive navigation and linking prompt is ready with builder-specific instructions."
-    });
+      setLinkingPrompt(ragResult.prompt);
+      setPromptFlow('linking');
+
+      toast({
+        title: "Enhanced Navigation Prompt Generated!",
+        description: wizardData.step2.selectedTool
+          ? `RAG-enhanced navigation prompt optimized for ${wizardData.step2.selectedTool} is ready.`
+          : "Comprehensive navigation and linking prompt is ready."
+      });
+    } catch (error) {
+      console.error('Failed to generate enhanced linking prompt:', error);
+
+      // Fallback to basic linking prompt
+      const basicPrompt = generateLinkingPrompt(pagePrompts.map(p => p.pageName), wizardData);
+      setLinkingPrompt(basicPrompt);
+      setPromptFlow('linking');
+
+      toast({
+        title: "Navigation Prompt Generated!",
+        description: "Your navigation and linking prompt is ready."
+      });
+    }
   };
 
   const handleComplete = () => {
@@ -716,7 +1023,7 @@ Structure this as actionable implementation steps that can be directly applied i
         typography: "Inter, sans-serif",
         spacing: "8px grid system"
       },
-      recommendedTools: recommendedTools.map(tool => ({
+      recommendedTools: recommendedBuilderTools.map(tool => ({
         name: tool.name,
         description: tool.description,
         pros: tool.bestFor,
@@ -769,24 +1076,24 @@ Structure this as actionable implementation steps that can be directly applied i
   };
 
   const getRecommendedBuilderForCurrentPrompt = () => {
-    if (recommendedTools.length === 0) return null;
+    if (recommendedBuilderTools.length === 0) return null;
 
     // Return the most suitable tool based on current stage
     if (promptStage === 'framework') {
-      return recommendedTools.find(tool =>
+      return recommendedBuilderTools.find(tool =>
         tool.name.toLowerCase().includes('framer') ||
         tool.name.toLowerCase().includes('figma')
-      ) || recommendedTools[0];
+      ) || recommendedBuilderTools[0];
     }
 
     if (promptStage === 'page') {
-      return recommendedTools.find(tool =>
+      return recommendedBuilderTools.find(tool =>
         tool.name.toLowerCase().includes('flutterflow') ||
         tool.name.toLowerCase().includes('framer')
-      ) || recommendedTools[0];
+      ) || recommendedBuilderTools[0];
     }
 
-    return recommendedTools[0];
+    return recommendedBuilderTools[0];
   };
 
   const openInBuilder = (tool: BuilderTool) => {
@@ -1030,6 +1337,88 @@ Structure this as actionable implementation steps that can be directly applied i
                     className="mt-2"
                   />
                   <p className="text-sm text-muted-foreground mt-1">Describe your preferred color scheme</p>
+                </div>
+
+                {/* RAG Tool Selection */}
+                <div>
+                  <Label className="text-base font-medium">Development Tool (Optional)</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Choose a specific tool to optimize your prompts for. This will generate tool-specific instructions and best practices.
+                  </p>
+
+                  {filteredTools.length === 0 ? (
+                    <div className="p-4 border rounded-lg bg-muted/20">
+                      <p className="text-sm text-muted-foreground">
+                        No compatible tools found for {wizardData.step1.appType.replace('-', ' ')} on {wizardData.step3.platforms.join(', ')}.
+                        You can still proceed - tool selection will be available after choosing platforms in Step 3.
+                      </p>
+                    </div>
+                  ) : (
+                    <RadioGroup
+                      value={wizardData.step2.selectedTool || ""}
+                      onValueChange={(value) => setWizardData({
+                        ...wizardData,
+                        step2: { ...wizardData.step2, selectedTool: value as RAGTool }
+                      })}
+                      className="grid grid-cols-1 gap-3"
+                    >
+                      {/* No tool selected option */}
+                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <RadioGroupItem value="" id="no-tool" />
+                        <Label htmlFor="no-tool" className="flex items-center gap-3 cursor-pointer flex-1">
+                          <div className="p-2 bg-gray-500/10 rounded-md">
+                            <Zap className="h-5 w-5 text-gray-500" />
+                          </div>
+                          <div>
+                            <div className="font-medium">No Specific Tool</div>
+                            <div className="text-sm text-muted-foreground">Generate general prompts that work with any tool</div>
+                          </div>
+                        </Label>
+                      </div>
+
+                      {/* Available RAG tools */}
+                      {filteredTools.map((tool) => (
+                        <div key={tool.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <RadioGroupItem value={tool.id} id={`tool-${tool.id}`} />
+                          <Label htmlFor={`tool-${tool.id}`} className="flex items-center gap-3 cursor-pointer flex-1">
+                            <div className="p-2 bg-primary/10 rounded-md">
+                              <span className="text-lg">{tool.icon}</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="font-medium">{tool.name}</div>
+                                <Badge variant="outline" className="text-xs">
+                                  {tool.category}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs">
+                                  {tool.complexity}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground mt-1">{tool.description}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Best for: {tool.bestFor.slice(0, 3).join(', ')}
+                                {tool.bestFor.length > 3 && ` +${tool.bestFor.length - 3} more`}
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+
+                  {wizardData.step2.selectedTool && (
+                    <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          Tool Selected: {filteredTools.find(t => t.id === wizardData.step2.selectedTool)?.name}
+                        </span>
+                      </div>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        Your prompts will be optimized with tool-specific documentation, best practices, and constraints.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
