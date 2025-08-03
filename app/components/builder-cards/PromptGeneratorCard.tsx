@@ -182,7 +182,7 @@ ${prompt.responsiveNotes || '- Adapts to different screen sizes\n- Maintains usa
 **Visual Hierarchy**:
 ${prompt.visualHierarchy || '- Primary actions prominently displayed\n- Secondary elements appropriately sized\n- Clear content organization'}
 
-**Components & Elements**:
+### 🧩 Components & Elements
 ${prompt.components}`;
 
     // Add RAG-enhanced component recommendations
