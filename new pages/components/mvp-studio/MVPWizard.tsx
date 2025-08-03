@@ -311,7 +311,6 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     const loadAvailableTools = async () => {
       try {
         const tools = getAllRAGToolProfiles();
-        console.log('Loaded RAG tools:', tools.length, tools.map(t => t.name));
         setAvailableTools(tools);
 
         // Apply initial filtering based on current wizard data
@@ -328,7 +327,6 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
           return appTypeMatch && platformMatch;
         });
 
-        console.log('Filtered RAG tools:', filtered.length, filtered.map(t => t.name));
         setFilteredTools(filtered);
       } catch (error) {
         console.error('Failed to load RAG tools:', error);
@@ -360,7 +358,6 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
       return appTypeMatch && platformMatch;
     });
 
-    console.log('Re-filtering tools for step', currentStep, ':', filtered.length, 'tools available');
     setFilteredTools(filtered);
 
     // Get recommended tools for current selection
