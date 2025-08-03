@@ -254,7 +254,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Repository Status**: ✅ **FULLY UPDATED** with RAG Integration and Universal Prompt Template
 
-There are several ways of editing your application.
+## How can I edit this code?
 
 **Use Lovable**
 
