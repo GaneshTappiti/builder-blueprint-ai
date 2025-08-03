@@ -92,6 +92,7 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
   // RAG tool state
   const [availableTools, setAvailableTools] = useState<RAGToolProfile[]>([]);
   const [filteredTools, setFilteredTools] = useState<RAGToolProfile[]>([]);
+  const [ragRecommendations, setRagRecommendations] = useState<{ tool: RAGToolProfile; reason: string; confidence: number }[]>([]);
 
   // Enhanced wizard state for better UX
   const [enhancedData, setEnhancedData] = useState<EnhancedWizardData>({
@@ -369,11 +370,29 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     setFilteredTools(sortedFiltered);
   }, [wizardData.step1.appType, wizardData.step3.platforms, availableTools, enhancedData.description, currentStep]);
 
-  // Helper function to score tool recommendations
+  // Generate RAG-enhanced recommendations when description or features change
+  useEffect(() => {
+    const generateRecommendations = async () => {
+      if (currentStep === 2 && (enhancedData.description || enhancedData.keyFeatures.length > 0)) {
+        try {
+          const recommendations = await generateRAGToolRecommendations();
+          setRagRecommendations(recommendations);
+        } catch (error) {
+          console.error('Failed to generate RAG recommendations:', error);
+        }
+      }
+    };
+
+    // Debounce the recommendation generation
+    const timeoutId = setTimeout(generateRecommendations, 500);
+    return () => clearTimeout(timeoutId);
+  }, [enhancedData.description, enhancedData.keyFeatures, currentStep, filteredTools]);
+
+  // Enhanced RAG-powered tool recommendation scoring
   const getToolRecommendationScore = (tool: RAGToolProfile, appType: AppType): number => {
     let score = 0;
 
-    // Higher score for tools that are perfect matches for the app type
+    // Base scoring for app type compatibility
     if (appType === 'web-app') {
       if (['lovable', 'bolt', 'cursor', 'v0'].includes(tool.id)) score += 3;
       if (['framer', 'bubble'].includes(tool.id)) score += 2;
@@ -385,10 +404,112 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
       if (['bubble', 'framer'].includes(tool.id)) score += 2;
     }
 
-    // Bonus for beginner-friendly tools
+    // Enhanced scoring based on project description and features
+    const description = enhancedData.description.toLowerCase();
+    const keyFeatures = enhancedData.keyFeatures.map(f => f.toLowerCase());
+
+    // AI/ML features boost
+    if (description.includes('ai') || description.includes('machine learning') ||
+        keyFeatures.some(f => f.includes('ai') || f.includes('ml'))) {
+      if (['cursor', 'lovable', 'bolt'].includes(tool.id)) score += 2;
+    }
+
+    // Real-time features boost
+    if (description.includes('real-time') || description.includes('live') ||
+        keyFeatures.some(f => f.includes('real-time') || f.includes('live'))) {
+      if (['lovable', 'bolt'].includes(tool.id)) score += 1;
+    }
+
+    // E-commerce features boost
+    if (description.includes('ecommerce') || description.includes('shop') || description.includes('payment') ||
+        keyFeatures.some(f => f.includes('shop') || f.includes('payment') || f.includes('cart'))) {
+      if (['bubble', 'framer'].includes(tool.id)) score += 2;
+    }
+
+    // Complex UI/Animation boost
+    if (description.includes('animation') || description.includes('interactive') ||
+        keyFeatures.some(f => f.includes('animation') || f.includes('interactive'))) {
+      if (['framer', 'v0'].includes(tool.id)) score += 2;
+    }
+
+    // Beginner-friendly bonus
     if (tool.complexity === 'beginner') score += 1;
 
+    // Platform-specific bonuses
+    if (wizardData.step3.platforms.includes('mobile') && tool.platforms.includes('mobile')) {
+      score += 1;
+    }
+
     return score;
+  };
+
+  // RAG-enhanced tool recommendation with contextual insights
+  const generateRAGToolRecommendations = async (): Promise<{ tool: RAGToolProfile; reason: string; confidence: number }[]> => {
+    if (!enhancedData.description && enhancedData.keyFeatures.length === 0) {
+      // Return basic recommendations if no description available
+      return filteredTools.slice(0, 3).map(tool => ({
+        tool,
+        reason: `Great choice for ${wizardData.step1.appType.replace('-', ' ')} development`,
+        confidence: 0.7
+      }));
+    }
+
+    try {
+      // Use RAG context to generate intelligent recommendations
+      const projectContext = `
+        App Type: ${wizardData.step1.appType}
+        Description: ${enhancedData.description}
+        Key Features: ${enhancedData.keyFeatures.join(', ')}
+        Target Platforms: ${wizardData.step3.platforms.join(', ')}
+        Target Audience: ${enhancedData.targetAudience}
+      `;
+
+      // Score and rank tools with enhanced context
+      const scoredTools = filteredTools.map(tool => {
+        const baseScore = getToolRecommendationScore(tool, wizardData.step1.appType);
+
+        // Generate contextual reason for recommendation
+        let reason = `Excellent for ${wizardData.step1.appType.replace('-', ' ')} development`;
+        let confidence = 0.8;
+
+        // Add specific reasons based on tool strengths and project needs
+        if (tool.id === 'lovable' && (enhancedData.description.includes('rapid') || enhancedData.description.includes('fast'))) {
+          reason = 'Perfect for rapid prototyping and fast development cycles';
+          confidence = 0.95;
+        } else if (tool.id === 'cursor' && enhancedData.description.includes('complex')) {
+          reason = 'Ideal for complex applications with AI-assisted coding';
+          confidence = 0.9;
+        } else if (tool.id === 'framer' && enhancedData.description.includes('design')) {
+          reason = 'Best for design-heavy applications with rich interactions';
+          confidence = 0.9;
+        } else if (tool.id === 'flutterflow' && wizardData.step3.platforms.includes('mobile')) {
+          reason = 'Top choice for cross-platform mobile development';
+          confidence = 0.95;
+        }
+
+        return {
+          tool,
+          reason,
+          confidence,
+          score: baseScore
+        };
+      });
+
+      // Return top 3 recommendations sorted by score
+      return scoredTools
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(({ tool, reason, confidence }) => ({ tool, reason, confidence }));
+
+    } catch (error) {
+      console.error('Failed to generate RAG tool recommendations:', error);
+      // Fallback to basic recommendations
+      return filteredTools.slice(0, 3).map(tool => ({
+        tool,
+        reason: `Recommended for ${wizardData.step1.appType.replace('-', ' ')} development`,
+        confidence: 0.7
+      }));
+    }
   };
 
   // Update universal config based on app type selection
@@ -773,22 +894,79 @@ Structure this as actionable implementation steps that can be directly applied i
     const startTime = Date.now();
 
     try {
-      // Generate Universal Prompt Template for comprehensive app blueprint
-      const universalPrompt = UniversalPromptTemplateService.generateUniversalPrompt(
-        wizardData.userPrompt,
-        wizardData,
-        universalConfig,
-        wizardData.step2.selectedTool
-      );
+      let framework: any;
 
-      // Use the universal prompt to generate comprehensive framework via AI
-      const aiResponse = await geminiService.generateText(universalPrompt, {
-        maxTokens: 4000, // Increased for comprehensive response
-        temperature: 0.7
-      });
+      // Use RAG-enhanced generation if a tool is selected
+      if (wizardData.step2.selectedTool) {
+        try {
+          // Generate RAG-enhanced framework prompt
+          const ragResult = await generateRAGEnhancedPrompt({
+            type: 'framework',
+            wizardData,
+            selectedTool: wizardData.step2.selectedTool,
+            additionalContext: {
+              userPrompt: wizardData.userPrompt
+            }
+          });
 
-      // Parse the comprehensive AI response
-      const framework = parseComprehensiveFrameworkResponse(aiResponse.text, universalConfig);
+          // Use the RAG-enhanced prompt to generate framework
+          const aiResponse = await geminiService.generateText(ragResult.prompt, {
+            maxTokens: 4000,
+            temperature: 0.7
+          });
+
+          // Parse the RAG-enhanced response
+          framework = parseComprehensiveFrameworkResponse(aiResponse.text, universalConfig);
+
+          // Add RAG metadata to framework
+          framework.metadata = {
+            ...framework.metadata,
+            ragEnhanced: true,
+            toolUsed: wizardData.step2.selectedTool,
+            confidence: ragResult.confidence,
+            sources: ragResult.sources,
+            toolSpecificOptimizations: ragResult.toolSpecificOptimizations
+          };
+
+          toast({
+            title: "🧠 RAG-Enhanced Framework Generated!",
+            description: `Framework optimized for ${wizardData.step2.selectedTool} with ${ragResult.sources.length} documentation sources.`
+          });
+
+        } catch (ragError) {
+          console.error('RAG framework generation failed, falling back to universal prompt:', ragError);
+
+          // Fallback to universal prompt if RAG fails
+          const universalPrompt = UniversalPromptTemplateService.generateUniversalPrompt(
+            wizardData.userPrompt,
+            wizardData,
+            universalConfig,
+            wizardData.step2.selectedTool
+          );
+
+          const aiResponse = await geminiService.generateText(universalPrompt, {
+            maxTokens: 4000,
+            temperature: 0.7
+          });
+
+          framework = parseComprehensiveFrameworkResponse(aiResponse.text, universalConfig);
+        }
+      } else {
+        // Use universal prompt template for generic generation
+        const universalPrompt = UniversalPromptTemplateService.generateUniversalPrompt(
+          wizardData.userPrompt,
+          wizardData,
+          universalConfig,
+          wizardData.step2.selectedTool
+        );
+
+        const aiResponse = await geminiService.generateText(universalPrompt, {
+          maxTokens: 4000,
+          temperature: 0.7
+        });
+
+        framework = parseComprehensiveFrameworkResponse(aiResponse.text, universalConfig);
+      }
 
       // Set the generated prompts
       setFrameworkPrompt(framework.prompts.framework);
@@ -1383,8 +1561,46 @@ Structure this as actionable implementation steps that can be directly applied i
                     Choose a specific tool to optimize your prompts for. This will generate tool-specific instructions and best practices.
                   </p>
 
-                  {/* Quick Recommendations */}
-                  {filteredTools.length > 0 && (
+                  {/* RAG-Enhanced Recommendations */}
+                  {ragRecommendations.length > 0 ? (
+                    <div className="mb-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Brain className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          AI-Powered Recommendations
+                        </span>
+                        <Badge variant="secondary" className="text-xs">RAG Enhanced</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {ragRecommendations.map((rec, index) => (
+                          <div
+                            key={rec.tool.id}
+                            className="flex items-center justify-between p-2 bg-white/50 dark:bg-gray-800/50 rounded-md hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+                            onClick={() => setWizardData({
+                              ...wizardData,
+                              step2: { ...wizardData.step2, selectedTool: rec.tool.id }
+                            })}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">{rec.tool.icon}</span>
+                                <div>
+                                  <div className="font-medium text-sm">{rec.tool.name}</div>
+                                  <div className="text-xs text-muted-foreground">{rec.reason}</div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-xs text-green-600 dark:text-green-400">
+                                {Math.round(rec.confidence * 100)}% match
+                              </div>
+                              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : filteredTools.length > 0 && (
                     <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <Sparkles className="h-4 w-4 text-blue-500" />
