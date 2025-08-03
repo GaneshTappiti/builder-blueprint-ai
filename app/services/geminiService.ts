@@ -31,6 +31,19 @@ export interface ValidationResult {
 }
 
 export const geminiService = {
+  // Generate embeddings for RAG (fallback method)
+  async generateEmbedding(text: string): Promise<number[] | null> {
+    try {
+      // Note: Gemini doesn't have direct embedding API like OpenAI
+      // This is a placeholder that returns null to trigger fallback
+      // In production, you'd use a dedicated embedding service
+      return null;
+    } catch (error) {
+      console.warn('Embedding generation failed:', error);
+      return null;
+    }
+  },
+
   // Generate text using Gemini AI
   async generateText(prompt: string, options?: {
     maxTokens?: number;

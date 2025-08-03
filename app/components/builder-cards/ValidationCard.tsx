@@ -1,15 +1,20 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, CheckCircle, Users, MessageSquare, Target } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, CheckCircle, Users, MessageSquare, Target, Zap, Wrench } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
+import { RAGTool, RAGToolProfile } from "@/types/ideaforge";
+import { getAllRAGToolProfiles } from "@/services/ragToolProfiles";
+import { RAGContextInjector } from "@/services/ragContextInjector";
 
 const validationQuestions = [
   {
@@ -33,6 +38,10 @@ export function ValidationCard() {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Tool selection state
+  const [availableTools, setAvailableTools] = useState<RAGToolProfile[]>([]);
+  const [filteredTools, setFilteredTools] = useState<RAGToolProfile[]>([]);
+
   // Blueprint customization options
   const [blueprintOptions, setBlueprintOptions] = useState({
     appType: state.appIdea.platforms.includes('mobile') ? 'mobile' : 'web',
@@ -42,8 +51,64 @@ export function ValidationCard() {
     includeIntegrations: true
   });
 
+  // Load available tools on component mount
+  useEffect(() => {
+    const tools = getAllRAGToolProfiles();
+    setAvailableTools(tools);
+  }, []);
+
+  // Filter tools based on app type and platforms
+  useEffect(() => {
+    if (availableTools.length === 0) return;
+
+    const appType = state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app';
+    const platforms = state.appIdea.platforms.length > 0 ? state.appIdea.platforms : ['web'];
+
+    const filtered = availableTools.filter(tool => {
+      // Filter by app type compatibility - be more flexible with matching
+      const appTypeMatch = tool.appTypes.some(toolAppType =>
+        toolAppType === appType ||
+        (appType === 'web-app' && (toolAppType === 'web-app' || toolAppType === 'saas-tool')) ||
+        (appType === 'mobile-app' && (toolAppType === 'mobile-app' || toolAppType === 'hybrid'))
+      );
+
+      // Filter by platform compatibility
+      const platformMatch = platforms.some(platform =>
+        tool.platforms.includes(platform as any) ||
+        tool.platforms.includes('cross-platform' as any)
+      );
+
+      return appTypeMatch || platformMatch; // Use OR to be more inclusive
+    });
+
+    setFilteredTools(filtered);
+  }, [availableTools, state.appIdea.platforms]);
+
   const handleCheckboxChange = (field: 'hasValidated' | 'hasDiscussed', checked: boolean) => {
     dispatch(builderActions.updateValidation({ [field]: checked }));
+  };
+
+  const handleToolSelection = async (toolId: string) => {
+    const selectedTool = toolId === '' ? undefined : toolId as RAGTool;
+    dispatch(builderActions.updateValidation({ selectedTool }));
+
+    // Enhance with RAG context (background process, doesn't affect UI)
+    if (selectedTool) {
+      try {
+        const ragContext = await RAGContextInjector.getContextForStage({
+          stage: 'tool_selection',
+          toolId: selectedTool,
+          appIdea: state.appIdea.ideaDescription,
+          appType: state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app',
+          platforms: state.appIdea.platforms
+        });
+
+        // Store RAG context for later use (could be added to builder state if needed)
+        console.log('RAG Context loaded for tool selection:', ragContext);
+      } catch (error) {
+        console.warn('Failed to load RAG context:', error);
+      }
+    }
   };
 
   const generateBlueprint = async () => {
@@ -84,7 +149,23 @@ export function ValidationCard() {
       dispatch(builderActions.setGenerationProgress(step.progress));
     }
 
-    // Generate comprehensive blueprint using AI
+    // Get RAG context for blueprint generation
+    let ragContext = null;
+    if (state.validationQuestions.selectedTool) {
+      try {
+        ragContext = await RAGContextInjector.getContextForStage({
+          stage: 'blueprint_generation',
+          toolId: state.validationQuestions.selectedTool,
+          appIdea: state.appIdea.ideaDescription,
+          appType: state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app',
+          platforms: state.appIdea.platforms
+        });
+      } catch (error) {
+        console.warn('Failed to load RAG context for blueprint:', error);
+      }
+    }
+
+    // Generate comprehensive blueprint using AI with RAG context
     try {
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -99,6 +180,16 @@ export function ValidationCard() {
             platforms: state.appIdea.platforms,
             designStyle: state.appIdea.designStyle,
             targetAudience: state.appIdea.targetAudience,
+            selectedTool: state.validationQuestions.selectedTool,
+            toolProfile: state.validationQuestions.selectedTool ?
+              availableTools.find(tool => tool.id === state.validationQuestions.selectedTool) : null,
+            // Inject RAG context to enhance generation
+            ragContext: ragContext ? {
+              toolSpecificGuidance: ragContext.toolSpecificContext,
+              architecturePatterns: ragContext.architecturePatterns,
+              bestPractices: ragContext.bestPractices,
+              optimizationTips: ragContext.optimizationTips
+            } : null,
             ...blueprintOptions
           })
         }),
@@ -466,6 +557,83 @@ export function ValidationCard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Tool Selection Section */}
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-blue-400" />
+            Development Tool Selection
+          </CardTitle>
+          <p className="text-sm text-gray-400">
+            Choose your preferred development tool for optimized prompts (optional)
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {filteredTools.length === 0 ? (
+            <div className="p-4 border rounded-lg bg-muted/20">
+              <p className="text-sm text-muted-foreground">
+                No compatible tools found for {state.appIdea.platforms.includes('mobile') ? 'mobile' : 'web'} apps.
+                You can still proceed - general prompts will be generated.
+              </p>
+            </div>
+          ) : (
+            <RadioGroup
+              value={state.validationQuestions.selectedTool || ""}
+              onValueChange={handleToolSelection}
+              className="grid grid-cols-1 gap-3"
+            >
+              {/* No tool selected option */}
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value="" id="no-tool" />
+                <Label htmlFor="no-tool" className="flex items-center gap-3 cursor-pointer flex-1">
+                  <div className="p-2 bg-gray-500/10 rounded-md">
+                    <Zap className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-white">No Specific Tool</div>
+                    <div className="text-sm text-muted-foreground">Generate general prompts that work with any tool</div>
+                  </div>
+                </Label>
+              </div>
+
+              {/* Available RAG tools */}
+              {filteredTools.slice(0, 6).map((tool) => (
+                <div key={tool.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value={tool.id} id={`tool-${tool.id}`} />
+                  <Label htmlFor={`tool-${tool.id}`} className="flex items-center gap-3 cursor-pointer flex-1">
+                    <div className="p-2 bg-primary/10 rounded-md">
+                      <span className="text-lg">{tool.icon}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-white">{tool.name}</div>
+                        <Badge variant="outline" className="text-xs">
+                          {tool.category}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {tool.complexity}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{tool.description}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Best for: {tool.bestFor.slice(0, 2).join(', ')}
+                        {tool.bestFor.length > 2 && '...'}
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+              ))}
+
+              {filteredTools.length > 6 && (
+                <div className="text-center text-sm text-muted-foreground">
+                  And {filteredTools.length - 6} more tools available...
+                </div>
+              )}
+            </RadioGroup>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Blueprint Customization Options */}
       <Card className="bg-black/40 backdrop-blur-sm border-white/10">

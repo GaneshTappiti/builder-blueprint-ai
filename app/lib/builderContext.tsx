@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { RAGTool } from '@/types/ideaforge';
 
 // Types for the builder state
 export interface AppIdea {
@@ -16,6 +17,7 @@ export interface ValidationQuestions {
   hasValidated: boolean;
   hasDiscussed: boolean;
   motivation: string;
+  selectedTool?: RAGTool;
 }
 
 export interface Screen {
@@ -170,7 +172,8 @@ const initialState: BuilderState = {
   validationQuestions: {
     hasValidated: false,
     hasDiscussed: false,
-    motivation: ''
+    motivation: '',
+    selectedTool: undefined
   },
   appBlueprint: null,
   screenPrompts: [],
