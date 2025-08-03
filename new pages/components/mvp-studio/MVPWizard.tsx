@@ -47,16 +47,35 @@ import {
   RAGTool,
   RAGToolProfile
 } from "@/types/ideaforge";
+
+// Define missing types
+interface GeneratedFramework {
+  prompts: {
+    framework: string;
+    pages: PagePrompt[];
+    linking: string;
+  };
+  recommendedTools: BuilderTool[];
+  metadata: {
+    generatedAt: string;
+    toolUsed?: RAGTool;
+    confidence: number;
+    totalScreens?: number;
+    complexity?: string;
+    userRoles?: number;
+  };
+  builderTools?: any[];
+  pages?: any[];
+}
 import { getAllRAGToolProfiles, getRecommendedTools } from "@/services/ragToolProfiles";
 import { generateRAGEnhancedPrompt } from "@/services/ragEnhancedGenerator";
 import { geminiService } from "@/services/geminiService";
 import { UniversalPromptTemplateService, DEFAULT_CONFIGS } from "@/services/universalPromptTemplate";
 import { ComprehensiveResponseParser } from "@/services/comprehensiveResponseParser";
-import { MVPPromptTemplateService } from "@/services/mvpPromptTemplates";
-import { FrameworkGeneratorService, FrameworkGenerationRequest, GeneratedFramework, parseFrameworkResponse } from "@/services/frameworkGenerator";
+// import { MVPPromptTemplateService } from "@/services/mvpPromptTemplates";
+// import { FrameworkGeneratorService, FrameworkGenerationRequest, GeneratedFramework, parseFrameworkResponse } from "@/services/frameworkGenerator";
 import PagePromptGenerator from "./PagePromptGenerator";
 import ExportablePromptsSystem from "./ExportablePromptsSystem";
-import { useAnalytics } from "@/services/mvpStudioAnalytics";
 import { AIRequest } from "@/types/aiProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -78,7 +97,6 @@ interface MVPWizardProps {
 const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const analytics = useAnalytics();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [wizardData, setWizardData] = useState<MVPWizardData>({
@@ -1007,18 +1025,18 @@ Structure this as actionable implementation steps that can be directly applied i
       // Track successful framework generation
       const complexity = enhancedData.keyFeatures.length > 5 ? 'complex' :
                         enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple';
-      analytics.trackFrameworkGeneration(
-        wizardData.step1.appType,
-        complexity,
-        startTime,
-        true
-      );
+      // analytics.trackFrameworkGeneration(
+      //   wizardData.step1.appType,
+      //   complexity,
+      //   startTime,
+      //   true
+      // );
 
       // Track tool recommendations
-      analytics.trackToolRecommendation(
-        wizardData.step1.appType,
-        framework.builderTools.map((bt: any) => bt.tool.name)
-      );
+      // analytics.trackToolRecommendation(
+      //   wizardData.step1.appType,
+      //   framework.builderTools.map((bt: any) => bt.tool.name)
+      // );
 
       setPromptFlow('pages');
       toast({
@@ -1038,14 +1056,14 @@ Structure this as actionable implementation steps that can be directly applied i
       });
 
       // Track failed framework generation
-      analytics.trackFrameworkGeneration(
-        wizardData.step1.appType,
-        enhancedData.keyFeatures.length > 5 ? 'complex' :
-        enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple',
-        startTime,
-        false,
-        errorMessage
-      );
+      // analytics.trackFrameworkGeneration(
+      //   wizardData.step1.appType,
+      //   enhancedData.keyFeatures.length > 5 ? 'complex' :
+      //   enhancedData.keyFeatures.length > 2 ? 'medium' : 'simple',
+      //   startTime,
+      //   false,
+      //   errorMessage
+      // );
     } finally {
       setIsGenerating(false);
     }
