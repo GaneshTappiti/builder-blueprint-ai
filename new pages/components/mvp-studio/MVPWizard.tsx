@@ -311,8 +311,25 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     const loadAvailableTools = async () => {
       try {
         const tools = getAllRAGToolProfiles();
+        console.log('Loaded RAG tools:', tools.length, tools.map(t => t.name));
         setAvailableTools(tools);
-        setFilteredTools(tools); // Initially show all tools
+
+        // Apply initial filtering based on current wizard data
+        const filtered = tools.filter(tool => {
+          // Filter by app type compatibility
+          const appTypeMatch = tool.appTypes.includes(wizardData.step1.appType);
+
+          // For stage 2, we should show tools compatible with the app type
+          // Platform filtering will be more restrictive after step 3
+          const platformMatch = currentStep <= 2 ? true :
+            (wizardData.step3.platforms.length === 0 ||
+            wizardData.step3.platforms.some(platform => tool.platforms.includes(platform)));
+
+          return appTypeMatch && platformMatch;
+        });
+
+        console.log('Filtered RAG tools:', filtered.length, filtered.map(t => t.name));
+        setFilteredTools(filtered);
       } catch (error) {
         console.error('Failed to load RAG tools:', error);
         toast({
@@ -324,9 +341,9 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
     };
 
     loadAvailableTools();
-  }, []);
+  }, [wizardData.step1.appType, currentStep]);
 
-  // Filter tools based on app type and platforms
+  // Filter tools based on app type and platforms when data changes
   useEffect(() => {
     if (availableTools.length === 0) return;
 
@@ -334,13 +351,16 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
       // Filter by app type compatibility
       const appTypeMatch = tool.appTypes.includes(wizardData.step1.appType);
 
-      // Filter by platform compatibility
-      const platformMatch = wizardData.step3.platforms.length === 0 ||
-        wizardData.step3.platforms.some(platform => tool.platforms.includes(platform));
+      // For stage 2, show all tools compatible with app type
+      // For stage 3+, also filter by platform compatibility
+      const platformMatch = currentStep <= 2 ? true :
+        (wizardData.step3.platforms.length === 0 ||
+        wizardData.step3.platforms.some(platform => tool.platforms.includes(platform)));
 
       return appTypeMatch && platformMatch;
     });
 
+    console.log('Re-filtering tools for step', currentStep, ':', filtered.length, 'tools available');
     setFilteredTools(filtered);
 
     // Get recommended tools for current selection
@@ -352,7 +372,7 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
       );
       // Note: This would be RAGToolProfile[], but we're keeping the existing logic
     }
-  }, [wizardData.step1.appType, wizardData.step3.platforms, availableTools, enhancedData.description]);
+  }, [wizardData.step1.appType, wizardData.step3.platforms, availableTools, enhancedData.description, currentStep]);
 
   // Update universal config based on app type selection
   useEffect(() => {
@@ -1346,12 +1366,21 @@ Structure this as actionable implementation steps that can be directly applied i
                     Choose a specific tool to optimize your prompts for. This will generate tool-specific instructions and best practices.
                   </p>
 
+
+
                   {filteredTools.length === 0 ? (
                     <div className="p-4 border rounded-lg bg-muted/20">
                       <p className="text-sm text-muted-foreground">
-                        No compatible tools found for {wizardData.step1.appType.replace('-', ' ')} on {wizardData.step3.platforms.join(', ')}.
-                        You can still proceed - tool selection will be available after choosing platforms in Step 3.
+                        {availableTools.length === 0
+                          ? "Loading development tools..."
+                          : `No compatible tools found for ${wizardData.step1.appType.replace('-', ' ')}. ${availableTools.length} tools available but none match current criteria.`
+                        }
                       </p>
+                      {availableTools.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          You can still proceed - more tools may become available after selecting platforms in Step 3.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <RadioGroup
