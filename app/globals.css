@@ -101,6 +101,14 @@
     will-change: auto;
   }
 
+  .workspace-input-enhanced {
+    @apply bg-black/50 border-white/20 text-white placeholder:text-gray-400;
+  }
+
+  .workspace-dropdown {
+    @apply bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl;
+  }
+
   .workspace-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30;
   }
