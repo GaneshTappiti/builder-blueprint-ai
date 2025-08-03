@@ -1,4 +1,4 @@
-import { RAGTool, RAGContext, AppType, Platform } from '@/types/ideaforge';
+import { RAGTool, RAGContext, AppType, Platform, RAG_TOOLS } from '@/types/ideaforge';
 import { getRAGToolProfile } from './ragToolProfiles';
 import { geminiService } from './geminiService';
 import fs from 'fs';
@@ -157,16 +157,15 @@ Format as JSON:
 
       return {
         toolId,
-        toolProfile,
         relevantDocs: [
           documentation.mainPrompt,
           documentation.systemPrompt,
           ...(documentation.guides || [])
-        ].filter(Boolean),
+        ].filter(Boolean) as string[],
         toolSpecificPrompts: [
           documentation.mainPrompt,
           documentation.agentPrompt
-        ].filter(Boolean),
+        ].filter(Boolean) as string[],
         optimizationTips: parsedContext.optimizationTips || [
           `Leverage ${toolProfile.name}'s strengths in ${toolProfile.bestFor[0]}`,
           `Follow ${toolProfile.category} best practices`,
@@ -176,16 +175,6 @@ Format as JSON:
           `Consider ${toolProfile.complexity} complexity level`,
           `Platform limitations: ${platforms.join(', ')}`,
           `Tool category: ${toolProfile.category}`
-        ],
-        bestPractices: parsedContext.bestPractices || [
-          `Follow ${toolProfile.name} documentation patterns`,
-          `Use tool-specific features effectively`,
-          `Maintain consistency with ${toolProfile.category} standards`
-        ],
-        commonPitfalls: parsedContext.commonPitfalls || [
-          `Avoid overcomplicating for ${toolProfile.complexity} users`,
-          `Don't ignore tool-specific constraints`,
-          `Ensure platform compatibility`
         ]
       };
 
@@ -195,13 +184,10 @@ Format as JSON:
       // Fallback context using documentation
       return {
         toolId,
-        toolProfile,
-        relevantDocs: [documentation.mainPrompt || ''].filter(Boolean),
-        toolSpecificPrompts: [documentation.mainPrompt || ''].filter(Boolean),
+        relevantDocs: [documentation.mainPrompt || ''].filter(Boolean) as string[],
+        toolSpecificPrompts: [documentation.mainPrompt || ''].filter(Boolean) as string[],
         optimizationTips: [`Use ${toolProfile.name} effectively for ${toolProfile.bestFor[0]}`],
-        constraints: [`Consider ${toolProfile.complexity} complexity`],
-        bestPractices: [`Follow ${toolProfile.category} standards`],
-        commonPitfalls: [`Avoid overcomplication`]
+        constraints: [`Consider ${toolProfile.complexity} complexity`]
       };
     }
   }
@@ -300,7 +286,7 @@ Format as JSON:
         .map(dirent => dirent.name)
         .filter(name => name.endsWith('_docs'))
         .map(name => name.replace('_docs', '') as RAGTool)
-        .filter(toolId => Object.values(RAGTool).includes(toolId as any));
+        .filter(toolId => RAG_TOOLS.includes(toolId));
 
       return folders;
     } catch (error) {

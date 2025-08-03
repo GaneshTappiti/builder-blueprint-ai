@@ -20,6 +20,25 @@ export type RAGTool =
   | 'manus'
   | 'same_dev';
 
+// Array of all available RAG tools for runtime checks
+export const RAG_TOOLS: RAGTool[] = [
+  'lovable',
+  'uizard',
+  'adalo',
+  'flutterflow',
+  'framer',
+  'bubble',
+  'bolt',
+  'cursor',
+  'cline',
+  'v0',
+  'devin',
+  'windsurf',
+  'roocode',
+  'manus',
+  'same_dev'
+];
+
 export interface RAGToolProfile {
   id: RAGTool;
   name: string;
