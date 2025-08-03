@@ -11,10 +11,12 @@ import {
   Target
 } from "lucide-react";
 import Link from "next/link";
+import ClientWrapper from "@/components/ClientWrapper";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-950">
+    <ClientWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-950">
       {/* Hero Section */}
       <div className="px-6 py-12">
         <div className="max-w-4xl mx-auto text-center mb-12">
@@ -170,5 +172,6 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+    </ClientWrapper>
   );
 }

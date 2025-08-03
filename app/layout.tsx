@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ReactQueryProvider } from './providers/ReactQueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -51,17 +52,21 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full">
       <body className={`${inter.className} antialiased h-full`}>
-        <ReactQueryProvider>
-          <AuthProvider>
-            <AdminProvider>
-              <TooltipProvider>
-                {children}
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </AdminProvider>
-          </AuthProvider>
-        </ReactQueryProvider>
+        <div id="__next" className="h-full">
+          <ErrorBoundary>
+            <ReactQueryProvider>
+              <AuthProvider>
+                <AdminProvider>
+                  <TooltipProvider>
+                    {children}
+                    <Toaster />
+                    <Sonner />
+                  </TooltipProvider>
+                </AdminProvider>
+              </AuthProvider>
+            </ReactQueryProvider>
+          </ErrorBoundary>
+        </div>
       </body>
     </html>
   )
