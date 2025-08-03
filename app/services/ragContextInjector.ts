@@ -29,7 +29,6 @@ export interface ContextQuery {
 }
 
 export class RAGContextInjector {
-  private static readonly RAG_DATA_PATH = './RAG/data';
   private static contextCache = new Map<string, RAGContextResult>();
 
   /**
@@ -37,7 +36,7 @@ export class RAGContextInjector {
    */
   static async getContextForStage(query: ContextQuery): Promise<RAGContextResult> {
     const cacheKey = this.generateCacheKey(query);
-    
+
     // Check cache first
     if (this.contextCache.has(cacheKey)) {
       return this.contextCache.get(cacheKey)!;

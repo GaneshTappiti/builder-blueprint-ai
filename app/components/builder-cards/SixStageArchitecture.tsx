@@ -114,9 +114,10 @@ interface SixStageArchitectureProps {
   className?: string;
   showOverview?: boolean;
   forceBuilderMode?: boolean;
+  onStartBuilder?: () => void;
 }
 
-export function SixStageArchitecture({ className = "", showOverview = true, forceBuilderMode = false }: SixStageArchitectureProps) {
+export function SixStageArchitecture({ className = "", showOverview = true, forceBuilderMode = false, onStartBuilder }: SixStageArchitectureProps) {
   const { state, dispatch } = useBuilder();
   const [viewMode, setViewMode] = useState<'overview' | 'builder'>(forceBuilderMode ? 'builder' : 'overview');
   const router = useRouter();
@@ -126,9 +127,14 @@ export function SixStageArchitecture({ className = "", showOverview = true, forc
   const totalProgress = (completedStages / 6) * 100;
 
   const handleStageClick = (stageId: number) => {
-    // Set the current stage and redirect to builder page
+    // Set the current stage and trigger wizard
     dispatch(builderActions.setCurrentCard(stageId));
-    router.push('/workspace/mvp-studio/builder');
+    if (onStartBuilder) {
+      onStartBuilder();
+    } else {
+      // Fallback to redirect if no callback provided
+      router.push('/workspace/mvp-studio/builder');
+    }
   };
 
   const handleStartBuilder = () => {
@@ -136,8 +142,12 @@ export function SixStageArchitecture({ className = "", showOverview = true, forc
     if (state.currentCard === 1) {
       dispatch(builderActions.setCurrentCard(1));
     }
-    // Redirect to MVP Studio builder page when clicking Start/Continue Building
-    router.push('/workspace/mvp-studio/builder');
+    // Use callback if provided, otherwise redirect
+    if (onStartBuilder) {
+      onStartBuilder();
+    } else {
+      router.push('/workspace/mvp-studio/builder');
+    }
   };
 
   const getStageStatus = (stageId: number) => {
