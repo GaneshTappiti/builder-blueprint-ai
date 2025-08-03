@@ -29,20 +29,25 @@ MVP Studio is a comprehensive AI-powered wizard that transforms app ideas into d
 ```
 app/
 ├── workspace/mvp-studio/
-│   ├── page.tsx                    # Main MVP Studio landing
+│   ├── page.tsx                    # Main MVP Studio with integrated wizard
 │   └── builder/
-│       └── page.tsx                # Wizard interface
+│       └── page.tsx                # Legacy builder page (fallback)
 ├── components/mvp-studio/
 │   ├── MVPResultsDisplay.tsx       # Results presentation
 │   └── index.ts                    # Component exports
+├── new pages/components/mvp-studio/
+│   ├── MVPWizard.tsx              # Main wizard with RAG integration
+│   ├── MVPWizardTypes.ts          # Wizard type definitions
+│   └── PagePromptGenerator.tsx     # Page prompt generation
 ├── services/
 │   ├── mvpPromptTemplates.ts       # Template generation service
-│   ├── frameworkGenerator.ts       # Framework generation logic
+│   ├── ragEnhancedGenerator.ts     # RAG-enhanced prompt generation
+│   ├── universalPromptTemplate.ts  # Universal prompt templates
 │   └── aiProviderService.ts        # AI provider integration
 ├── lib/
 │   └── mvpTemplates.ts             # Pre-built MVP templates
 └── types/
-    └── ideaforge.ts                # TypeScript interfaces
+    └── ideaforge.ts                # TypeScript interfaces with RAG types
 ```
 
 ## 🧠 AI-Powered Generation Process

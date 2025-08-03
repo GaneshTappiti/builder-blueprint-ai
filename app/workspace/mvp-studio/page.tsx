@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SixStageArchitecture } from "@/components/builder-cards/SixStageArchitecture";
 import { BuilderProvider } from "@/lib/builderContext";
-import { 
-  Sparkles, 
-  Zap, 
-  Brain, 
+import MVPWizard from "../../../new pages/components/mvp-studio/MVPWizard";
+import { MVPAnalysisResult } from "@/types/ideaforge";
+import {
+  Sparkles,
+  Zap,
+  Brain,
   ExternalLink,
   Layers,
   Target,
@@ -21,6 +23,8 @@ import {
 export default function MVPStudioPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardResults, setWizardResults] = useState<MVPAnalysisResult | null>(null);
 
   return (
     <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
@@ -91,13 +95,13 @@ export default function MVPStudioPage() {
             <div className="flex flex-wrap justify-center gap-4 mb-12">
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
-                onClick={() => router.push('/workspace/mvp-studio/builder')}
+                onClick={() => setShowWizard(true)}
               >
                 <Layers className="mr-2 h-4 w-4" />
-                Start 6-Stage Builder
+                Start MVP Wizard
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-green-500/30 hover:bg-green-500/10 text-white"
                 onClick={() => {
                   // Scroll to the MVP Templates section at the bottom
@@ -110,8 +114,8 @@ export default function MVPStudioPage() {
                 <Target className="mr-2 h-4 w-4" />
                 Browse Templates
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-green-500/30 hover:bg-green-500/10 text-white"
                 onClick={() => router.push('/workspace/ai-tools')}
               >
@@ -126,7 +130,11 @@ export default function MVPStudioPage() {
             <section className="mb-6 md:mb-8">
               <div>
                 <BuilderProvider>
-                  <SixStageArchitecture className="px-0" showOverview={true} />
+                  <SixStageArchitecture
+                    className="px-0"
+                    showOverview={true}
+                    onStartBuilder={() => setShowWizard(true)}
+                  />
                 </BuilderProvider>
               </div>
             </section>
@@ -172,6 +180,17 @@ export default function MVPStudioPage() {
           </div>
         </div>
       </main>
+
+      {/* MVP Wizard Integration */}
+      <MVPWizard
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        onComplete={(result) => {
+          setWizardResults(result);
+          setShowWizard(false);
+          // You can add additional logic here for handling results
+        }}
+      />
     </div>
   );
 }
