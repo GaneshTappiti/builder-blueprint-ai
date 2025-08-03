@@ -167,10 +167,9 @@ const WikiView: React.FC<WikiViewProps> = ({ idea, onUpdate }) => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl glass-effect-theme border-green-500/20">
-          <DialogContent className="sm:max-w-2xl glass-effect-theme border-green-500/20">
-            <DialogHeader>
-              <DialogTitle className="text-white">Add New Wiki Section</DialogTitle>
-            </DialogHeader>
+              <DialogHeader>
+                <DialogTitle className="text-white">Add New Wiki Section</DialogTitle>
+              </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-white mb-2 block">Title</label>
