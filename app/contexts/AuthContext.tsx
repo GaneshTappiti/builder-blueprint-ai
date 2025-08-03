@@ -19,21 +19,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>({
+    id: "1",
+    email: "user@example.com",
+    name: "Demo User"
+  });
+  const [loading, setLoading] = useState(false);
 
   // Mock authentication - in real app this would connect to Supabase Auth
   useEffect(() => {
-    // Simulate checking for existing session
-    setTimeout(() => {
-      // Mock user for development
-      setUser({
-        id: "1",
-        email: "user@example.com",
-        name: "Demo User"
-      });
-      setLoading(false);
-    }, 1000);
+    // For development, immediately set user without loading state
+    // This prevents the black screen issue during initial render
+    console.log("Auth initialized with demo user");
   }, []);
 
   const signIn = async (email: string, password: string) => {

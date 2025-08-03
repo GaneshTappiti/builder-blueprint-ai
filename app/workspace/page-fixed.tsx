@@ -85,6 +85,8 @@ interface Task {
 }
 
 export default function WorkspacePage() {
+  console.log("🔥 Fixed WorkspacePage component started rendering");
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -123,6 +125,8 @@ export default function WorkspacePage() {
   // Mock function to replace useIdeaStore
   const canCreateNewIdea = () => true;
 
+  console.log("🔥 All hooks initialized successfully");
+
   // Enhanced logout function
   const handleLogout = async () => {
     try {
@@ -138,13 +142,13 @@ export default function WorkspacePage() {
     }
   };
 
-  // Mock data with static dates to prevent hydration mismatch
+  // Mock data
   const mockProjects: Project[] = [
     {
       id: '1',
       name: 'AI SaaS Platform',
       description: 'Building an AI-powered SaaS solution',
-      lastUpdated: '8/3/2025',
+      lastUpdated: new Date().toLocaleDateString(),
       stage: 'development',
       progress: 65
     },
@@ -152,7 +156,7 @@ export default function WorkspacePage() {
       id: '2',
       name: 'Mobile E-commerce',
       description: 'React Native e-commerce application',
-      lastUpdated: '8/2/2025',
+      lastUpdated: new Date(Date.now() - 86400000).toLocaleDateString(),
       stage: 'planning',
       progress: 30
     }
@@ -163,17 +167,19 @@ export default function WorkspacePage() {
       id: '1',
       title: 'Design wireframes',
       priority: 'High',
-      dueDate: '8/4/2025',
+      dueDate: new Date(Date.now() + 86400000).toLocaleDateString(),
       status: 'todo'
     },
     {
       id: '2',
       title: 'Set up development environment',
       priority: 'Medium',
-      dueDate: '8/5/2025',
+      dueDate: new Date(Date.now() + 172800000).toLocaleDateString(),
       status: 'in-progress'
     }
   ];
+
+  console.log("🔥 About to render main content");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-950">
