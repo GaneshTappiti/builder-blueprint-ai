@@ -15,6 +15,16 @@ const nextConfig = {
       }
     }
     
+    // Suppress webpack cache warnings for optional platform-specific packages
+    config.infrastructureLogging = {
+      level: 'error',
+    }
+    
+    // Ignore webpack cache warnings for platform-specific binaries
+    config.ignoreWarnings = [
+      /Managed item.*isn't a directory or doesn't contain a package\.json/,
+    ]
+    
     // Improve chunk splitting
     config.optimization = {
       ...config.optimization,
