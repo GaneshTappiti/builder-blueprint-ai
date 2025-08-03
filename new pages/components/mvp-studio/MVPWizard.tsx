@@ -358,18 +358,38 @@ const MVPWizard: React.FC<MVPWizardProps> = ({ isOpen, onClose, onComplete }) =>
       return appTypeMatch && platformMatch;
     });
 
-    setFilteredTools(filtered);
+    // Sort tools to show recommended ones first
+    const sortedFiltered = filtered.sort((a, b) => {
+      // Prioritize tools that are commonly recommended for the app type
+      const aRecommended = getToolRecommendationScore(a, wizardData.step1.appType);
+      const bRecommended = getToolRecommendationScore(b, wizardData.step1.appType);
+      return bRecommended - aRecommended;
+    });
 
-    // Get recommended tools for current selection
-    if (wizardData.step1.appType && wizardData.step3.platforms.length > 0) {
-      const recommended = getRecommendedTools(
-        wizardData.step1.appType,
-        wizardData.step3.platforms,
-        enhancedData.description
-      );
-      // Note: This would be RAGToolProfile[], but we're keeping the existing logic
-    }
+    setFilteredTools(sortedFiltered);
   }, [wizardData.step1.appType, wizardData.step3.platforms, availableTools, enhancedData.description, currentStep]);
+
+  // Helper function to score tool recommendations
+  const getToolRecommendationScore = (tool: RAGToolProfile, appType: AppType): number => {
+    let score = 0;
+
+    // Higher score for tools that are perfect matches for the app type
+    if (appType === 'web-app') {
+      if (['lovable', 'bolt', 'cursor', 'v0'].includes(tool.id)) score += 3;
+      if (['framer', 'bubble'].includes(tool.id)) score += 2;
+    } else if (appType === 'mobile-app') {
+      if (['flutterflow', 'adalo'].includes(tool.id)) score += 3;
+      if (['uizard'].includes(tool.id)) score += 2;
+    } else if (appType === 'saas-tool') {
+      if (['lovable', 'cursor', 'bolt'].includes(tool.id)) score += 3;
+      if (['bubble', 'framer'].includes(tool.id)) score += 2;
+    }
+
+    // Bonus for beginner-friendly tools
+    if (tool.complexity === 'beginner') score += 1;
+
+    return score;
+  };
 
   // Update universal config based on app type selection
   useEffect(() => {
@@ -1363,6 +1383,37 @@ Structure this as actionable implementation steps that can be directly applied i
                     Choose a specific tool to optimize your prompts for. This will generate tool-specific instructions and best practices.
                   </p>
 
+                  {/* Quick Recommendations */}
+                  {filteredTools.length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          Top Picks for {wizardData.step1.appType.replace('-', ' ')}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {filteredTools
+                          .filter(tool => getToolRecommendationScore(tool, wizardData.step1.appType) >= 3)
+                          .slice(0, 3)
+                          .map(tool => (
+                            <button
+                              key={tool.id}
+                              onClick={() => setWizardData({
+                                ...wizardData,
+                                step2: { ...wizardData.step2, selectedTool: tool.id }
+                              })}
+                              className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 rounded-full text-xs text-blue-600 dark:text-blue-400 transition-colors"
+                            >
+                              <span>{tool.icon}</span>
+                              <span>{tool.name}</span>
+                            </button>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  )}
+
 
 
                   {filteredTools.length === 0 ? (
@@ -1403,32 +1454,65 @@ Structure this as actionable implementation steps that can be directly applied i
                       </div>
 
                       {/* Available RAG tools */}
-                      {filteredTools.map((tool) => (
-                        <div key={tool.id} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                          <RadioGroupItem value={tool.id} id={`tool-${tool.id}`} />
-                          <Label htmlFor={`tool-${tool.id}`} className="flex items-center gap-3 cursor-pointer flex-1">
-                            <div className="p-2 bg-primary/10 rounded-md">
-                              <span className="text-lg">{tool.icon}</span>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <div className="font-medium">{tool.name}</div>
-                                <Badge variant="outline" className="text-xs">
-                                  {tool.category}
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {tool.complexity}
-                                </Badge>
+                      {filteredTools.map((tool) => {
+                        const isRecommended = getToolRecommendationScore(tool, wizardData.step1.appType) >= 3;
+                        return (
+                          <div
+                            key={tool.id}
+                            className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors relative ${
+                              isRecommended ? 'border-green-500/30 bg-green-500/5' : ''
+                            }`}
+                          >
+                            {isRecommended && (
+                              <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                Recommended
                               </div>
-                              <div className="text-sm text-muted-foreground mt-1">{tool.description}</div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                Best for: {tool.bestFor.slice(0, 3).join(', ')}
-                                {tool.bestFor.length > 3 && ` +${tool.bestFor.length - 3} more`}
+                            )}
+                            <RadioGroupItem value={tool.id} id={`tool-${tool.id}`} />
+                            <Label htmlFor={`tool-${tool.id}`} className="flex items-center gap-3 cursor-pointer flex-1">
+                              <div className="p-2 bg-primary/10 rounded-md">
+                                <span className="text-lg">{tool.icon}</span>
                               </div>
-                            </div>
-                          </Label>
-                        </div>
-                      ))}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium">{tool.name}</div>
+                                  {isRecommended && (
+                                    <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">
+                                      ⭐ Recommended
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline" className="text-xs">
+                                    {tool.category}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {tool.complexity}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground mt-1">{tool.description}</div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Best for: {tool.bestFor.slice(0, 3).join(', ')}
+                                  {tool.bestFor.length > 3 && ` +${tool.bestFor.length - 3} more`}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                  <span className="px-2 py-1 bg-muted/50 rounded text-xs">
+                                    {tool.pricing}
+                                  </span>
+                                  <a
+                                    href={tool.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Learn more
+                                  </a>
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </RadioGroup>
                   )}
 

@@ -25,7 +25,7 @@ export const useMVPWizardState = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [wizardData, setWizardData] = useState<MVPWizardData>({
     step1: { appName: "", appType: "web-app" },
-    step2: { theme: "dark", designStyle: "minimal" },
+    step2: { theme: "dark", designStyle: "minimal", selectedTool: undefined },
     step3: { platforms: ["web"] },
     step4: { selectedAI: "" },
     userPrompt: ""
