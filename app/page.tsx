@@ -1,5 +1,6 @@
-"use client"
+﻿"use client"
 
+<<<<<<< HEAD
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -12,9 +13,22 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ClientWrapper from "@/components/ClientWrapper";
+=======
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+>>>>>>> 57903b1208d63f1312df0c3f019e406ff6818dc8
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to workspace page immediately
+    router.replace("/workspace");
+  }, [router]);
+
+  // Show a loading state while redirecting
   return (
+<<<<<<< HEAD
     <ClientWrapper>
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-950">
       {/* Hero Section */}
@@ -170,6 +184,12 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+=======
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-green-950 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-400 border-t-transparent"></div>
+        <p className="text-gray-300 text-sm">Redirecting to workspace...</p>
+>>>>>>> 57903b1208d63f1312df0c3f019e406ff6818dc8
       </div>
     </div>
     </ClientWrapper>
