@@ -16,14 +16,14 @@ import {
 import { Filter, X } from "lucide-react";
 
 interface FilterDrawerProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   children?: React.ReactNode;
 }
 
-const FilterDrawer: React.FC<FilterDrawerProps> = ({ isOpen, onClose, children }) => {
+const FilterDrawer: React.FC<FilterDrawerProps> = ({ open, onClose, children }) => {
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="bg-black/90 border-white/10 text-white">
         <SheetHeader>
           <SheetTitle className="text-white">Advanced Filters</SheetTitle>

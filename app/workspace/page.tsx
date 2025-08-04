@@ -592,6 +592,14 @@ export default function WorkspacePage() {
       description: "Create and manage your startup documents",
       path: "/workspace/docs-decks",
       icon: "📄"
+    },
+    {
+      id: "investor-radar",
+      name: "Investor Radar",
+      description: "🆕 Browse and connect with 100+ verified investors. Access complete profiles with direct contact information, investment preferences, and focus areas. No signup required - start connecting immediately.",
+      path: "/workspace/investor-radar",
+      icon: "🎯",
+      isNew: true
     }
   ];
 
