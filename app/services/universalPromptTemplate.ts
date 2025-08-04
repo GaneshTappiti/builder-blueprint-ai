@@ -362,6 +362,6 @@ export const DEFAULT_CONFIGS: Record<AppType, UniversalPromptConfig> = {
     includeUIComponents: true,
     includeModalsPopups: true,
     appDepth: 'production',
-    appType: 'hybrid'
+    appType: 'web'
   }
 };

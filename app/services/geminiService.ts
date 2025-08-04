@@ -6,6 +6,7 @@ import {
   BMCGenerationRequest,
   BMCGenerationResponse,
   BMCBlock,
+  BMCBlockConfig,
   BMC_BLOCK_CONFIGS
 } from '@/types/businessModelCanvas';
 
@@ -198,8 +199,8 @@ export const geminiService = {
       
       // Parse the response to extract structured data
       const scoreMatch = text.match(/OVERALL SCORE:\s*(\d+)/i);
-      const feedbackMatch = text.match(/FEEDBACK:\s*(.*?)(?=SUGGESTIONS:|$)/is);
-      const suggestionsMatch = text.match(/SUGGESTIONS:\s*(.*?)(?=MARKET POTENTIAL:|$)/is);
+      const feedbackMatch = text.match(/FEEDBACK:\s*([\s\S]*?)(?=SUGGESTIONS:|$)/i);
+      const suggestionsMatch = text.match(/SUGGESTIONS:\s*([\s\S]*?)(?=MARKET POTENTIAL:|$)/i);
       const marketMatch = text.match(/MARKET POTENTIAL:\s*(\d+)/i);
       const technicalMatch = text.match(/TECHNICAL FEASIBILITY:\s*(\d+)/i);
       const competitiveMatch = text.match(/COMPETITIVE ADVANTAGE:\s*(\d+)/i);
@@ -298,9 +299,9 @@ export const geminiService = {
       const text = result.text;
       
       // Parse the response
-      const trendsMatch = text.match(/TRENDS:\s*(.*?)(?=OPPORTUNITIES:|$)/is);
-      const opportunitiesMatch = text.match(/OPPORTUNITIES:\s*(.*?)(?=THREATS:|$)/is);
-      const threatsMatch = text.match(/THREATS:\s*(.*?)$/is);
+      const trendsMatch = text.match(/TRENDS:\s*([\s\S]*?)(?=OPPORTUNITIES:|$)/i);
+      const opportunitiesMatch = text.match(/OPPORTUNITIES:\s*([\s\S]*?)(?=THREATS:|$)/i);
+      const threatsMatch = text.match(/THREATS:\s*([\s\S]*?)$/i);
       
       const parseList = (text: string) => 
         text.split('\n')
@@ -519,13 +520,13 @@ export const geminiService = {
 
   // Helper methods for parsing responses
   parseRoadmapResponse(text: string): any {
-    const phases = text.match(/PHASE \d+.*?(?=PHASE \d+|KEY METRICS:|$)/gs) || [];
-    const metricsMatch = text.match(/KEY METRICS:\s*(.*?)(?=RESOURCES NEEDED:|$)/is);
-    const resourcesMatch = text.match(/RESOURCES NEEDED:\s*(.*?)$/is);
+    const phases = text.match(/PHASE \d+[\s\S]*?(?=PHASE \d+|KEY METRICS:|$)/g) || [];
+    const metricsMatch = text.match(/KEY METRICS:\s*([\s\S]*?)(?=RESOURCES NEEDED:|$)/i);
+    const resourcesMatch = text.match(/RESOURCES NEEDED:\s*([\s\S]*?)$/i);
 
     return {
       phases: phases.map(phase => {
-        const titleMatch = phase.match(/PHASE \d+[^:]*:(.*?)(?=\n-)/s);
+        const titleMatch = phase.match(/PHASE \d+[^:]*:([\s\S]*?)(?=\n-)/i);
         const tasks = phase.match(/- (.*?)(?=\n|$)/g) || [];
         return {
           title: titleMatch?.[1]?.trim() || 'Phase',
@@ -538,11 +539,11 @@ export const geminiService = {
   },
 
   parseTaskBreakdown(text: string): any {
-    const tasksMatch = text.match(/TASKS:\s*(.*?)(?=TOTAL ESTIMATE:|$)/is);
+    const tasksMatch = text.match(/TASKS:\s*([\s\S]*?)(?=TOTAL ESTIMATE:|$)/i);
     const totalMatch = text.match(/TOTAL ESTIMATE:\s*(\d+)\s*hours/i);
-    const dependenciesMatch = text.match(/DEPENDENCIES:\s*(.*?)(?=RISKS:|$)/is);
-    const risksMatch = text.match(/RISKS:\s*(.*?)(?=ACCEPTANCE CRITERIA:|$)/is);
-    const criteriaMatch = text.match(/ACCEPTANCE CRITERIA:\s*(.*?)$/is);
+    const dependenciesMatch = text.match(/DEPENDENCIES:\s*([\s\S]*?)(?=RISKS:|$)/i);
+    const risksMatch = text.match(/RISKS:\s*([\s\S]*?)(?=ACCEPTANCE CRITERIA:|$)/i);
+    const criteriaMatch = text.match(/ACCEPTANCE CRITERIA:\s*([\s\S]*?)$/i);
 
     const tasks = tasksMatch?.[1]?.split('\n')
       .filter(line => line.trim().startsWith('-'))
@@ -564,10 +565,10 @@ export const geminiService = {
   },
 
   parseInvestorMatches(text: string): any {
-    const typesMatch = text.match(/INVESTOR TYPES:\s*(.*?)(?=FUNDING STRATEGIES:|$)/is);
-    const strategiesMatch = text.match(/FUNDING STRATEGIES:\s*(.*?)(?=PITCH FOCUS AREAS:|$)/is);
-    const focusMatch = text.match(/PITCH FOCUS AREAS:\s*(.*?)(?=PREPARATION CHECKLIST:|$)/is);
-    const checklistMatch = text.match(/PREPARATION CHECKLIST:\s*(.*?)$/is);
+    const typesMatch = text.match(/INVESTOR TYPES:\s*([\s\S]*?)(?=FUNDING STRATEGIES:|$)/i);
+    const strategiesMatch = text.match(/FUNDING STRATEGIES:\s*([\s\S]*?)(?=PITCH FOCUS AREAS:|$)/i);
+    const focusMatch = text.match(/PITCH FOCUS AREAS:\s*([\s\S]*?)(?=PREPARATION CHECKLIST:|$)/i);
+    const checklistMatch = text.match(/PREPARATION CHECKLIST:\s*([\s\S]*?)$/i);
 
     return {
       investorTypes: this.parseList(typesMatch?.[1] || ''),
@@ -578,10 +579,10 @@ export const geminiService = {
   },
 
   parsePromptOptimization(text: string): any {
-    const optimizedMatch = text.match(/OPTIMIZED PROMPT:\s*(.*?)(?=IMPROVEMENTS MADE:|$)/is);
-    const improvementsMatch = text.match(/IMPROVEMENTS MADE:\s*(.*?)(?=ADDITIONAL SUGGESTIONS:|$)/is);
-    const suggestionsMatch = text.match(/ADDITIONAL SUGGESTIONS:\s*(.*?)(?=PROMPT STRUCTURE TIPS:|$)/is);
-    const tipsMatch = text.match(/PROMPT STRUCTURE TIPS:\s*(.*?)$/is);
+    const optimizedMatch = text.match(/OPTIMIZED PROMPT:\s*([\s\S]*?)(?=IMPROVEMENTS MADE:|$)/i);
+    const improvementsMatch = text.match(/IMPROVEMENTS MADE:\s*([\s\S]*?)(?=ADDITIONAL SUGGESTIONS:|$)/i);
+    const suggestionsMatch = text.match(/ADDITIONAL SUGGESTIONS:\s*([\s\S]*?)(?=PROMPT STRUCTURE TIPS:|$)/i);
+    const tipsMatch = text.match(/PROMPT STRUCTURE TIPS:\s*([\s\S]*?)$/i);
 
     return {
       optimizedPrompt: optimizedMatch?.[1]?.trim() || '',
@@ -592,10 +593,10 @@ export const geminiService = {
   },
 
   parseAnalyticsInsights(text: string): any {
-    const insightsMatch = text.match(/KEY INSIGHTS:\s*(.*?)(?=TRENDS IDENTIFIED:|$)/is);
-    const trendsMatch = text.match(/TRENDS IDENTIFIED:\s*(.*?)(?=RECOMMENDATIONS:|$)/is);
-    const recommendationsMatch = text.match(/RECOMMENDATIONS:\s*(.*?)(?=ACTION ITEMS:|$)/is);
-    const actionsMatch = text.match(/ACTION ITEMS:\s*(.*?)$/is);
+    const insightsMatch = text.match(/KEY INSIGHTS:\s*([\s\S]*?)(?=TRENDS IDENTIFIED:|$)/i);
+    const trendsMatch = text.match(/TRENDS IDENTIFIED:\s*([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
+    const recommendationsMatch = text.match(/RECOMMENDATIONS:\s*([\s\S]*?)(?=ACTION ITEMS:|$)/i);
+    const actionsMatch = text.match(/ACTION ITEMS:\s*([\s\S]*?)$/i);
 
     return {
       insights: this.parseList(insightsMatch?.[1] || ''),
@@ -606,10 +607,10 @@ export const geminiService = {
   },
 
   parseRecommendations(text: string): any {
-    const immediateMatch = text.match(/IMMEDIATE ACTIONS:\s*(.*?)(?=STRATEGIC RECOMMENDATIONS:|$)/is);
-    const strategicMatch = text.match(/STRATEGIC RECOMMENDATIONS:\s*(.*?)(?=TOOLS & RESOURCES:|$)/is);
-    const toolsMatch = text.match(/TOOLS & RESOURCES:\s*(.*?)(?=LEARNING OPPORTUNITIES:|$)/is);
-    const learningMatch = text.match(/LEARNING OPPORTUNITIES:\s*(.*?)$/is);
+    const immediateMatch = text.match(/IMMEDIATE ACTIONS:\s*([\s\S]*?)(?=STRATEGIC RECOMMENDATIONS:|$)/i);
+    const strategicMatch = text.match(/STRATEGIC RECOMMENDATIONS:\s*([\s\S]*?)(?=TOOLS & RESOURCES:|$)/i);
+    const toolsMatch = text.match(/TOOLS & RESOURCES:\s*([\s\S]*?)(?=LEARNING OPPORTUNITIES:|$)/i);
+    const learningMatch = text.match(/LEARNING OPPORTUNITIES:\s*([\s\S]*?)$/i);
 
     return {
       immediateActions: this.parseList(immediateMatch?.[1] || ''),
@@ -620,10 +621,10 @@ export const geminiService = {
   },
 
   parseWritingImprovement(text: string): any {
-    const improvedMatch = text.match(/IMPROVED VERSION:\s*(.*?)(?=CHANGES MADE:|$)/is);
-    const changesMatch = text.match(/CHANGES MADE:\s*(.*?)(?=WRITING TIPS:|$)/is);
-    const tipsMatch = text.match(/WRITING TIPS:\s*(.*?)(?=TONE ASSESSMENT:|$)/is);
-    const toneMatch = text.match(/TONE ASSESSMENT:\s*(.*?)$/is);
+    const improvedMatch = text.match(/IMPROVED VERSION:\s*([\s\S]*?)(?=CHANGES MADE:|$)/i);
+    const changesMatch = text.match(/CHANGES MADE:\s*([\s\S]*?)(?=WRITING TIPS:|$)/i);
+    const tipsMatch = text.match(/WRITING TIPS:\s*([\s\S]*?)(?=TONE ASSESSMENT:|$)/i);
+    const toneMatch = text.match(/TONE ASSESSMENT:\s*([\s\S]*?)$/i);
 
     return {
       improvedText: improvedMatch?.[1]?.trim() || '',

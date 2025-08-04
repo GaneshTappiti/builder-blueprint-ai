@@ -23,7 +23,28 @@ export interface ToolDocumentation {
 
 export class RAGDocumentationReader {
   private static readonly RAG_DATA_PATH = './RAG/data';
+  private static readonly RAG_INDEX_PATH = './RAG/index.json';
   private static documentationCache = new Map<RAGTool, ToolDocumentation>();
+  private static ragIndex: any = null;
+
+  /**
+   * Load RAG index for efficient file mapping
+   */
+  private static async loadRAGIndex(): Promise<any> {
+    if (this.ragIndex) return this.ragIndex;
+
+    try {
+      if (fs.existsSync(this.RAG_INDEX_PATH)) {
+        const indexContent = fs.readFileSync(this.RAG_INDEX_PATH, 'utf-8');
+        this.ragIndex = JSON.parse(indexContent);
+        return this.ragIndex;
+      }
+    } catch (error) {
+      console.warn('Failed to load RAG index:', error);
+    }
+
+    return null;
+  }
 
   /**
    * Get comprehensive documentation for a specific tool
@@ -34,8 +55,12 @@ export class RAGDocumentationReader {
       return this.documentationCache.get(toolId)!;
     }
 
-    const toolFolder = path.join(this.RAG_DATA_PATH, `${toolId}_docs`);
-    
+    // Load RAG index for efficient file mapping
+    const ragIndex = await this.loadRAGIndex();
+    const toolConfig = ragIndex?.structure?.data?.tools?.find((t: any) => t.id === toolId);
+
+    const toolFolder = path.join(this.RAG_DATA_PATH, toolConfig?.folder || `${toolId}_docs`);
+
     if (!fs.existsSync(toolFolder)) {
       console.warn(`Tool documentation folder not found: ${toolFolder}`);
       return { toolId, guides: [], patterns: [], examples: [] };
@@ -49,33 +74,88 @@ export class RAGDocumentationReader {
     };
 
     try {
-      const files = fs.readdirSync(toolFolder);
-      
-      for (const file of files) {
-        const filePath = path.join(toolFolder, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        
-        // Parse different types of documentation files
-        if (file.toLowerCase().includes('prompt.txt') || file.toLowerCase() === 'prompt.txt') {
-          documentation.mainPrompt = content;
-        } else if (file.toLowerCase().includes('agent prompt')) {
-          documentation.agentPrompt = content;
-        } else if (file.toLowerCase().includes('system') || file.toLowerCase().includes('comprehensive_system_prompt')) {
-          documentation.systemPrompt = content;
-        } else if (file.toLowerCase().includes('tools.json') || file.toLowerCase().includes('tools_config.json')) {
-          try {
-            documentation.tools = JSON.parse(content);
-          } catch (e) {
-            console.warn(`Failed to parse tools JSON for ${toolId}:`, e);
+      // Use index configuration if available, otherwise fallback to file scanning
+      if (toolConfig?.files) {
+        // Load files based on index configuration
+        const { files: fileConfig } = toolConfig;
+
+        // Load main prompt
+        if (fileConfig.mainPrompt) {
+          const filePath = path.join(toolFolder, fileConfig.mainPrompt);
+          if (fs.existsSync(filePath)) {
+            documentation.mainPrompt = fs.readFileSync(filePath, 'utf-8');
           }
-        } else if (file.endsWith('.md')) {
-          // Categorize markdown files
-          if (file.includes('guide')) {
-            documentation.guides?.push(content);
-          } else if (file.includes('pattern')) {
-            documentation.patterns?.push(content);
-          } else {
-            documentation.examples?.push(content);
+        }
+
+        // Load agent prompt
+        if (fileConfig.agentPrompt) {
+          const filePath = path.join(toolFolder, fileConfig.agentPrompt);
+          if (fs.existsSync(filePath)) {
+            documentation.agentPrompt = fs.readFileSync(filePath, 'utf-8');
+          }
+        }
+
+        // Load system prompt
+        if (fileConfig.systemPrompt) {
+          const filePath = path.join(toolFolder, fileConfig.systemPrompt);
+          if (fs.existsSync(filePath)) {
+            documentation.systemPrompt = fs.readFileSync(filePath, 'utf-8');
+          }
+        }
+
+        // Load tools configuration
+        if (fileConfig.toolsConfig) {
+          const filePath = path.join(toolFolder, fileConfig.toolsConfig);
+          if (fs.existsSync(filePath)) {
+            try {
+              const content = fs.readFileSync(filePath, 'utf-8');
+              documentation.tools = JSON.parse(content);
+            } catch (e) {
+              console.warn(`Failed to parse tools JSON for ${toolId}:`, e);
+            }
+          }
+        }
+
+        // Load guides
+        if (fileConfig.guides && Array.isArray(fileConfig.guides)) {
+          for (const guideFile of fileConfig.guides) {
+            const filePath = path.join(toolFolder, guideFile);
+            if (fs.existsSync(filePath)) {
+              const content = fs.readFileSync(filePath, 'utf-8');
+              documentation.guides?.push(content);
+            }
+          }
+        }
+      } else {
+        // Fallback: Read all files in the tool folder
+        const files = fs.readdirSync(toolFolder);
+
+        for (const file of files) {
+          const filePath = path.join(toolFolder, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+
+          // Parse different types of documentation files
+          if (file.toLowerCase().includes('prompt.txt') || file.toLowerCase() === 'prompt.txt') {
+            documentation.mainPrompt = content;
+          } else if (file.toLowerCase().includes('agent prompt')) {
+            documentation.agentPrompt = content;
+          } else if (file.toLowerCase().includes('system') || file.toLowerCase().includes('comprehensive_system_prompt')) {
+            documentation.systemPrompt = content;
+          } else if (file.toLowerCase().includes('tools.json') || file.toLowerCase().includes('tools_config.json')) {
+            try {
+              documentation.tools = JSON.parse(content);
+            } catch (e) {
+              console.warn(`Failed to parse tools JSON for ${toolId}:`, e);
+            }
+          } else if (file.endsWith('.md')) {
+            // Categorize markdown files
+            if (file.includes('guide')) {
+              documentation.guides?.push(content);
+            } else if (file.includes('pattern')) {
+              documentation.patterns?.push(content);
+            } else {
+              documentation.examples?.push(content);
+            }
           }
         }
       }

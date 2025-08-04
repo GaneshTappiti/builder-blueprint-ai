@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ValidationResult } from '@/app/services/geminiService';
+import { ValidationResult } from '@/services/geminiService';
 
 interface UseEnhancedAIReturn {
   // ✅ Core AI Features

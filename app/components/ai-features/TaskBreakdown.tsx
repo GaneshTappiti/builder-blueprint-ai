@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Textarea } from '@/app/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { Badge } from '@/app/components/ui/badge';
-import { useEnhancedAI } from '@/app/hooks/useEnhancedAI';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useEnhancedAI } from '@/hooks/useEnhancedAI';
 import { CheckSquare, Clock, AlertTriangle, Target, Loader2 } from 'lucide-react';
 
 const TaskBreakdown = () => {
@@ -100,7 +100,7 @@ const TaskBreakdown = () => {
         </CardContent>
       </Card>
 
-      {breakdown && (
+      {(breakdown as any) && (
         <div className="space-y-6">
           {/* Summary */}
           <Card>
@@ -116,17 +116,17 @@ const TaskBreakdown = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <CheckSquare className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                  <div className="text-2xl font-bold">{breakdown.tasks?.length || 0}</div>
+                  <div className="text-2xl font-bold">{(breakdown as any).tasks?.length || 0}</div>
                   <div className="text-sm text-muted-foreground">Total Tasks</div>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <Clock className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                  <div className="text-2xl font-bold">{breakdown.totalEstimate || 0}h</div>
+                  <div className="text-2xl font-bold">{(breakdown as any).totalEstimate || 0}h</div>
                   <div className="text-sm text-muted-foreground">Estimated Time</div>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-                  <div className="text-2xl font-bold">{breakdown.risks?.length || 0}</div>
+                  <div className="text-2xl font-bold">{(breakdown as any).risks?.length || 0}</div>
                   <div className="text-sm text-muted-foreground">Risk Factors</div>
                 </div>
               </div>
@@ -134,7 +134,7 @@ const TaskBreakdown = () => {
           </Card>
 
           {/* Tasks */}
-          {breakdown.tasks && breakdown.tasks.length > 0 && (
+          {(breakdown as any).tasks && (breakdown as any).tasks.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -144,7 +144,7 @@ const TaskBreakdown = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {breakdown.tasks.map((task: any, index: number) => (
+                  {(breakdown as any).tasks.map((task: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium">
@@ -165,14 +165,14 @@ const TaskBreakdown = () => {
 
           {/* Dependencies & Risks */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {breakdown.dependencies && breakdown.dependencies.length > 0 && (
+            {(breakdown as any).dependencies && (breakdown as any).dependencies.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Dependencies</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {breakdown.dependencies.map((dep: string, index: number) => (
+                    {(breakdown as any).dependencies.map((dep: string, index: number) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                         <span className="text-sm">{dep}</span>
@@ -183,7 +183,7 @@ const TaskBreakdown = () => {
               </Card>
             )}
 
-            {breakdown.risks && breakdown.risks.length > 0 && (
+            {(breakdown as any).risks && (breakdown as any).risks.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -193,7 +193,7 @@ const TaskBreakdown = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {breakdown.risks.map((risk: string, index: number) => (
+                    {(breakdown as any).risks.map((risk: string, index: number) => (
                       <div key={index} className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-orange-500" />
                         <span className="text-sm">{risk}</span>
@@ -206,7 +206,7 @@ const TaskBreakdown = () => {
           </div>
 
           {/* Acceptance Criteria */}
-          {breakdown.acceptanceCriteria && breakdown.acceptanceCriteria.length > 0 && (
+          {(breakdown as any).acceptanceCriteria && (breakdown as any).acceptanceCriteria.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -216,7 +216,7 @@ const TaskBreakdown = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {breakdown.acceptanceCriteria.map((criteria: string, index: number) => (
+                  {(breakdown as any).acceptanceCriteria.map((criteria: string, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-green-500" />
                       <span className="text-sm">{criteria}</span>

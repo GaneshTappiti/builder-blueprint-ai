@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Textarea } from '@/app/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { Badge } from '@/app/components/ui/badge';
-import { useEnhancedAI } from '@/app/hooks/useEnhancedAI';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useEnhancedAI } from '@/hooks/useEnhancedAI';
 import { Map, Calendar, Target, Loader2, CheckCircle } from 'lucide-react';
 
 const RoadmapGenerator = () => {
@@ -95,10 +95,10 @@ const RoadmapGenerator = () => {
         </CardContent>
       </Card>
 
-      {roadmap && (
+      {(roadmap as any) && (
         <div className="space-y-6">
           {/* Phases */}
-          {roadmap.phases && roadmap.phases.length > 0 && (
+          {(roadmap as any).phases && (roadmap as any).phases.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -127,7 +127,7 @@ const RoadmapGenerator = () => {
           )}
 
           {/* Key Metrics */}
-          {roadmap.metrics && roadmap.metrics.length > 0 && (
+          {(roadmap as any).metrics && (roadmap as any).metrics.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -137,7 +137,7 @@ const RoadmapGenerator = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {roadmap.metrics.map((metric: string, index: number) => (
+                  {(roadmap as any).metrics.map((metric: string, index: number) => (
                     <Badge key={index} variant="secondary">
                       {metric}
                     </Badge>
@@ -148,14 +148,14 @@ const RoadmapGenerator = () => {
           )}
 
           {/* Resources Needed */}
-          {roadmap.resources && roadmap.resources.length > 0 && (
+          {(roadmap as any).resources && (roadmap as any).resources.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Resources Needed</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {roadmap.resources.map((resource: string, index: number) => (
+                  {(roadmap as any).resources.map((resource: string, index: number) => (
                     <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-sm">{resource}</span>

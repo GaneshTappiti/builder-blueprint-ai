@@ -209,11 +209,11 @@ export default function AIProviderDashboard() {
               <Card className="bg-black/20 border-white/10">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    {getStatusIcon(preferences.connectionStatus)}
+                    {getStatusIcon(String(preferences.connectionStatus))}
                     <div>
                       <p className="text-sm text-gray-400">Status</p>
-                      <p className={`font-semibold ${getStatusColor(preferences.connectionStatus)}`}>
-                        {preferences.connectionStatus.replace('_', ' ').toUpperCase()}
+                      <p className={`font-semibold ${getStatusColor(String(preferences.connectionStatus))}`}>
+                        {String(preferences.connectionStatus).replace('_', ' ').toUpperCase()}
                       </p>
                     </div>
                   </div>
@@ -226,7 +226,7 @@ export default function AIProviderDashboard() {
                     <Zap className="w-5 h-5 text-blue-500" />
                     <div>
                       <p className="text-sm text-gray-400">Total Requests</p>
-                      <p className="font-semibold text-white">{formatNumber(preferences.totalRequests)}</p>
+                      <p className="font-semibold text-white">{formatNumber(Number(preferences.totalRequests) || 0)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -238,7 +238,7 @@ export default function AIProviderDashboard() {
                     <BarChart3 className="w-5 h-5 text-green-500" />
                     <div>
                       <p className="text-sm text-gray-400">Tokens Used</p>
-                      <p className="font-semibold text-white">{formatNumber(preferences.totalTokensUsed)}</p>
+                      <p className="font-semibold text-white">{formatNumber(Number(preferences.totalTokensUsed) || 0)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -250,7 +250,7 @@ export default function AIProviderDashboard() {
                     <Activity className="w-5 h-5 text-purple-500" />
                     <div>
                       <p className="text-sm text-gray-400">Provider</p>
-                      <p className="font-semibold text-white capitalize">{preferences.provider}</p>
+                      <p className="font-semibold text-white capitalize">{String(preferences.provider)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -279,7 +279,7 @@ export default function AIProviderDashboard() {
                     <Brain className="w-16 h-16 text-green-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">AI Provider Connected</h3>
                     <p className="text-gray-400 mb-4">
-                      Your {preferences.provider} provider is working correctly.
+                      Your {String(preferences.provider)} provider is working correctly.
                     </p>
                   </CardContent>
                 </Card>
@@ -312,15 +312,15 @@ export default function AIProviderDashboard() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-white">{usageStats?.daily?.requests || 0}</p>
+                          <p className="text-2xl font-bold text-white">{(usageStats as any)?.daily?.requests || 0}</p>
                           <p className="text-sm text-gray-400">Daily Requests</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-white">{usageStats?.weekly?.requests || 0}</p>
+                          <p className="text-2xl font-bold text-white">{(usageStats as any)?.weekly?.requests || 0}</p>
                           <p className="text-sm text-gray-400">Weekly Requests</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-white">{usageStats?.monthly?.requests || 0}</p>
+                          <p className="text-2xl font-bold text-white">{(usageStats as any)?.monthly?.requests || 0}</p>
                           <p className="text-sm text-gray-400">Monthly Requests</p>
                         </div>
                       </div>

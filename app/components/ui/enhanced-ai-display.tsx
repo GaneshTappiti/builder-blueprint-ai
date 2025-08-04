@@ -112,7 +112,7 @@ export const EnhancedAIDisplay: React.FC<EnhancedAIDisplayProps> = ({
           remarkPlugins={[remarkGfm]}
           components={{
             // Enhanced code block rendering
-            code({ node, inline, className, children, ...props }) {
+            code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
               const language = match ? match[1] : 'text';
               

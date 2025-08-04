@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Users, MessageSquare, Target, Zap, Wrench } from "lucide-react";
-import { useBuilder, builderActions } from "@/lib/builderContext";
+import { useBuilder, builderActions, AppBlueprint } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
 import { RAGTool, RAGToolProfile } from "@/types/ideaforge";
 import { getAllRAGToolProfiles } from "@/services/ragToolProfiles";
@@ -69,7 +69,7 @@ export function ValidationCard() {
       const appTypeMatch = tool.appTypes.some(toolAppType =>
         toolAppType === appType ||
         (appType === 'web-app' && (toolAppType === 'web-app' || toolAppType === 'saas-tool')) ||
-        (appType === 'mobile-app' && (toolAppType === 'mobile-app' || toolAppType === 'hybrid'))
+        (appType === 'mobile-app' && toolAppType === 'mobile-app')
       );
 
       // Filter by platform compatibility
@@ -229,7 +229,7 @@ export function ValidationCard() {
     });
   };
 
-  const createEnhancedFallbackBlueprint = () => {
+  const createEnhancedFallbackBlueprint = (): AppBlueprint => {
     const idea = state.appIdea.ideaDescription.toLowerCase();
     const mainFeatureName = getMainFeatureName();
 

@@ -253,7 +253,7 @@ export function BMCExportPanel({ canvas, isVisible, onToggle }: BMCExportPanelPr
                   <Checkbox
                     id="metadata"
                     checked={includeMetadata}
-                    onCheckedChange={setIncludeMetadata}
+                    onCheckedChange={(checked) => setIncludeMetadata(checked === true)}
                     className="mt-1"
                   />
                   <Label htmlFor="metadata" className="text-white text-sm leading-relaxed cursor-pointer">
@@ -264,7 +264,7 @@ export function BMCExportPanel({ canvas, isVisible, onToggle }: BMCExportPanelPr
                   <Checkbox
                     id="timestamps"
                     checked={includeTimestamps}
-                    onCheckedChange={setIncludeTimestamps}
+                    onCheckedChange={(checked) => setIncludeTimestamps(checked === true)}
                     className="mt-1"
                   />
                   <Label htmlFor="timestamps" className="text-white text-sm leading-relaxed cursor-pointer">

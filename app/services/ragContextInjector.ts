@@ -30,6 +30,7 @@ export interface ContextQuery {
 
 export class RAGContextInjector {
   private static contextCache = new Map<string, RAGContextResult>();
+  private static RAG_DATA_PATH = path.join(process.cwd(), 'data', 'rag');
 
   /**
    * Get relevant RAG context for a specific stage and query

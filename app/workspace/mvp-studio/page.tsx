@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SixStageArchitecture } from "@/components/builder-cards/SixStageArchitecture";
 import { BuilderProvider } from "@/lib/builderContext";
-import MVPWizard from "../../../new pages/components/mvp-studio/MVPWizard";
-import { MVPAnalysisResult } from "@/types/ideaforge";
 import {
   Sparkles,
   Zap,
@@ -17,21 +15,24 @@ import {
   ExternalLink,
   Layers,
   Target,
-  ArrowLeft
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  Play,
+  Settings
 } from "lucide-react";
 
 export default function MVPStudioPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
-  const [wizardResults, setWizardResults] = useState<MVPAnalysisResult | null>(null);
 
   return (
-    <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
-      <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      
-      {/* Main content */}
-      <main className="layout-main transition-all duration-300">
+    <BuilderProvider>
+      <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
+        <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+        {/* Main content */}
+        <main className="layout-main transition-all duration-300">
         {/* Top Navigation Bar */}
         <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
           <div className="px-6 py-4">
@@ -59,105 +60,20 @@ export default function MVPStudioPage() {
           </div>
         </div>
 
-        {/* Hero Section */}
-        <div className="px-6 py-12 workspace-content-spacing">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/20 bg-black/20 backdrop-blur-xl mb-6">
-              <Sparkles className="w-4 h-4 text-green-400" />
-              <span className="text-sm font-medium text-white">AI-Powered Build Orchestrator</span>
-            </div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
-              MVP Studio
-            </h1>
-            
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Your AI-powered build orchestrator. Generate prompts, get tool recommendations, and build your MVP with the best AI builders in the market.
-            </p>
+        {/* Main Content */}
+        <div className="px-6 py-8 workspace-content-spacing">
+          {/* SixStageArchitecture Component */}
+          <SixStageArchitecture
+            showOverview={true}
+            onStartBuilder={() => router.push('/workspace/mvp-studio/builder')}
+          />
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="glass-effect-theme p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-green-400 mb-1">AI-Generated Prompts</div>
-                <div className="text-sm text-gray-400">Tailored for each builder</div>
-              </div>
-              <div className="glass-effect-theme p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-green-400 mb-1">14+ Tools</div>
-                <div className="text-sm text-gray-400">Supported platforms</div>
-              </div>
-              <div className="glass-effect-theme p-4 rounded-lg text-center">
-                <div className="text-2xl font-bold text-green-400 mb-1">Export Ready</div>
-                <div className="text-sm text-gray-400">Copy & paste prompts</div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
-                onClick={() => setShowWizard(true)}
-              >
-                <Layers className="mr-2 h-4 w-4" />
-                Start MVP Wizard
-              </Button>
-              <Button
-                variant="outline"
-                className="border-green-500/30 hover:bg-green-500/10 text-white"
-                onClick={() => {
-                  // Scroll to the MVP Templates section at the bottom
-                  const templatesSection = document.querySelector('#mvp-templates-section');
-                  if (templatesSection) {
-                    templatesSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                <Target className="mr-2 h-4 w-4" />
-                Browse Templates
-              </Button>
-              <Button
-                variant="outline"
-                className="border-green-500/30 hover:bg-green-500/10 text-white"
-                onClick={() => router.push('/workspace/ai-tools')}
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                Browse AI Tools
-              </Button>
-            </div>
-          </div>
-
-          {/* 6-Stage Builder Architecture */}
-          <div className="max-w-4xl mx-auto">
-            <section className="mb-6 md:mb-8">
-              <div>
-                <BuilderProvider>
-                  <SixStageArchitecture
-                    className="px-0"
-                    showOverview={true}
-                    onStartBuilder={() => setShowWizard(true)}
-                  />
-                </BuilderProvider>
-              </div>
-            </section>
-          </div>
         </div>
 
         {/* Bottom Section - Quick Actions and Features */}
         <div className="px-6 py-12 bg-black/40 backdrop-blur-xl border-t border-white/10">
           <div className="max-w-4xl mx-auto">
-            {/* Landing Page Demo */}
-            <div className="text-center mb-12">
-              <div className="glass-effect-theme p-4 rounded-lg mb-8">
-                <p className="text-gray-300 mb-2">Want to see the converted React Router landing page?</p>
-                <Button 
-                  variant="outline" 
-                  className="border-blue-500/30 hover:bg-blue-500/10 text-blue-300"
-                  onClick={() => router.push('/landing')}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Landing Page Demo
-                </Button>
-              </div>
-            </div>
+
 
             {/* Feature Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,16 +97,7 @@ export default function MVPStudioPage() {
         </div>
       </main>
 
-      {/* MVP Wizard Integration */}
-      <MVPWizard
-        isOpen={showWizard}
-        onClose={() => setShowWizard(false)}
-        onComplete={(result) => {
-          setWizardResults(result);
-          setShowWizard(false);
-          // You can add additional logic here for handling results
-        }}
-      />
-    </div>
+      </div>
+    </BuilderProvider>
   );
 }

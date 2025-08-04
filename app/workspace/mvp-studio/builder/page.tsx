@@ -1,13 +1,13 @@
 "use client"
 
 import React from 'react';
-import WorkspaceSidebar from "@/components/WorkspaceSidebar";
+import WorkspaceSidebar, { SidebarToggle } from "@/components/WorkspaceSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SixStageArchitecture } from "@/components/builder-cards/SixStageArchitecture";
 import { BuilderProvider } from "@/lib/builderContext";
 import { useState } from "react";
-import { ArrowLeft, Brain, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Sparkles, Menu } from "lucide-react";
 import Link from "next/link";
 
 export default function BuilderPage() {
@@ -24,15 +24,7 @@ export default function BuilderPage() {
             <div className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-gray-400 hover:text-white hover:bg-black/30"
-                    onClick={() => setSidebarOpen(true)}
-                  >
-                    <span className="sr-only">Toggle Sidebar</span>
-                    ☰
-                  </Button>
+                  <SidebarToggle onClick={() => setSidebarOpen(true)} />
                   <Link
                     href="/workspace/mvp-studio"
                     className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"

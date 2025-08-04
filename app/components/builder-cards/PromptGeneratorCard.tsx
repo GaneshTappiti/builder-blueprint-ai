@@ -863,10 +863,11 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  screenPrompts.forEach(prompt => {
-                    copyPromptToClipboard(generateFullPrompt(prompt), prompt.screenId);
-                  });
+                onClick={async () => {
+                  for (const prompt of screenPrompts) {
+                    const fullPrompt = await generateFullPrompt(prompt);
+                    copyPromptToClipboard(fullPrompt, prompt.screenId);
+                  }
                   toast({
                     title: "All Prompts Copied!",
                     description: `${screenPrompts.length} prompts copied to clipboard.`,
@@ -917,11 +918,13 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const allPrompts = screenPrompts.map(prompt =>
-                    `# ${prompt.title}\n\n${generateFullPrompt(prompt)}\n\n---\n\n`
-                  ).join('');
-                  navigator.clipboard.writeText(allPrompts);
+                onClick={async () => {
+                  const allPrompts = await Promise.all(
+                    screenPrompts.map(async prompt =>
+                      `# ${prompt.title}\n\n${await generateFullPrompt(prompt)}\n\n---\n\n`
+                    )
+                  );
+                  navigator.clipboard.writeText(allPrompts.join(''));
                   toast({
                     title: "Combined Export Copied!",
                     description: "All prompts combined into a single document.",
@@ -934,16 +937,20 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
+                onClick={async () => {
+                  const screensWithPrompts = await Promise.all(
+                    screenPrompts.map(async prompt => ({
+                      ...prompt,
+                      fullPrompt: await generateFullPrompt(prompt)
+                    }))
+                  );
+
                   const jsonExport = JSON.stringify({
                     appName: state.appIdea.appName,
                     platforms: state.appIdea.platforms,
                     designStyle: state.appIdea.designStyle,
                     promptFormat: selectedPromptFormat,
-                    screens: screenPrompts.map(prompt => ({
-                      ...prompt,
-                      fullPrompt: generateFullPrompt(prompt)
-                    })),
+                    screens: screensWithPrompts,
                     generatedAt: new Date().toISOString()
                   }, null, 2);
                   navigator.clipboard.writeText(jsonExport);
@@ -985,7 +992,10 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyPromptToClipboard(generateFullPrompt(prompt), prompt.screenId)}
+                    onClick={async () => {
+                      const fullPrompt = await generateFullPrompt(prompt);
+                      copyPromptToClipboard(fullPrompt, prompt.screenId);
+                    }}
                     className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10"
                   >
                     {copiedPrompts.has(prompt.screenId) ? (
@@ -1004,7 +1014,7 @@ ${prompt.performanceNotes || '- Lazy loading for heavy components\n- Optimize re
               </CardHeader>
               <CardContent className="pt-0">
                 <Textarea
-                  value={generateFullPrompt(prompt)}
+                  value={getPromptTextSync(prompt)}
                   readOnly
                   className="min-h-[200px] text-sm bg-black/40 backdrop-blur-sm border-white/10 text-gray-300"
                 />
