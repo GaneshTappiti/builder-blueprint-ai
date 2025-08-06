@@ -63,23 +63,23 @@ export default function WorkshopPage() {
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
-  // Check if user has an active idea (free tier restriction)
-  useEffect(() => {
-    checkActiveIdea();
-  }, [checkActiveIdea]);
-
   const checkActiveIdea = useCallback(async () => {
     try {
       const { data: ideas, error } = await supabaseHelpers.getIdeas();
       if (!error && ideas) {
         // Check if user has any active ideas (not archived)
-        const activeIdeas = ideas.filter(idea => idea.status !== 'archived');
-        setHasActiveIdea(activeIdeas.length > 0);
+        // Since the Idea interface doesn't have status, we'll check if any ideas exist
+        setHasActiveIdea(ideas.length > 0);
       }
     } catch (error) {
       console.error('Error checking active ideas:', error);
     }
   }, [setHasActiveIdea]);
+
+  // Check if user has an active idea (free tier restriction)
+  useEffect(() => {
+    checkActiveIdea();
+  }, [checkActiveIdea]);
 
   const validateIdea = async () => {
     if (!ideaInput.trim()) {
@@ -202,13 +202,13 @@ export default function WorkshopPage() {
       if (error) throw error;
 
       // Save to Zustand store as active idea
-      if (data && data[0]) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const savedIdea = data[0];
         setActiveIdea({
           id: savedIdea.id,
           title: savedIdea.title,
           description: savedIdea.description || '',
-          status: savedIdea.status as 'exploring' | 'validated' | 'building' | 'launched' | 'archived',
+          status: savedIdea.status as 'exploring' | 'validated' | 'archived' | 'draft',
           category: savedIdea.category,
           tags: savedIdea.tags || [],
           validation_score: savedIdea.validation_score,
@@ -325,10 +325,11 @@ export default function WorkshopPage() {
 
           {/* Free Tier Restriction Alert */}
           {!canCreateNewIdea() && (
-            <EnhancedUpgradePrompt
-              feature="Multiple Active Ideas"
-              className="mb-6"
-            />
+            <div className="mb-6">
+              <EnhancedUpgradePrompt
+                feature="Multiple Active Ideas"
+              />
+            </div>
           )}
 
           {!validation ? (
