@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react';
+import { formatDisplayDate } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +77,7 @@ export function ProjectHistory() {
     if (diffDays === 1) return 'Today';
     if (diffDays === 2) return 'Yesterday';
     if (diffDays <= 7) return `${diffDays - 1} days ago`;
-    return date.toLocaleDateString();
+    return formatDisplayDate(date);
   };
 
   const getCompletionStatus = (project: ProjectHistoryType) => {

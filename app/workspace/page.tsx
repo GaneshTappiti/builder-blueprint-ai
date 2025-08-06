@@ -345,8 +345,12 @@ export default function WorkspacePage() {
       const validationScore = extractValidationScore(mockValidationText);
       const sections = parseValidationResponse(mockValidationText);
 
+      // Generate static ID to prevent hydration mismatch
+      let idCounter = 1;
+      const generateId = () => `idea-${idCounter++}`;
+      
       const validatedIdea = {
-        id: Date.now().toString(),
+        id: generateId(),
         title: extractIdeaTitle(ideaText),
         description: ideaText,
         status: 'active' as const,
@@ -359,8 +363,8 @@ export default function WorkspacePage() {
         competitor_analysis: sections.competitorAnalysis,
         target_market: sections.targetMarket,
         problem_statement: sections.problemStatement,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: '2025-08-04T00:00:00.000Z',
+        updated_at: '2025-08-04T00:00:00.000Z'
       };
 
       setValidationResult({

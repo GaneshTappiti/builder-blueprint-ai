@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 // import { EnhancedAIDisplay } from '@/components/ui/enhanced-ai-display';
 // import AIResponseFormatter from '@/components/AIResponseFormatter';
-import { TextFormatter } from '@/utils/textFormatting';
+import { TextFormatter, ParsedSection } from '@/utils/textFormatting';
 
 const TestFormattingPage = () => {
   const [testContent, setTestContent] = useState(`## VALIDATION SCORE (85/100)
@@ -68,7 +68,7 @@ const connectToSlack = async (token) => {
 
 This analysis shows strong potential for success with proper execution and market timing.`);
 
-  const [parsedSections, setParsedSections] = useState([]);
+  const [parsedSections, setParsedSections] = useState<ParsedSection[]>([]);
 
   const handleParseContent = () => {
     const sections = TextFormatter.parseResponse(testContent);

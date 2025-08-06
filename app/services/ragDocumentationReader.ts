@@ -237,6 +237,7 @@ Format as JSON:
 
       return {
         toolId,
+        toolProfile,
         relevantDocs: [
           documentation.mainPrompt,
           documentation.systemPrompt,
@@ -255,6 +256,16 @@ Format as JSON:
           `Consider ${toolProfile.complexity} complexity level`,
           `Platform limitations: ${platforms.join(', ')}`,
           `Tool category: ${toolProfile.category}`
+        ],
+        bestPractices: parsedContext.bestPractices || [
+          `Use ${toolProfile.name} according to ${toolProfile.category} standards`,
+          `Follow platform-specific patterns for ${platforms.join(', ')}`,
+          `Implement proper error handling and validation`
+        ],
+        commonPitfalls: parsedContext.commonPitfalls || [
+          `Avoid over-complicating for ${toolProfile.complexity} complexity level`,
+          `Don't ignore ${toolProfile.category} specific limitations`,
+          `Be mindful of ${toolProfile.pricing} pricing implications`
         ]
       };
 
@@ -264,10 +275,13 @@ Format as JSON:
       // Fallback context using documentation
       return {
         toolId,
+        toolProfile,
         relevantDocs: [documentation.mainPrompt || ''].filter(Boolean) as string[],
         toolSpecificPrompts: [documentation.mainPrompt || ''].filter(Boolean) as string[],
         optimizationTips: [`Use ${toolProfile.name} effectively for ${toolProfile.bestFor[0]}`],
-        constraints: [`Consider ${toolProfile.complexity} complexity`]
+        constraints: [`Consider ${toolProfile.complexity} complexity`],
+        bestPractices: [`Follow ${toolProfile.name} best practices`],
+        commonPitfalls: [`Avoid common ${toolProfile.name} mistakes`]
       };
     }
   }

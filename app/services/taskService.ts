@@ -1,4 +1,6 @@
 // Task Service
+import { formatDisplayDate } from '@/utils/dateUtils';
+
 export interface Task {
   id: string;
   title: string;
@@ -74,9 +76,9 @@ class TaskService {
         description: 'Create detailed wireframes for the main user flows',
         priority: 'high',
         status: 'in-progress',
-        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), // 2 days from now
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+        dueDate: new Date('2025-08-06T10:00:00Z'), // 2 days from now
+        createdAt: new Date('2025-08-01T10:00:00Z'), // 3 days ago
+        updatedAt: new Date('2025-08-04T08:00:00Z'), // 2 hours ago
         projectId: '1',
         tags: ['design', 'ui/ux'],
         estimatedHours: 8
@@ -87,9 +89,9 @@ class TaskService {
         description: 'Configure development tools and dependencies',
         priority: 'medium',
         status: 'done',
-        dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+        dueDate: new Date('2025-08-03T10:00:00Z'), // 1 day ago
+        createdAt: new Date('2025-07-30T10:00:00Z'), // 5 days ago
+        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
         projectId: '1',
         tags: ['development', 'setup'],
         estimatedHours: 4,
@@ -101,9 +103,9 @@ class TaskService {
         description: 'Analyze competitor landscape and market opportunities',
         priority: 'high',
         status: 'todo',
-        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // 1 week from now
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+        dueDate: new Date('2025-08-11T10:00:00Z'), // 1 week from now
+        createdAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
+        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
         projectId: '2',
         tags: ['research', 'market'],
         estimatedHours: 12
@@ -114,9 +116,9 @@ class TaskService {
         description: 'Document all API endpoints and usage examples',
         priority: 'medium',
         status: 'todo',
-        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5), // 5 days from now
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
+        dueDate: new Date('2025-08-09T10:00:00Z'), // 5 days from now
+        createdAt: new Date('2025-08-03T22:00:00Z'), // 12 hours ago
+        updatedAt: new Date('2025-08-03T22:00:00Z'), // 12 hours ago
         projectId: '3',
         tags: ['documentation', 'api'],
         estimatedHours: 6
@@ -127,9 +129,9 @@ class TaskService {
         description: 'Conduct user testing with 5 participants',
         priority: 'high',
         status: 'todo',
-        dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24), // Overdue by 1 day
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 1 week ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+        dueDate: new Date('2025-08-03T10:00:00Z'), // Overdue by 1 day
+        createdAt: new Date('2025-07-28T10:00:00Z'), // 1 week ago
+        updatedAt: new Date('2025-08-02T10:00:00Z'), // 2 days ago
         projectId: '3',
         tags: ['testing', 'user-research'],
         estimatedHours: 8
@@ -264,7 +266,7 @@ class TaskService {
       const days = Math.floor(diffInSeconds / 86400);
       return `${days}d ago`;
     } else {
-      return date.toLocaleDateString();
+      return formatDisplayDate(date);
     }
   }
 
@@ -288,7 +290,7 @@ class TaskService {
     } else if (isTomorrow) {
       text = 'Due tomorrow';
     } else {
-      text = `Due ${date.toLocaleDateString()}`;
+      text = `Due ${formatDisplayDate(date)}`;
     }
 
     return { text, isOverdue, isToday, isTomorrow };

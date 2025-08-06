@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatDisplayDate, formatCalendarDate } from "@/utils/dateUtils";
 
 interface Task {
   id: string;
@@ -292,7 +293,7 @@ export default function TaskPlannerPage() {
         {task.dueDate && (
           <div className="flex items-center gap-1 text-xs text-gray-400 mb-3">
             <CalendarIcon className="h-3 w-3" />
-            {new Date(task.dueDate).toLocaleDateString()}
+            {formatDisplayDate(task.dueDate)}
           </div>
         )}
         
@@ -744,7 +745,7 @@ export default function TaskPlannerPage() {
                               {task.dueDate && (
                                 <div className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3" />
-                                  {new Date(task.dueDate).toLocaleDateString()}
+                                  {formatDisplayDate(task.dueDate)}
                                 </div>
                               )}
                             </div>

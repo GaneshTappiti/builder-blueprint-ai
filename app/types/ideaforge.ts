@@ -81,10 +81,13 @@ export interface MVPWizardData {
 // RAG Integration Types
 export interface RAGContext {
   toolId: RAGTool;
+  toolProfile: RAGToolProfile;
   relevantDocs: string[];
   toolSpecificPrompts: string[];
   optimizationTips: string[];
   constraints: string[];
+  bestPractices: string[];
+  commonPitfalls: string[];
 }
 
 export interface RAGPromptResult {

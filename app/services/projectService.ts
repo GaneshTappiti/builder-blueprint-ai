@@ -1,4 +1,6 @@
 // Project Service
+import { formatDisplayDate } from '@/utils/dateUtils';
+
 export interface Project {
   id: string;
   name: string;
@@ -72,8 +74,8 @@ class ProjectService {
         description: 'A personalized fitness app that uses AI to create custom workout plans based on user preferences and progress.',
         stage: 'development',
         progress: 65,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7), // 1 week ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+        createdAt: new Date('2025-07-28T10:00:00Z'), // 1 week ago
+        updatedAt: new Date('2025-08-04T08:00:00Z'), // 2 hours ago
         tags: ['AI', 'Fitness', 'Mobile App'],
         priority: 'high',
         status: 'active',
@@ -85,12 +87,12 @@ class ProjectService {
         description: 'A modern e-commerce platform with advanced analytics and inventory management.',
         stage: 'planning',
         progress: 30,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+        createdAt: new Date('2025-07-30T10:00:00Z'), // 5 days ago
+        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
         tags: ['E-commerce', 'Web App', 'Analytics'],
         priority: 'medium',
         status: 'active',
-        dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30) // 30 days from now
+        dueDate: new Date('2025-09-03T10:00:00Z') // 30 days from now
       },
       {
         id: '3',
@@ -98,8 +100,8 @@ class ProjectService {
         description: 'A collaborative task management tool for remote teams with real-time updates.',
         stage: 'testing',
         progress: 85,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14), // 2 weeks ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
+        createdAt: new Date('2025-07-21T10:00:00Z'), // 2 weeks ago
+        updatedAt: new Date('2025-08-04T04:00:00Z'), // 6 hours ago
         tags: ['Productivity', 'Collaboration', 'SaaS'],
         priority: 'high',
         status: 'active'
@@ -110,8 +112,8 @@ class ProjectService {
         description: 'Analytics dashboard for social media managers to track performance across platforms.',
         stage: 'launch',
         progress: 95,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21), // 3 weeks ago
-        updatedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+        createdAt: new Date('2025-07-14T10:00:00Z'), // 3 weeks ago
+        updatedAt: new Date('2025-08-04T09:30:00Z'), // 30 minutes ago
         tags: ['Analytics', 'Social Media', 'Dashboard'],
         priority: 'medium',
         status: 'completed'
@@ -239,7 +241,7 @@ class ProjectService {
       const days = Math.floor(diffInSeconds / 86400);
       return `${days}d ago`;
     } else {
-      return date.toLocaleDateString();
+      return formatDisplayDate(date);
     }
   }
 

@@ -4,7 +4,8 @@ import {
   MVPWizardData,
   AppType,
   Platform,
-  RAGToolProfile
+  RAGToolProfile,
+  RAGContext
 } from '@/types/ideaforge';
 import { getRAGToolProfile } from './ragToolProfiles';
 import { RAGDocumentationReader } from './ragDocumentationReader';
@@ -14,17 +15,6 @@ import { RAGDocumentationReader } from './ragDocumentationReader';
  * Adapts the Python RAG system to work with Next.js + Supabase + Gemini
  * Replaces ChromaDB with Supabase vector storage and file system with database storage
  */
-
-export interface RAGContext {
-  toolId: RAGTool;
-  toolProfile: RAGToolProfile;
-  relevantDocs: string[];
-  toolSpecificPrompts: string[];
-  optimizationTips: string[];
-  constraints: string[];
-  bestPractices: string[];
-  commonPitfalls: string[];
-}
 
 export interface EnhancedPromptRequest {
   type: 'framework' | 'page' | 'linking';
@@ -39,6 +29,34 @@ export interface EnhancedPromptRequest {
 }
 
 export class RAGEnhancedGenerator {
+  /**
+   * Create a default RAG context for when no specific tool is selected
+   */
+  private static createDefaultRAGContext(): RAGContext {
+    return {
+      toolId: 'nextjs' as RAGTool,
+      toolProfile: {
+        id: 'nextjs' as RAGTool,
+        name: 'Generic Framework',
+        description: 'Generic development framework',
+        category: 'low-code',
+        icon: 'framework',
+        bestFor: ['General development'],
+        platforms: ['web'] as Platform[],
+        appTypes: ['web-app'] as AppType[],
+        complexity: 'intermediate',
+        pricing: 'free',
+        url: ''
+      },
+      relevantDocs: [],
+      toolSpecificPrompts: [],
+      optimizationTips: ['Follow general best practices'],
+      constraints: ['Standard web development constraints'],
+      bestPractices: ['Use responsive design', 'Follow accessibility guidelines'],
+      commonPitfalls: ['Over-engineering', 'Poor performance optimization']
+    };
+  }
+
   /**
    * Generate RAG context for a specific tool and project requirements
    */
@@ -66,7 +84,7 @@ export class RAGEnhancedGenerator {
       // Generate generic framework prompt
       return {
         prompt: this.buildGenericFrameworkPrompt(wizardData, prompt),
-        toolContext: null,
+        toolContext: this.createDefaultRAGContext(),
         confidence: 0.7,
         sources: [],
         toolSpecificOptimizations: []
@@ -103,7 +121,7 @@ export class RAGEnhancedGenerator {
     if (!selectedTool) {
       return {
         prompt: this.buildGenericPagePrompt(pageName, pageData, wizardData),
-        toolContext: null,
+        toolContext: this.createDefaultRAGContext(),
         confidence: 0.7,
         sources: [],
         toolSpecificOptimizations: []
@@ -139,7 +157,7 @@ export class RAGEnhancedGenerator {
     if (!selectedTool) {
       return {
         prompt: this.buildGenericLinkingPrompt(pageNames, wizardData),
-        toolContext: null,
+        toolContext: this.createDefaultRAGContext(),
         confidence: 0.7,
         sources: [],
         toolSpecificOptimizations: []

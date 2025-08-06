@@ -202,7 +202,7 @@ export class RAGDocumentationImporter {
       // Use Gemini to generate embeddings
       // Note: This is a simplified approach - you might want to use a dedicated embedding service
       const response = await geminiService.generateEmbedding(text);
-      return response.embedding;
+      return response || new Array(1536).fill(0);
     } catch (error) {
       console.error('Failed to generate embedding:', error);
       // Return a zero vector as fallback

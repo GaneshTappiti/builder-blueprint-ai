@@ -3,7 +3,7 @@ export interface SearchResult {
   id: string;
   title: string;
   description: string;
-  type: 'module' | 'project' | 'task' | 'idea' | 'document';
+  type: 'module' | 'project' | 'task' | 'idea' | 'document' | 'action';
   path: string;
   icon?: string;
   metadata?: any;

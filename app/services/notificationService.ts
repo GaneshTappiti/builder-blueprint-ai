@@ -1,4 +1,6 @@
 // Notification Service
+import { formatDisplayDate } from '@/utils/dateUtils';
+
 export interface Notification {
   id: string;
   title: string;
@@ -197,7 +199,7 @@ class NotificationService {
       const days = Math.floor(diffInSeconds / 86400);
       return `${days} day${days !== 1 ? 's' : ''} ago`;
     } else {
-      return date.toLocaleDateString();
+      return formatDisplayDate(date);
     }
   }
 

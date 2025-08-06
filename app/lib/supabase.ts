@@ -122,3 +122,14 @@ export const supabaseHelpers = {
     };
   }
 };
+
+// Mock Supabase client for services that need it
+export const supabase = {
+  from: (table: string) => ({
+    upsert: async (data: any, options?: any) => ({ error: null }),
+    insert: async (data: any) => ({ error: null }),
+    select: async () => ({ data: [], error: null }),
+    update: async (data: any) => ({ error: null }),
+    delete: async () => ({ error: null })
+  })
+};

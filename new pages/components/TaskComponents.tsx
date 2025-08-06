@@ -6,6 +6,7 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
+import { formatDisplayDate } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -93,7 +94,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             )}
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+              <span>{formatDisplayDate(task.dueDate)}</span>
             </div>
           </div>
         </div>
