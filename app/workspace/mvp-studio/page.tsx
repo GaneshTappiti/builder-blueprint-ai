@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SixStageArchitecture } from "@/components/builder-cards/SixStageArchitecture";
 import { BuilderProvider } from "@/lib/builderContext";
+import SimpleMVPWizard from "@/components/mvp-studio/SimpleMVPWizard";
 import {
   Sparkles,
   Zap,
@@ -25,6 +26,7 @@ import {
 export default function MVPStudioPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   return (
     <BuilderProvider>
@@ -52,6 +54,14 @@ export default function MVPStudioPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => setIsWizardOpen(true)}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium px-4 py-2"
+                  size="sm"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  RAG-Enhanced Wizard
+                </Button>
                 <Badge variant="secondary" className="bg-blue-600/20 text-blue-300 border-blue-600/40">
                   BETA
                 </Badge>
@@ -93,9 +103,34 @@ export default function MVPStudioPage() {
                 <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
               </div>
             </div>
+
+            {/* RAG Wizard Card */}
+            <div className="mt-8 max-w-2xl mx-auto">
+              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors cursor-pointer border border-purple-500/30" onClick={() => setIsWizardOpen(true)}>
+                <Brain className="h-10 w-10 text-purple-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">🧠 RAG-Enhanced Wizard</h3>
+                <p className="text-gray-300 mb-4">Experience our advanced AI wizard with Retrieval-Augmented Generation for tool-specific, context-aware prompt generation.</p>
+                <div className="flex justify-center gap-2 text-sm text-gray-400">
+                  <span className="bg-purple-500/20 px-2 py-1 rounded">Tool-Specific</span>
+                  <span className="bg-blue-500/20 px-2 py-1 rounded">Context-Aware</span>
+                  <span className="bg-green-500/20 px-2 py-1 rounded">Enhanced Prompts</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* RAG-Enhanced MVP Wizard */}
+      <SimpleMVPWizard
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onComplete={(result) => {
+          console.log('RAG-Enhanced MVP Wizard completed:', result);
+          setIsWizardOpen(false);
+          // You can add additional logic here to handle the result
+        }}
+      />
 
       </div>
     </BuilderProvider>

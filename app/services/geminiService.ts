@@ -10,11 +10,18 @@ import {
   BMC_BLOCK_CONFIGS
 } from '@/types/businessModelCanvas';
 
-// Initialize Gemini AI with validation
-const genAI = new GoogleGenerativeAI(getGeminiApiKey());
+// Lazy initialization of Gemini AI
+let genAI: GoogleGenerativeAI | null = null;
+let model: any = null;
 
-// Get the Gemini Flash model (updated model name)
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+function initializeGemini() {
+  if (!genAI) {
+    const apiKey = getGeminiApiKey();
+    genAI = new GoogleGenerativeAI(apiKey);
+    model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  }
+  return { genAI, model };
+}
 
 export interface GeminiResponse {
   text: string;
@@ -51,6 +58,7 @@ export const geminiService = {
     temperature?: number;
   }): Promise<GeminiResponse> {
     try {
+      const { model } = initializeGemini();
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const rawText = response.text();
@@ -1300,6 +1308,7 @@ Generate completely different and unique content that doesn't overlap with the a
 
       console.log('Generating comprehensive app blueprint with Gemini...');
 
+      const { genAI } = initializeGemini();
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       const result = await model.generateContent(universalPrompt);
       const response = await result.response;
