@@ -62,14 +62,6 @@ const builderStages = [
     color: "from-orange-500 to-red-600"
   },
   {
-    id: 5,
-    title: "App Flow & Wireframe Describer",
-    subtitle: "Navigation and logic flow",
-    icon: GitBranch,
-    description: "Conditional routing and screen transitions",
-    color: "from-cyan-500 to-blue-600"
-  },
-  {
     id: 6,
     title: "Prompt Export Composer",
     subtitle: "Final prompt package",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,21 @@ export function FlowDescriptionCard() {
   const [isGeneratingExport, setIsGeneratingExport] = useState(false);
   const [flowLogicCopied, setFlowLogicCopied] = useState(false);
   const [fullNavigationCopied, setFullNavigationCopied] = useState(false);
+  const [navigationPrompt, setNavigationPrompt] = useState<string>('');
+
+  // Generate and cache the navigation prompt
+  const generateAndCachePrompt = async () => {
+    const prompt = await generateFullNavigationPrompt();
+    setNavigationPrompt(prompt);
+    return prompt;
+  };
+
+  // Generate prompt when component mounts or app flow changes
+  useEffect(() => {
+    if (state.appFlow) {
+      generateAndCachePrompt();
+    }
+  }, [state.appFlow, state.appBlueprint, state.appIdea]);
 
   const copyFlowLogic = async () => {
     try {
@@ -123,13 +138,13 @@ ${ragContext.architecturePatterns.substring(0, 300)}`;
     }
 
     // Add RAG best practices
-    if (ragContext?.bestPractices?.length > 0) {
+    if (ragContext?.bestPractices && ragContext.bestPractices.length > 0) {
       prompt += `\n\n## Best Practices
 ${ragContext.bestPractices.slice(0, 4).map(practice => `- ${practice}`).join('\n')}`;
     }
 
     // Add RAG optimization tips
-    if (ragContext?.optimizationTips?.length > 0) {
+    if (ragContext?.optimizationTips && ragContext.optimizationTips.length > 0) {
       prompt += `\n\n## Optimization Tips
 ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
     }
@@ -159,7 +174,7 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
         return;
       }
 
-      const fullPrompt = await generateFullNavigationPrompt();
+      const fullPrompt = navigationPrompt || await generateAndCachePrompt();
       await navigator.clipboard.writeText(fullPrompt);
       setFullNavigationCopied(true);
 
@@ -210,7 +225,7 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
 
     // Generate export prompts
     const exportPrompts = {
-      unifiedPrompt: generateUnifiedPrompt(),
+      unifiedPrompt: await generateUnifiedPrompt(),
       screenByScreenPrompts: state.screenPrompts,
       targetTool: 'framer' // Default to Framer
     };
@@ -226,9 +241,9 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
     });
   };
 
-  const generateUnifiedPrompt = () => {
+  const generateUnifiedPrompt = async () => {
     // Use the comprehensive navigation prompt for the unified export
-    return generateFullNavigationPrompt();
+    return await generateFullNavigationPrompt();
   };
 
   if (!state.appFlow) {
@@ -245,17 +260,6 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold flex items-center justify-center gap-2 text-white">
-          <GitBranch className="h-5 w-5 text-blue-400" />
-          🧭 App Flow & Wireframe Describer
-        </h3>
-        <p className="text-sm text-gray-400">
-          Navigation logic and screen relationships for your app
-        </p>
-      </div>
-
       {/* Global Copy Full Navigation Prompt Button */}
       <Card className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-sm border-green-500/30">
         <CardContent className="p-4">
@@ -316,14 +320,14 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
               Combined Prompt Preview
             </CardTitle>
             <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
-              {generateFullNavigationPrompt().length} characters
+              {navigationPrompt.length} characters
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10 max-h-48 overflow-y-auto">
             <pre className="text-xs whitespace-pre-wrap font-mono text-gray-300">
-              {generateFullNavigationPrompt()}
+              {navigationPrompt || 'Loading prompt preview...'}
             </pre>
           </div>
           <div className="mt-3 text-xs text-gray-400">
@@ -347,8 +351,9 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const figmaPrompt = `# Figma Design Brief\n\n${generateFullNavigationPrompt()}\n\n## Design Requirements\n- Create wireframes for each screen\n- Show navigation flow between screens\n- Include modal overlays and transitions\n- Use ${state.appIdea.designStyle} design style`;
+              onClick={async () => {
+                const prompt = navigationPrompt || await generateAndCachePrompt();
+                const figmaPrompt = `# Figma Design Brief\n\n${prompt}\n\n## Design Requirements\n- Create wireframes for each screen\n- Show navigation flow between screens\n- Include modal overlays and transitions\n- Use ${state.appIdea.designStyle} design style`;
                 navigator.clipboard.writeText(figmaPrompt);
                 toast({
                   title: "Figma Brief Copied!",
@@ -362,8 +367,9 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const devPrompt = `# Development Specification\n\n${generateFullNavigationPrompt()}\n\n## Technical Requirements\n- Implement navigation stack\n- Handle state management\n- Add loading and error states\n- Follow ${state.appIdea.platforms.join('/')} best practices`;
+              onClick={async () => {
+                const prompt = navigationPrompt || await generateAndCachePrompt();
+                const devPrompt = `# Development Specification\n\n${prompt}\n\n## Technical Requirements\n- Implement navigation stack\n- Handle state management\n- Add loading and error states\n- Follow ${state.appIdea.platforms.join('/')} best practices`;
                 navigator.clipboard.writeText(devPrompt);
                 toast({
                   title: "Dev Spec Copied!",
@@ -377,8 +383,9 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const noCodePrompt = `# No-Code Implementation Guide\n\n${generateFullNavigationPrompt()}\n\n## No-Code Setup\n- Configure screen routing\n- Set up conditional navigation\n- Create modal components\n- Implement user flow logic`;
+              onClick={async () => {
+                const prompt = navigationPrompt || await generateAndCachePrompt();
+                const noCodePrompt = `# No-Code Implementation Guide\n\n${prompt}\n\n## No-Code Setup\n- Configure screen routing\n- Set up conditional navigation\n- Create modal components\n- Implement user flow logic`;
                 navigator.clipboard.writeText(noCodePrompt);
                 toast({
                   title: "No-Code Guide Copied!",
@@ -392,8 +399,9 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const aiPrompt = `# AI Design Assistant Prompt\n\n${generateFullNavigationPrompt()}\n\n## AI Instructions\n- Generate UI mockups for each screen\n- Create consistent design system\n- Show user flow connections\n- Apply ${state.appIdea.designStyle} styling`;
+              onClick={async () => {
+                const prompt = navigationPrompt || await generateAndCachePrompt();
+                const aiPrompt = `# AI Design Assistant Prompt\n\n${prompt}\n\n## AI Instructions\n- Generate UI mockups for each screen\n- Create consistent design system\n- Show user flow connections\n- Apply ${state.appIdea.designStyle} styling`;
                 navigator.clipboard.writeText(aiPrompt);
                 toast({
                   title: "AI Prompt Copied!",
