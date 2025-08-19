@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { geminiService } from '@/services/geminiService';
+import { getGeminiApiKey } from '@/lib/env-validation';
 
 export async function POST(request: NextRequest) {
   try {
     // Check if Gemini API key is configured
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      console.error('GOOGLE_GEMINI_API_KEY environment variable is not set');
+    // Centralized key validation (supports multiple env var names)
+    try { getGeminiApiKey(); } catch (e) {
+      console.error('Gemini API key not set:', e instanceof Error ? e.message : e);
       return NextResponse.json(
-        { error: 'AI service not configured. Please check environment variables.' },
+        { error: 'AI service not configured. Please set GOOGLE_GEMINI_API_KEY in .env.local' },
         { status: 500 }
       );
     }
