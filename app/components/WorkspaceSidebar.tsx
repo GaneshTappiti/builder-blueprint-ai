@@ -113,7 +113,6 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     { id: "task-planner", name: "Task Planner", icon: Calendar, path: "/workspace/task-planner" },
     { id: "mvp-studio", name: "MVP Studio", icon: Code, path: "/workspace/mvp-studio" },
     { id: "investor-radar", name: "Investor Radar", icon: Target, path: "/workspace/investor-radar", isNew: true },
-    { id: "ai-features", name: "AI Features", icon: Sparkles, path: "/ai-features", isBeta: true, betaVariant: 'default' as const },
     { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
     { id: "docs-decks", name: "Docs & Decks", icon: FileText, path: "/workspace/docs-decks" },
     { id: "teamspace", name: "TeamSpace", icon: Users, path: "/workspace/teamspace", isBeta: true, betaVariant: 'secondary' as const },

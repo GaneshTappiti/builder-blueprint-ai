@@ -4,8 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+interface Investor {
+  name: string;
+  company: string;
+  position: string;
+  location: string;
+  focusAreas?: string[];
+}
+
 export default function TestInvestorsPage() {
-  const [investors, setInvestors] = useState([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,7 +33,7 @@ export default function TestInvestorsPage() {
         }
       } catch (err) {
         console.error('Error loading investors:', err);
-        setError(`Error: ${err.message}`);
+        setError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
