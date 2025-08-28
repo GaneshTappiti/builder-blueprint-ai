@@ -19,16 +19,16 @@ export const useTasks = () => {
     return unsubscribe;
   }, []);
 
-  const createTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return taskService.createTask(taskData);
+  const createTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>) => {
+    return await taskService.createTask(taskData);
   };
 
-  const updateTask = (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
-    return taskService.updateTask(id, updates);
+  const updateTask = async (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'user_id'>>) => {
+    return await taskService.updateTask(id, updates);
   };
 
-  const deleteTask = (id: string) => {
-    return taskService.deleteTask(id);
+  const deleteTask = async (id: string) => {
+    return await taskService.deleteTask(id);
   };
 
   const getTask = (id: string) => {

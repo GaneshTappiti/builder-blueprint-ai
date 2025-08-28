@@ -1,6 +1,8 @@
 // Project Service
 import { formatDisplayDate } from '@/utils/dateUtils';
 
+import { supabase } from '@/lib/supabase';
+
 export interface Project {
   id: string;
   name: string;
@@ -14,6 +16,7 @@ export interface Project {
   dueDate?: Date;
   teamMembers?: string[];
   status: 'active' | 'paused' | 'completed' | 'archived';
+  user_id: string;
 }
 
 export interface ProjectStats {
@@ -29,97 +32,63 @@ class ProjectService {
   private readonly STORAGE_KEY = 'workspace_projects';
 
   constructor() {
-    this.loadFromStorage();
+    this.initialize();
   }
 
-  private loadFromStorage() {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem(this.STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          this.projects = parsed.map((p: any) => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-            updatedAt: new Date(p.updatedAt),
-            dueDate: p.dueDate ? new Date(p.dueDate) : undefined
-          }));
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load projects from storage:', error);
-    }
-
-    // Initialize with mock data if no stored data
-    this.initializeWithMockData();
+  private async initialize() {
+    await this.loadFromSupabase();
   }
 
-  private saveToStorage() {
+  private async loadFromSupabase() {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.projects));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        this.projects = [];
+        return;
       }
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('updatedAt', { ascending: false });
+
+      if (error) throw error;
+
+      this.projects = data.map((p: any) => ({
+        ...p,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+        dueDate: p.dueDate ? new Date(p.dueDate) : undefined
+      }));
     } catch (error) {
-      console.error('Failed to save projects to storage:', error);
+      console.error('Failed to load projects from Supabase:', error);
+      this.projects = [];
     }
   }
 
-  private initializeWithMockData() {
-    // Mock projects for demo
-    this.projects = [
-      {
-        id: '1',
-        name: 'AI-Powered Fitness App',
-        description: 'A personalized fitness app that uses AI to create custom workout plans based on user preferences and progress.',
-        stage: 'development',
-        progress: 65,
-        createdAt: new Date('2025-07-28T10:00:00Z'), // 1 week ago
-        updatedAt: new Date('2025-08-04T08:00:00Z'), // 2 hours ago
-        tags: ['AI', 'Fitness', 'Mobile App'],
-        priority: 'high',
-        status: 'active',
-        teamMembers: ['user1', 'user2']
-      },
-      {
-        id: '2',
-        name: 'E-commerce Platform',
-        description: 'A modern e-commerce platform with advanced analytics and inventory management.',
-        stage: 'planning',
-        progress: 30,
-        createdAt: new Date('2025-07-30T10:00:00Z'), // 5 days ago
-        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
-        tags: ['E-commerce', 'Web App', 'Analytics'],
-        priority: 'medium',
-        status: 'active',
-        dueDate: new Date('2025-09-03T10:00:00Z') // 30 days from now
-      },
-      {
-        id: '3',
-        name: 'Task Management Tool',
-        description: 'A collaborative task management tool for remote teams with real-time updates.',
-        stage: 'testing',
-        progress: 85,
-        createdAt: new Date('2025-07-21T10:00:00Z'), // 2 weeks ago
-        updatedAt: new Date('2025-08-04T04:00:00Z'), // 6 hours ago
-        tags: ['Productivity', 'Collaboration', 'SaaS'],
-        priority: 'high',
-        status: 'active'
-      },
-      {
-        id: '4',
-        name: 'Social Media Dashboard',
-        description: 'Analytics dashboard for social media managers to track performance across platforms.',
-        stage: 'launch',
-        progress: 95,
-        createdAt: new Date('2025-07-14T10:00:00Z'), // 3 weeks ago
-        updatedAt: new Date('2025-08-04T09:30:00Z'), // 30 minutes ago
-        tags: ['Analytics', 'Social Media', 'Dashboard'],
-        priority: 'medium',
-        status: 'completed'
-      }
-    ];
+  private async saveToSupabase(project: Project) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user authenticated');
+
+      const { error } = await supabase
+        .from('projects')
+        .upsert({
+          ...project,
+          user_id: user.id,
+          createdAt: project.createdAt.toISOString(),
+          updatedAt: project.updatedAt.toISOString(),
+          dueDate: project.dueDate?.toISOString()
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to save project to Supabase:', error);
+      throw error;
+    }
   }
+
+  // Removed mock data initialization
 
   // Get all projects
   getProjects(): Project[] {
@@ -152,43 +121,57 @@ class ProjectService {
   }
 
   // Create new project
-  createProject(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Project {
+  async createProject(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>): Promise<Project> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user authenticated');
+
     const newProject: Project = {
       ...projectData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
+      user_id: user.id,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
+    await this.saveToSupabase(newProject);
     this.projects.unshift(newProject);
-    this.saveToStorage();
     this.notifyListeners();
     return newProject;
   }
 
   // Update project
-  updateProject(id: string, updates: Partial<Omit<Project, 'id' | 'createdAt'>>): Project | null {
+  async updateProject(id: string, updates: Partial<Omit<Project, 'id' | 'createdAt' | 'user_id'>>): Promise<Project | null> {
     const projectIndex = this.projects.findIndex(p => p.id === id);
     if (projectIndex === -1) return null;
 
-    this.projects[projectIndex] = {
+    const updatedProject = {
       ...this.projects[projectIndex],
       ...updates,
       updatedAt: new Date()
     };
 
-    this.saveToStorage();
+    this.projects[projectIndex] = updatedProject;
+    await this.saveToSupabase(updatedProject);
     this.notifyListeners();
-    return this.projects[projectIndex];
+    return updatedProject;
   }
 
   // Delete project
-  deleteProject(id: string): boolean {
+  async deleteProject(id: string): Promise<boolean> {
     const initialLength = this.projects.length;
     this.projects = this.projects.filter(p => p.id !== id);
     
     if (this.projects.length < initialLength) {
-      this.saveToStorage();
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Failed to delete project from Supabase:', error);
+        return false;
+      }
+
       this.notifyListeners();
       return true;
     }

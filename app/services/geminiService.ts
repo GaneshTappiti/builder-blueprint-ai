@@ -83,7 +83,7 @@ export const geminiService = {
       };
     } catch (error) {
       console.error('Gemini API Error:', error);
-      throw new Error('Failed to generate text with Gemini AI');
+      throw error instanceof Error ? error : new Error('Failed to generate text with Gemini AI');
     }
   },
 

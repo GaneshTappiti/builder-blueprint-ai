@@ -1,6 +1,8 @@
 // Task Service
 import { formatDisplayDate } from '@/utils/dateUtils';
 
+import { supabase } from '@/lib/supabase';
+
 export interface Task {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ export interface Task {
   tags?: string[];
   estimatedHours?: number;
   actualHours?: number;
+  user_id: string;
 }
 
 export interface TaskStats {
@@ -31,113 +34,63 @@ class TaskService {
   private readonly STORAGE_KEY = 'workspace_tasks';
 
   constructor() {
-    this.loadFromStorage();
+    this.initialize();
   }
 
-  private loadFromStorage() {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem(this.STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          this.tasks = parsed.map((t: any) => ({
-            ...t,
-            createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt),
-            dueDate: t.dueDate ? new Date(t.dueDate) : undefined
-          }));
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load tasks from storage:', error);
-    }
-
-    // Initialize with mock data if no stored data
-    this.initializeWithMockData();
+  private async initialize() {
+    await this.loadFromSupabase();
   }
 
-  private saveToStorage() {
+  private async loadFromSupabase() {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.tasks));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        this.tasks = [];
+        return;
       }
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('updatedAt', { ascending: false });
+
+      if (error) throw error;
+
+      this.tasks = data.map((t: any) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+        updatedAt: new Date(t.updatedAt),
+        dueDate: t.dueDate ? new Date(t.dueDate) : undefined
+      }));
     } catch (error) {
-      console.error('Failed to save tasks to storage:', error);
+      console.error('Failed to load tasks from Supabase:', error);
+      this.tasks = [];
     }
   }
 
-  private initializeWithMockData() {
-    // Mock tasks for demo
-    this.tasks = [
-      {
-        id: '1',
-        title: 'Design wireframes for mobile app',
-        description: 'Create detailed wireframes for the main user flows',
-        priority: 'high',
-        status: 'in-progress',
-        dueDate: new Date('2025-08-06T10:00:00Z'), // 2 days from now
-        createdAt: new Date('2025-08-01T10:00:00Z'), // 3 days ago
-        updatedAt: new Date('2025-08-04T08:00:00Z'), // 2 hours ago
-        projectId: '1',
-        tags: ['design', 'ui/ux'],
-        estimatedHours: 8
-      },
-      {
-        id: '2',
-        title: 'Set up development environment',
-        description: 'Configure development tools and dependencies',
-        priority: 'medium',
-        status: 'done',
-        dueDate: new Date('2025-08-03T10:00:00Z'), // 1 day ago
-        createdAt: new Date('2025-07-30T10:00:00Z'), // 5 days ago
-        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
-        projectId: '1',
-        tags: ['development', 'setup'],
-        estimatedHours: 4,
-        actualHours: 3
-      },
-      {
-        id: '3',
-        title: 'Market research analysis',
-        description: 'Analyze competitor landscape and market opportunities',
-        priority: 'high',
-        status: 'todo',
-        dueDate: new Date('2025-08-11T10:00:00Z'), // 1 week from now
-        createdAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
-        updatedAt: new Date('2025-08-03T10:00:00Z'), // 1 day ago
-        projectId: '2',
-        tags: ['research', 'market'],
-        estimatedHours: 12
-      },
-      {
-        id: '4',
-        title: 'Write API documentation',
-        description: 'Document all API endpoints and usage examples',
-        priority: 'medium',
-        status: 'todo',
-        dueDate: new Date('2025-08-09T10:00:00Z'), // 5 days from now
-        createdAt: new Date('2025-08-03T22:00:00Z'), // 12 hours ago
-        updatedAt: new Date('2025-08-03T22:00:00Z'), // 12 hours ago
-        projectId: '3',
-        tags: ['documentation', 'api'],
-        estimatedHours: 6
-      },
-      {
-        id: '5',
-        title: 'User testing session',
-        description: 'Conduct user testing with 5 participants',
-        priority: 'high',
-        status: 'todo',
-        dueDate: new Date('2025-08-03T10:00:00Z'), // Overdue by 1 day
-        createdAt: new Date('2025-07-28T10:00:00Z'), // 1 week ago
-        updatedAt: new Date('2025-08-02T10:00:00Z'), // 2 days ago
-        projectId: '3',
-        tags: ['testing', 'user-research'],
-        estimatedHours: 8
-      }
-    ];
+  private async saveToSupabase(task: Task) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user authenticated');
+
+      const { error } = await supabase
+        .from('tasks')
+        .upsert({
+          ...task,
+          user_id: user.id,
+          createdAt: task.createdAt.toISOString(),
+          updatedAt: task.updatedAt.toISOString(),
+          dueDate: task.dueDate?.toISOString()
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to save task to Supabase:', error);
+      throw error;
+    }
   }
+
+  // Removed mock data initialization
 
   // Get all tasks
   getTasks(): Task[] {
@@ -186,43 +139,57 @@ class TaskService {
   }
 
   // Create new task
-  createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Task {
+  async createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>): Promise<Task> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user authenticated');
+
     const newTask: Task = {
       ...taskData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
+      user_id: user.id,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
+    await this.saveToSupabase(newTask);
     this.tasks.unshift(newTask);
-    this.saveToStorage();
     this.notifyListeners();
     return newTask;
   }
 
   // Update task
-  updateTask(id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>): Task | null {
+  async updateTask(id: string, updates: Partial<Omit<Task, 'id' | 'createdAt' | 'user_id'>>): Promise<Task | null> {
     const taskIndex = this.tasks.findIndex(t => t.id === id);
     if (taskIndex === -1) return null;
 
-    this.tasks[taskIndex] = {
+    const updatedTask = {
       ...this.tasks[taskIndex],
       ...updates,
       updatedAt: new Date()
     };
 
-    this.saveToStorage();
+    this.tasks[taskIndex] = updatedTask;
+    await this.saveToSupabase(updatedTask);
     this.notifyListeners();
-    return this.tasks[taskIndex];
+    return updatedTask;
   }
 
   // Delete task
-  deleteTask(id: string): boolean {
+  async deleteTask(id: string): Promise<boolean> {
     const initialLength = this.tasks.length;
     this.tasks = this.tasks.filter(t => t.id !== id);
     
     if (this.tasks.length < initialLength) {
-      this.saveToStorage();
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Failed to delete task from Supabase:', error);
+        return false;
+      }
+
       this.notifyListeners();
       return true;
     }

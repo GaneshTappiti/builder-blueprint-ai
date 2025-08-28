@@ -19,20 +19,20 @@ export const useProjects = () => {
     return unsubscribe;
   }, []);
 
-  const createProject = (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return projectService.createProject(projectData);
+  const createProject = async (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>) => {
+    return await projectService.createProject(projectData);
   };
 
-  const updateProject = (id: string, updates: Partial<Omit<Project, 'id' | 'createdAt'>>) => {
-    return projectService.updateProject(id, updates);
+  const updateProject = async (id: string, updates: Partial<Omit<Project, 'id' | 'createdAt' | 'user_id'>>) => {
+    return await projectService.updateProject(id, updates);
   };
 
-  const deleteProject = (id: string) => {
-    return projectService.deleteProject(id);
+  const deleteProject = async (id: string) => {
+    return await projectService.deleteProject(id);
   };
 
-  const archiveProject = (id: string) => {
-    return projectService.archiveProject(id);
+  const archiveProject = async (id: string) => {
+    return await projectService.archiveProject(id);
   };
 
   const getProject = (id: string) => {

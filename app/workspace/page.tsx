@@ -47,7 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAI } from '@/hooks/useEnhancedAI';
 // import FlowProgress from "@/components/dashboard/FlowProgress";
 // import QuickStats from "@/components/dashboard/QuickStats";
-// import { useActiveIdea, useIdeaStore } from "@/stores/ideaStore";
+import { useActiveIdea, useIdeaStore } from "@/stores/ideaStore";
 // import { AISettingsPanel } from '@/components/ai-settings';
 // import AdminStatusIndicator from '@/components/admin/AdminStatusIndicator';
 // import AdminQuickActions from '@/components/admin/AdminQuickActions';
@@ -134,11 +134,13 @@ export default function WorkspacePage() {
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showValidationResult, setShowValidationResult] = useState(false);
 
-  // Store hooks - Mock functions to replace useIdeaStore
-  const canCreateNewIdea = () => true;
-  const setHasActiveIdea = (value: boolean) => console.log("setHasActiveIdea:", value);
-  const setCurrentStep = (step: string) => console.log("setCurrentStep:", step);
-  const setActiveIdea = (idea: any) => console.log("setActiveIdea:", idea);
+  // Store hooks
+  const { canCreateNewIdea, setHasActiveIdea, setCurrentStep, setActiveIdea } = useIdeaStore(state => ({
+    canCreateNewIdea: state.canCreateNewIdea,
+    setHasActiveIdea: state.setHasActiveIdea,
+    setCurrentStep: state.setCurrentStep,
+    setActiveIdea: state.setActiveIdea
+  }));
 
   const [showTemplates, setShowTemplates] = useState(false);
 
@@ -456,22 +458,23 @@ export default function WorkspacePage() {
     clearError();
 
     try {
-      // Enhanced prompt for better startup analysis
+      // Enhanced prompt for Founder's GPT expertise
       const enhancedPrompt = `
-      As an AI startup consultant, analyze this idea and provide:
-      1. A clear problem statement
-      2. Target market analysis
-      3. Key features for MVP
-      4. Monetization strategy
-      5. Next steps
+      As an AI co-founder with deep expertise in startup journeys, provide detailed advice on: ${gptInput}
 
-      User idea: ${gptInput}
+      Structure your response with clear sections including:
+      1. Strategic Analysis
+      2. Actionable Recommendations
+      3. Potential Challenges & Solutions
+      4. Next Steps
 
-      Format your response in a structured way with clear sections.
-      `;
+      Draw from Y Combinator principles, IndieHackers insights, and successful founder strategies. Provide specific, practical guidance.`
 
-      // Use real AI service instead of mock
-      const response = await ai.generateText(enhancedPrompt);
+      // Initialize AI engine with startup expertise
+      const response = await aiEngine.generateText(enhancedPrompt, {
+        temperature: 0.7,
+        maxTokens: 1500
+      });
 
       if (!response || !response.text) {
         throw new Error('No response received from AI service');
@@ -1188,7 +1191,7 @@ export default function WorkspacePage() {
                           <Button
                             type="submit"
                             className="absolute right-1 top-1 bg-green-600 hover:bg-green-500 h-8 md:h-10"
-                            disabled={isLoading || !gptInput.trim()}
+                            disabled={!!(isLoading || !gptInput.trim())}
                           >
                             {isLoading ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

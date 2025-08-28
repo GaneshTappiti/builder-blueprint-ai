@@ -1,7 +1,9 @@
-// Mock Zustand store for idea management
-// In a real application, this would use actual Zustand
+// Idea management store using Zustand
+import { create } from 'zustand';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
 
-interface ActiveIdea {
+export interface ActiveIdea {
   id: string;
   title: string;
   description: string;
@@ -19,47 +21,126 @@ interface ActiveIdea {
   problem_statement?: string;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 interface IdeaStore {
   currentStep: string;
   hasActiveIdea: boolean;
+  activeIdea: ActiveIdea | null;
+  ideas: ActiveIdea[];
+  isLoading: boolean;
+  error: string | null;
   canCreateNewIdea: () => boolean;
   setCurrentStep: (step: string) => void;
   setHasActiveIdea: (hasIdea: boolean) => void;
+  setActiveIdea: (idea: ActiveIdea | null) => Promise<void>;
+  fetchUserIdeas: () => Promise<void>;
+  saveIdeaToSupabase: (idea: ActiveIdea) => Promise<void>;
 }
 
-// Mock store state
-let storeState = {
+export const useIdeaStore = create<IdeaStore>((set, get) => ({
   currentStep: 'workshop',
-  hasActiveIdea: false
-};
+  hasActiveIdea: false,
+  activeIdea: null,
+  ideas: [],
+  isLoading: false,
+  error: null,
 
-// Mock store implementation
-export const useIdeaStore = (selector: (state: IdeaStore) => any) => {
-  const store: IdeaStore = {
-    currentStep: storeState.currentStep,
-    hasActiveIdea: storeState.hasActiveIdea,
-    canCreateNewIdea: () => !storeState.hasActiveIdea,
-    setCurrentStep: (step: string) => {
-      storeState.currentStep = step;
-    },
-    setHasActiveIdea: (hasIdea: boolean) => {
-      storeState.hasActiveIdea = hasIdea;
+  canCreateNewIdea: () => !get().hasActiveIdea,
+
+  setCurrentStep: (step: string) => set({ currentStep: step }),
+
+  setHasActiveIdea: (hasIdea: boolean) => set({ hasActiveIdea: hasIdea }),
+
+  saveIdeaToSupabase: async (idea: ActiveIdea) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user authenticated');
+
+      const ideaWithUser = { ...idea, user_id: user.id, updated_at: new Date().toISOString() };
+
+      if (idea.id) {
+        // Update existing idea
+        const { error } = await supabase
+          .from('ideas')
+          .update(ideaWithUser)
+          .eq('id', idea.id);
+
+        if (error) throw error;
+        toast({ title: 'Idea updated successfully' });
+        set(state => ({
+          ideas: state.ideas.map(i => i.id === idea.id ? idea : i),
+          activeIdea: idea
+        }));
+      } else {
+        // Create new idea
+        const newIdea = { ...ideaWithUser, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+        const { error } = await supabase
+          .from('ideas')
+          .insert(newIdea);
+
+        if (error) throw error;
+        toast({ title: 'Idea saved to vault' });
+        set(state => ({
+          ideas: [newIdea, ...state.ideas],
+          hasActiveIdea: true,
+          activeIdea: newIdea as ActiveIdea
+        }));
+      }
+    } catch (error) {
+      console.error('Error saving idea:', error);
+      toast({ title: 'Failed to save idea', variant: 'destructive' });
+      throw error;
     }
-  };
-  
-  return selector(store);
-};
+  },
 
-// Mock active idea hook
-let activeIdeaState: ActiveIdea | null = null;
+  setActiveIdea: async (idea: ActiveIdea | null) => {
+    if (idea) {
+      await get().saveIdeaToSupabase(idea);
+    } else {
+      set({ activeIdea: null });
+    }
+  },
 
+  fetchUserIdeas: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        set({ ideas: [], isLoading: false });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      const ideas = data as ActiveIdea[];
+      set({
+        ideas,
+        hasActiveIdea: ideas.length > 0,
+        activeIdea: ideas.length > 0 ? ideas[0] : null,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Error fetching ideas:', error);
+      toast({ title: 'Failed to load ideas', variant: 'destructive' });
+      set({ error: error instanceof Error ? error.message : 'Failed to load ideas', isLoading: false });
+    }
+  }
+}));
+
+// Helper hook to access active idea functionality
 export const useActiveIdea = () => {
+  const ideaStore = useIdeaStore();
   return {
-    activeIdea: activeIdeaState,
-    setActiveIdea: (idea: ActiveIdea | null) => {
-      activeIdeaState = idea;
-    }
+    activeIdea: ideaStore.activeIdea,
+    setActiveIdea: ideaStore.setActiveIdea,
+    fetchUserIdeas: ideaStore.fetchUserIdeas,
+    isLoading: ideaStore.isLoading,
+    error: ideaStore.error
   };
 };

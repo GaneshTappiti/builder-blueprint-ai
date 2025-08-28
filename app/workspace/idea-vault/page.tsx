@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useActiveIdea } from '@/stores/ideaStore';
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,11 +57,12 @@ interface ActiveIdea {
 export default function IdeaVaultPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeIdea, setActiveIdea] = useState<ActiveIdea | null>(null);
-  const [hasActiveIdea, setHasActiveIdea] = useState(false);
+  const [ideas, setIdeas] = useState<ActiveIdea[]>([]);
 
   const router = useRouter();
   const { toast } = useToast();
+  const { activeIdea, fetchUserIdeas } = useActiveIdea();
+  const { setHasActiveIdea } = useIdeaStore();
 
   // Mock subscription data for demonstration
   const isFreeTier = true;
@@ -68,36 +70,16 @@ export default function IdeaVaultPage() {
   const currentPlan = { limits: { ideas: 1 } };
 
   // Mock data for demonstration - in real app this would come from database/store
-  useEffect(() => {
-    // Simulate loading active idea
+  const loadIdeas = useCallback(async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      // Mock active idea data
-      const mockIdea: ActiveIdea = {
-        id: "1",
-        title: "AI-Powered Fitness Coach",
-        description: "A personalized fitness coaching app that uses AI to create custom workout plans and provide real-time form feedback through computer vision.",
-        status: "validated",
-        category: "health-tech",
-        tags: ["ai", "fitness", "mobile-app", "computer-vision"],
-        validation_score: 85,
-        market_opportunity: "The global fitness app market is valued at $4.4 billion and growing at 14.7% CAGR",
-        risk_assessment: "High competition from established players like Nike Training Club and Peloton",
-        monetization_strategy: "Freemium model with premium subscription for advanced AI features",
-        key_features: ["AI workout generation", "Form analysis", "Progress tracking", "Social features"],
-        next_steps: ["Market research", "MVP development", "User testing"],
-        competitor_analysis: "Direct competitors include Freeletics, Fitbod, and Nike Training Club",
-        target_market: "Health-conscious millennials and Gen Z users aged 25-40",
-        problem_statement: "Many people struggle with proper form and personalized workout plans",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+    const userIdeas = await fetchUserIdeas();
+    setIdeas(userIdeas);
+    setIsLoading(false);
+  }, [fetchUserIdeas]);
 
-      setActiveIdea(mockIdea);
-      setHasActiveIdea(true);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  useEffect(() => {
+    loadIdeas();
+  }, [loadIdeas]);
 
   const continueToIdeaForge = () => {
     if (!activeIdea) {
@@ -199,6 +181,76 @@ export default function IdeaVaultPage() {
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Back to Workspace
+                </Button>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Idea Vault</h1>
+              </div>
+              <Button onClick={startNewIdea} disabled={isLoading}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                New Idea
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="px-6 py-8 max-w-7xl mx-auto">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+              <Loader2 className="h-12 w-12 text-green-500 animate-spin" />
+              <p className="mt-4 text-gray-400">Loading your ideas...</p>
+            </div>
+          ) : ideas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+              <Lightbulb className="h-16 w-16 text-gray-700 mb-4" />
+              <h2 className="text-2xl font-semibold mb-2">No ideas yet</h2>
+              <p className="text-gray-400 max-w-md mb-8">Your Idea Vault is empty. Start brainstorming in the Workshop to create your first idea.</p>
+              <Button onClick={startNewIdea} size="lg">
+                <Sparkles className="h-5 w-5 mr-2" />
+                Start New Idea
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-bold">Your Ideas ({ideas.length})</h2>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm">All Ideas</Button>
+                  <Button variant="ghost" size="sm">Validated</Button>
+                  <Button variant="ghost" size="sm">Exploring</Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {ideas.map((idea) => (
+                  <Card key={idea.id} className="bg-gray-900 border-gray-800 hover:border-green-500 transition-colors overflow-hidden group">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-xl line-clamp-2 group-hover:text-green-400 transition-colors">{idea.title}</CardTitle>
+                        <Badge className={getStatusBadge(idea.status).color}>
+                          {getStatusBadge(idea.status).text}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-400 line-clamp-3 mb-4">{idea.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {idea.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="bg-gray-800 text-gray-300">{tag}</Badge>
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Updated {new Date(idea.updated_at).toLocaleDateString()}</span>
+                        <Button size="sm" onClick={() => {/* Add view idea functionality */}}>
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>                  Back to Workspace
                 </Button>
               </div>
               {!activeIdea && (
