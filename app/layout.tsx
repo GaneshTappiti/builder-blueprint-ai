@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { IdeaProvider } from '@/stores/ideaStore';
 
 const inter = Inter({ subsets: ['latin'] })
 import { Toaster } from "@/components/ui/toaster";
@@ -58,7 +59,9 @@ export default function RootLayout({
               <AuthProvider>
                 <AdminProvider>
                   <TooltipProvider>
-                    {children}
+                    <IdeaProvider>
+                      {children}
+                    </IdeaProvider>
                     <Toaster />
                     <Sonner />
                   </TooltipProvider>

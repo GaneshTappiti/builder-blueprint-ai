@@ -47,7 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAI } from '@/hooks/useEnhancedAI';
 // import FlowProgress from "@/components/dashboard/FlowProgress";
 // import QuickStats from "@/components/dashboard/QuickStats";
-import { useActiveIdea, useIdeaStore } from "@/stores/ideaStore";
+import { useActiveIdea, useIdeaContext } from "@/stores/ideaStore";
 // import { AISettingsPanel } from '@/components/ai-settings';
 // import AdminStatusIndicator from '@/components/admin/AdminStatusIndicator';
 // import AdminQuickActions from '@/components/admin/AdminQuickActions';
@@ -135,7 +135,7 @@ export default function WorkspacePage() {
   const [showValidationResult, setShowValidationResult] = useState(false);
 
   // Store hooks
-  const { canCreateNewIdea, setHasActiveIdea, setCurrentStep, setActiveIdea } = useIdeaStore(state => ({
+  const { canCreateNewIdea, setHasActiveIdea, setCurrentStep, setActiveIdea } = useIdeaContext();
     canCreateNewIdea: state.canCreateNewIdea,
     setHasActiveIdea: state.setHasActiveIdea,
     setCurrentStep: state.setCurrentStep,
