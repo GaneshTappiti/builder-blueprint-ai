@@ -116,7 +116,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     { id: "ai-tools", name: "AI Tools Hub", icon: Brain, path: "/workspace/ai-tools" },
     { id: "docs-decks", name: "Docs & Decks", icon: FileText, path: "/workspace/docs-decks" },
     { id: "teamspace", name: "TeamSpace", icon: Users, path: "/workspace/teamspace", isBeta: true, betaVariant: 'secondary' as const },
-    { id: "investor-radar", name: "Investor Radar", icon: Search, path: "/workspace/investor-radar", isBeta: true, betaVariant: 'secondary' as const },
+    
   ];
 
   const sidebarContent = (
