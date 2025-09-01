@@ -369,14 +369,11 @@ export default function IdeaForgePage() {
         ) : (
           <>
                          {/* Minimal Header */}
-             <MinimalHeader 
-               onToggleSidebar={() => setSidebarOpen(true)}
-               backToPath="/workspace"
-               backToLabel="Back to Workspace"
-               showSearch={false}
-               showNotifications={false}
-               showProfile={false}
-             />
+                     <MinimalHeader 
+          onToggleSidebar={() => setSidebarOpen(true)}
+          backToPath="/workspace"
+          backToLabel="Back to Workspace"
+        />
              
              {/* New Idea Button */}
              <div className="px-6 py-4 flex justify-end">

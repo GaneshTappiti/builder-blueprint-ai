@@ -41,9 +41,6 @@ export default function MVPStudioPage() {
           onToggleSidebar={() => setSidebarOpen(true)}
           backToPath="/workspace"
           backToLabel="Back to Workspace"
-          showSearch={false}
-          showNotifications={false}
-          showProfile={false}
         />
 
         {/* Main Content */}

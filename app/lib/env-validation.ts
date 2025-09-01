@@ -20,7 +20,7 @@ export function validateEnvironment() {
   if (missingVars.length > 0) {
     throw new Error(
       `Missing or invalid environment variables: ${missingVars.join(', ')}. ` +
-      'Please check your .env.local file and ensure all required API keys are set.'
+      'Please check your option .env.local file and ensure all required API keys are set.'
     );
   }
 

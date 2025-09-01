@@ -21,14 +21,11 @@ export default function BuilderPage() {
         
         <main className="layout-main transition-all duration-300">
           {/* Minimal Header */}
-          <MinimalHeader 
-            onToggleSidebar={() => setSidebarOpen(true)}
-            backToPath="/workspace/mvp-studio"
-            backToLabel="Back to MVP Studio"
-            showSearch={false}
-            showNotifications={false}
-            showProfile={false}
-          />
+                  <MinimalHeader 
+          onToggleSidebar={() => setSidebarOpen(true)}
+          backToPath="/workspace/mvp-studio"
+          backToLabel="Back to MVP Studio"
+        />
 
           {/* Main Content */}
           <div className="px-6 py-8">
