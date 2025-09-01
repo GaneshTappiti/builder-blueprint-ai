@@ -25,7 +25,7 @@ export default function TestUniversalTemplatePage() {
   const [userIdea, setUserIdea] = useState('A comprehensive task management application with real-time collaboration, project tracking, team productivity analytics, automated workflow management, and AI-powered insights for optimizing team performance.');
   const [testPreset, setTestPreset] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<{ prompt: string; analysis: any } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Universal config state

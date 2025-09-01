@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Layout, Users, GitBranch, Database, Eye, Edit3, MessageSquare, Activity, Plug } from "lucide-react";
+import { ArrowRight, Layout, Users, GitBranch, Eye, Edit3, MessageSquare, Plug } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
 import { RAGContextInjector } from "@/services/ragContextInjector";
@@ -302,6 +302,8 @@ export function BlueprintCard() {
         </p>
       </div>
 
+
+
       {/* Screens List */}
       <Card className="bg-black/40 backdrop-blur-sm border-white/10">
         <CardHeader>
@@ -404,43 +406,7 @@ export function BlueprintCard() {
         </CardContent>
       </Card>
 
-      {/* Data Models */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
-            <Database className="h-4 w-4 text-orange-400" />
-            📊 Data Models
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {state.appBlueprint.dataModels.map((model, index) => (
-            <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
-              <h5 className="font-medium text-white">{model.name}</h5>
-              {model.description && (
-                <p className="text-sm text-gray-400 mt-1 mb-2">{model.description}</p>
-              )}
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-1">
-                  {model.fields.map((field: string, idx: number) => (
-                    <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
-                      {field}
-                    </span>
-                  ))}
-                </div>
-                {model.relationships && model.relationships.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {model.relationships.map((relationship: string, idx: number) => (
-                      <span key={idx} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded backdrop-blur-sm">
-                        {relationship}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+
 
       {/* Modals & Popups */}
       {state.appBlueprint.modals && state.appBlueprint.modals.length > 0 && (
@@ -480,43 +446,7 @@ export function BlueprintCard() {
         </Card>
       )}
 
-      {/* States & Edge Cases */}
-      {state.appBlueprint.states && state.appBlueprint.states.length > 0 && (
-        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-white">
-              <Activity className="h-4 w-4 text-yellow-400" />
-              🧪 States & Edge Cases
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {state.appBlueprint.states.map((state_item, index) => (
-              <div key={index} className="border border-white/20 rounded-lg p-3 bg-white/5 backdrop-blur-sm">
-                <h5 className="font-medium text-white">{state_item.name}</h5>
-                <p className="text-sm text-gray-400 mt-1">{state_item.description}</p>
-                <div className="mt-2 space-y-1">
-                  <div className="flex flex-wrap gap-1">
-                    <span className="text-xs text-gray-400">Screens:</span>
-                    {state_item.screens.map((screen: string, idx: number) => (
-                      <span key={idx} className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded backdrop-blur-sm">
-                        {screen}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    <span className="text-xs text-gray-400">Conditions:</span>
-                    {state_item.conditions.map((condition: string, idx: number) => (
-                      <span key={idx} className="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded backdrop-blur-sm">
-                        {condition}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* 3rd-party Integrations */}
       {state.appBlueprint.integrations && state.appBlueprint.integrations.length > 0 && (
@@ -566,32 +496,111 @@ export function BlueprintCard() {
         </Card>
       )}
 
-      {/* Continue Button */}
-      <div className="flex justify-between items-center pt-4">
-        <Button variant="outline" className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10">
-          <Edit3 className="h-4 w-4" />
-          Regenerate Blueprint
-        </Button>
-        
-        <Button 
-          onClick={continueToPrompts}
-          disabled={isGeneratingPrompts}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-          size="lg"
-        >
-          {isGeneratingPrompts ? (
-            <>
-              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              Generating Prompts...
-            </>
-          ) : (
-            <>
-              Continue to Page Prompts
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </div>
+                           {/* Overall App Brief Prompt Copier */}
+        <Card className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border-blue-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base text-white">
+              <MessageSquare className="h-4 w-4 text-blue-400" />
+              📋 Overall App Brief - Copy for AI Builders
+            </CardTitle>
+            <p className="text-sm text-gray-400">
+              Copy this complete project brief to paste into Bubble, FlutterFlow, or any AI builder
+            </p>
+          </CardHeader>
+          <CardContent>
+                         <div className="bg-black/40 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+               <div className="space-y-2 text-sm text-gray-300 font-mono">
+                 <div><span className="text-blue-400">Build a web app</span> where {state.appIdea.targetAudience || 'users'} can {state.appIdea.ideaDescription.toLowerCase()}.</div>
+                 <div><span className="text-green-400">Core Screens:</span> {state.appBlueprint?.screens?.map(s => s.name).join(', ') || 'Main dashboard, User profile'}.</div>
+                 <div><span className="text-yellow-400">Main Features:</span> {state.appBlueprint?.screens?.map(s => s.purpose).slice(0, 3).join(', ') || 'Core functionality'}.</div>
+                 <div><span className="text-purple-400">User Roles:</span> {state.appBlueprint?.userRoles?.map(r => typeof r === 'string' ? r : r.name).join(', ') || 'User, Admin'}.</div>
+                 {state.appBlueprint?.integrations && state.appBlueprint.integrations.length > 0 && (
+                   <div><span className="text-cyan-400">Integrations:</span> {state.appBlueprint.integrations.map(i => i.name).join(', ')}.</div>
+                 )}
+                 <div><span className="text-orange-400">Architecture:</span> {state.appBlueprint?.architecture || 'Component-based with state management'}.</div>
+                 {state.validationQuestions.selectedTool && (
+                   <div><span className="text-pink-400">Tool-Specific:</span> Optimized for {state.validationQuestions.selectedTool} development workflow</div>
+                 )}
+               </div>
+             </div>
+            <Button 
+              onClick={async () => {
+                let ragContext = null;
+                
+                // Get RAG context if a tool is selected
+                if (state.validationQuestions.selectedTool) {
+                  try {
+                    ragContext = await RAGContextInjector.getContextForStage({
+                      stage: 'blueprint_generation',
+                      toolId: state.validationQuestions.selectedTool,
+                      appIdea: state.appIdea.ideaDescription,
+                      appType: state.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app',
+                      platforms: state.appIdea.platforms
+                    });
+                  } catch (error) {
+                    console.warn('Failed to load RAG context for brief:', error);
+                  }
+                }
+
+                // Build enhanced brief with RAG context
+                let brief = `Build a web app where ${state.appIdea.targetAudience || 'users'} can ${state.appIdea.ideaDescription.toLowerCase()}. Core Screens: ${state.appBlueprint?.screens?.map(s => s.name).join(', ') || 'Main dashboard, User profile'}. Main Features: ${state.appBlueprint?.screens?.map(s => s.purpose).slice(0, 3).join(', ') || 'Core functionality'}. User Roles: ${state.appBlueprint?.userRoles?.map(r => typeof r === 'string' ? r : r.name).join(', ') || 'User, Admin'}. ${state.appBlueprint?.integrations && state.appBlueprint.integrations.length > 0 ? `Integrations: ${state.appBlueprint.integrations.map(i => i.name).join(', ')}.` : ''} Architecture: ${state.appBlueprint?.architecture || 'Component-based with state management'}.`;
+
+                // Add RAG-enhanced content if available
+                if (ragContext) {
+                  if (ragContext.toolSpecificContext) {
+                    brief += `\n\nTool-Specific Guidance: ${ragContext.toolSpecificContext.substring(0, 300)}`;
+                  }
+                  if (ragContext.architecturePatterns) {
+                    brief += `\n\nArchitecture Patterns: ${ragContext.architecturePatterns.substring(0, 200)}`;
+                  }
+                  if (ragContext.bestPractices && ragContext.bestPractices.length > 0) {
+                    brief += `\n\nBest Practices: ${ragContext.bestPractices.slice(0, 3).join(', ')}`;
+                  }
+                  if (ragContext.optimizationTips && ragContext.optimizationTips.length > 0) {
+                    brief += `\n\nOptimization Tips: ${ragContext.optimizationTips.slice(0, 2).join(', ')}`;
+                  }
+                }
+
+                navigator.clipboard.writeText(brief);
+                toast({
+                  title: "Enhanced Brief Copied!",
+                  description: `Complete app brief with ${ragContext ? 'RAG-enhanced' : 'standard'} content copied to clipboard.`,
+                });
+              }}
+              className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white"
+              size="sm"
+            >
+              📋 Copy Enhanced Brief
+            </Button>
+          </CardContent>
+        </Card>
+
+       {/* Continue Button */}
+       <div className="flex justify-between items-center pt-4">
+         <Button variant="outline" className="flex items-center gap-2 border-white/20 text-gray-300 hover:bg-white/10">
+           <Edit3 className="h-4 w-4" />
+           Regenerate Blueprint
+         </Button>
+         
+         <Button 
+           onClick={continueToPrompts}
+           disabled={isGeneratingPrompts}
+           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+           size="lg"
+         >
+           {isGeneratingPrompts ? (
+             <>
+               <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+               Generating Prompts...
+             </>
+           ) : (
+             <>
+               Continue to Page Prompts
+               <ArrowRight className="h-4 w-4" />
+             </>
+           )}
+         </Button>
+       </div>
     </div>
   );
 }

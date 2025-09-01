@@ -9,6 +9,7 @@ import { BuilderProvider } from "@/lib/builderContext";
 import { useState } from "react";
 import { ArrowLeft, Brain, Sparkles, Menu } from "lucide-react";
 import Link from "next/link";
+import { MinimalHeader } from "@/components/MinimalHeader";
 
 export default function BuilderPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,33 +20,15 @@ export default function BuilderPage() {
         <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         
         <main className="layout-main transition-all duration-300">
-          {/* Top Navigation Bar */}
-          <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <SidebarToggle onClick={() => setSidebarOpen(true)} />
-                  <Link
-                    href="/workspace/mvp-studio"
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span>Back to MVP Studio</span>
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    <Brain className="h-6 w-6 text-green-400" />
-                    <h1 className="text-xl font-bold text-white">Builder Blueprint AI</h1>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Badge variant="secondary" className="bg-green-600/20 text-green-300 border-green-600/40">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    6-Stage Architecture
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Minimal Header */}
+          <MinimalHeader 
+            onToggleSidebar={() => setSidebarOpen(true)}
+            backToPath="/workspace/mvp-studio"
+            backToLabel="Back to MVP Studio"
+            showSearch={false}
+            showNotifications={false}
+            showProfile={false}
+          />
 
           {/* Main Content */}
           <div className="px-6 py-8">

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
+import { MinimalHeader } from "@/components/MinimalHeader";
 import {
   PlusCircle,
   ChevronLeft,
@@ -258,60 +259,36 @@ export default function IdeaForgePage() {
       <main className="layout-main transition-all duration-300">
         {currentIdea ? (
           <>
-            {/* Top Navigation Bar with Idea Context */}
-            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-              <div className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-white hover:bg-black/30"
-                      onClick={() => setSidebarOpen(true)}
-                    >
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-white"
-                      onClick={() => {
-                        setCurrentIdea(null);
-                        router.push('/workspace/ideaforge');
-                      }}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-2" />
-                      Back to Ideas
-                    </Button>
-                    <div className="hidden md:block">
-                      <h2 className="text-lg font-semibold text-white">{currentIdea.title}</h2>
-                      <Badge className={getStatusColor(currentIdea.status)}>
-                        {currentIdea.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowShareModal(true)}
-                      className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleExport('summary')}
-                      className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            {/* Minimal Header */}
+            <MinimalHeader 
+              onToggleSidebar={() => setSidebarOpen(true)}
+              backToPath="/workspace/ideaforge"
+              backToLabel="Back to Ideas"
+              showSearch={false}
+              showNotifications={false}
+              showProfile={false}
+            />
+            
+            {/* Action Buttons */}
+            <div className="px-6 py-4 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShareModal(true)}
+                className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport('summary')}
+                className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
 
             {/* Main Content */}
@@ -391,39 +368,28 @@ export default function IdeaForgePage() {
           </>
         ) : (
           <>
-            {/* Ideas List Navigation */}
-            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-              <div className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-white hover:bg-black/30"
-                      onClick={() => setSidebarOpen(true)}
-                    >
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                    <Link
-                      href="/workspace"
-                      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span>Back to Workspace</span>
-                    </Link>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="bg-green-600 hover:bg-green-700">
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        New Idea
-                      </Button>
-                    </DialogTrigger>
-                    <NewIdeaModal onCreateIdea={handleCreateIdea} />
-                  </Dialog>
-                </div>
-              </div>
-            </div>
+                         {/* Minimal Header */}
+             <MinimalHeader 
+               onToggleSidebar={() => setSidebarOpen(true)}
+               backToPath="/workspace"
+               backToLabel="Back to Workspace"
+               showSearch={false}
+               showNotifications={false}
+               showProfile={false}
+             />
+             
+             {/* New Idea Button */}
+             <div className="px-6 py-4 flex justify-end">
+               <Dialog>
+                 <DialogTrigger asChild>
+                   <Button className="bg-green-600 hover:bg-green-700">
+                     <PlusCircle className="h-4 w-4 mr-2" />
+                     New Idea
+                   </Button>
+                 </DialogTrigger>
+                 <NewIdeaModal onCreateIdea={handleCreateIdea} />
+               </Dialog>
+             </div>
 
             {/* Main Content */}
             <div className="px-6 py-8">

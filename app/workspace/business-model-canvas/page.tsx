@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import WorkspaceSidebar, { SidebarToggle } from "@/components/WorkspaceSidebar";
+import { MinimalHeader } from "@/components/MinimalHeader";
 import {
   Brain,
   Sparkles,
@@ -224,29 +225,15 @@ export default function BusinessModelCanvasPage() {
       <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       
       <main className="layout-main transition-all duration-300">
-        {/* Top Navigation Bar */}
-        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <SidebarToggle onClick={() => setSidebarOpen(true)} />
-                <Link
-                  href="/workspace"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Back to Workspace</span>
-                </Link>
-              </div>
-              <div className="flex items-center gap-4">
-                <Badge variant="secondary" className="bg-green-600/20 text-green-300 border-green-600/40">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI-Powered
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Minimal Header */}
+        <MinimalHeader 
+          onToggleSidebar={() => setSidebarOpen(true)}
+          backToPath="/workspace"
+          backToLabel="Back to Workspace"
+          showSearch={false}
+          showNotifications={false}
+          showProfile={false}
+        />
 
         {/* Main Content */}
         <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto">

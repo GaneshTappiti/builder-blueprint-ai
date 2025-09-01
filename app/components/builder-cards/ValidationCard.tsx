@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Users, MessageSquare, Target, Zap, Wrench } from "lucide-react";
-import { useBuilder, builderActions, AppBlueprint } from "@/lib/builderContext";
+import { useBuilder, builderActions, AppBlueprint, Screen, UserRole, Modal, Integration, AppState, PageFlow } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
 import { RAGTool, RAGToolProfile } from "@/types/ideaforge";
 import { getAllRAGToolProfiles } from "@/services/ragToolProfiles";
@@ -231,161 +231,470 @@ export function ValidationCard() {
 
   const createEnhancedFallbackBlueprint = (): AppBlueprint => {
     const idea = state.appIdea.ideaDescription.toLowerCase();
-    const mainFeatureName = getMainFeatureName();
+    const appName = state.appIdea.appName;
+    const platforms = state.appIdea.platforms;
+    const designStyle = state.appIdea.designStyle;
+    
+    // Dynamically generate screens based on app idea
+    const screens = generateDynamicScreens(idea, appName, platforms);
+    
+    // Generate user roles based on app context
+    const userRoles = generateDynamicUserRoles(idea);
+    
+    // Generate navigation flow based on screens
+    const navigationFlow = generateNavigationFlow(screens);
+    
+    // Generate modals only if needed
+    const modals = blueprintOptions.includeModals ? generateDynamicModals(screens) : [];
+    
+    // Generate integrations only if needed
+    const integrations = blueprintOptions.includeIntegrations ? generateDynamicIntegrations(idea, platforms) : [];
+    
+    // Generate states only if needed
+    const states = blueprintOptions.includeStates ? generateDynamicStates(screens) : [];
 
     return {
-      screens: [
-        {
-          id: 'splash',
-          name: 'Splash Screen',
-          purpose: 'App loading and branding',
-          type: 'loading',
-          components: ['App logo', 'Loading indicator', 'Version info'],
-          navigation: ['onboarding', 'login', 'dashboard'],
-          subPages: [],
-          edgeCases: ['Network error', 'App update required']
-        },
-        {
-          id: 'onboarding',
-          name: 'Onboarding Flow',
-          purpose: 'Introduce app features and benefits',
-          type: 'onboarding',
-          components: ['Feature highlights', 'Skip button', 'Next/Previous buttons', 'Progress indicator'],
-          navigation: ['login', 'signup'],
-          subPages: ['welcome', 'features', 'permissions'],
-          edgeCases: ['Skip onboarding', 'Return user']
-        },
-        {
-          id: 'login',
-          name: 'Login/Authentication',
-          purpose: 'User authentication and account access',
-          type: 'auth',
-          components: ['Email input', 'Password input', 'Login button', 'Social login options', 'Forgot password link'],
-          navigation: ['dashboard', 'signup', 'forgot-password'],
-          subPages: ['forgot-password', 'reset-password'],
-          edgeCases: ['Invalid credentials', 'Account locked', 'Network error']
-        },
-        {
-          id: 'signup',
-          name: 'Sign Up',
-          purpose: 'New user registration',
-          type: 'auth',
-          components: ['Name input', 'Email input', 'Password input', 'Confirm password', 'Terms checkbox', 'Sign up button'],
-          navigation: ['dashboard', 'login', 'email-verification'],
-          subPages: ['email-verification', 'profile-setup'],
-          edgeCases: ['Email already exists', 'Weak password', 'Terms not accepted']
-        },
-        {
-          id: 'dashboard',
-          name: 'Dashboard/Home',
-          purpose: 'Main hub with overview and quick actions',
-          type: 'main',
-          components: ['Header with user info', 'Quick stats/metrics', 'Recent activity', 'Action buttons', 'Navigation menu'],
-          navigation: ['profile', 'settings', 'main-features'],
-          subPages: ['notifications', 'search'],
-          edgeCases: ['No data available', 'Loading state', 'Error state']
-        },
-        {
-          id: 'main-feature',
-          name: mainFeatureName,
-          purpose: 'Core functionality of the application',
-          type: 'feature',
-          components: ['Feature interface', 'Action buttons', 'Data display', 'Filter/sort options'],
-          navigation: ['dashboard', 'details', 'create-edit'],
-          subPages: ['details', 'create', 'edit', 'list'],
-          edgeCases: ['Empty state', 'Loading', 'Error', 'No permissions']
-        },
-        {
-          id: 'profile',
-          name: 'User Profile',
-          purpose: 'User profile management and personal information',
-          type: 'feature',
-          components: ['Profile picture', 'User info display', 'Edit profile button', 'Activity history'],
-          navigation: ['dashboard', 'settings', 'edit-profile'],
-          subPages: ['edit-profile', 'activity-history', 'achievements'],
-          edgeCases: ['Profile incomplete', 'Image upload error']
-        },
-        {
-          id: 'settings',
-          name: 'Settings',
-          purpose: 'App configuration and user preferences',
-          type: 'settings',
-          components: ['Preference toggles', 'Account settings', 'Privacy controls', 'Logout button'],
-          navigation: ['dashboard', 'profile', 'privacy', 'notifications'],
-          subPages: ['account', 'privacy', 'notifications', 'about'],
-          edgeCases: ['Settings save error', 'Permission denied']
-        }
-      ],
-      userRoles: getEnhancedUserRoles(),
-      dataModels: getEnhancedDataModels(),
-      pageFlow: [
-        { from: 'splash', to: 'onboarding', condition: 'first_time_user', action: 'navigate' },
-        { from: 'splash', to: 'login', condition: 'returning_user_not_logged_in', action: 'navigate' },
-        { from: 'splash', to: 'dashboard', condition: 'user_logged_in', action: 'navigate' },
-        { from: 'onboarding', to: 'signup', condition: 'user_wants_to_register', action: 'navigate' },
-        { from: 'login', to: 'dashboard', condition: 'successful_login', action: 'navigate' },
-        { from: 'signup', to: 'dashboard', condition: 'successful_registration', action: 'navigate' }
-      ],
-      modals: [
-        {
-          id: 'confirmation',
-          name: 'Confirmation Dialog',
-          purpose: 'Confirm destructive actions',
-          triggerScreens: ['dashboard', 'profile', 'settings'],
-          components: ['Message text', 'Confirm button', 'Cancel button']
-        },
-        {
-          id: 'loading',
-          name: 'Loading Modal',
-          purpose: 'Show loading state for long operations',
-          triggerScreens: ['dashboard', 'main-feature'],
-          components: ['Loading spinner', 'Progress text', 'Cancel button']
-        }
-      ],
-      states: [
-        {
-          name: 'Loading',
-          description: 'Data is being fetched or processed',
-          screens: ['dashboard', 'main-feature', 'profile'],
-          conditions: ['api_request_pending', 'data_processing']
-        },
-        {
-          name: 'Empty',
-          description: 'No data available to display',
-          screens: ['dashboard', 'main-feature'],
-          conditions: ['no_data_found', 'first_time_user', 'filtered_results_empty']
-        },
-        {
-          name: 'Error',
-          description: 'An error occurred during operation',
-          screens: ['dashboard', 'main-feature', 'profile', 'settings'],
-          conditions: ['network_error', 'server_error', 'permission_denied']
-        }
-      ],
-      integrations: [
-        {
-          name: 'Authentication',
-          type: 'auth',
-          description: 'User authentication and authorization',
-          implementation: 'Firebase Auth or Auth0 for social login and user management'
-        },
-        {
-          name: 'Cloud Storage',
-          type: 'storage',
-          description: 'File and data storage',
-          implementation: 'Firebase Storage or AWS S3 for user-generated content'
-        },
-        {
-          name: 'Push Notifications',
-          type: 'notification',
-          description: 'Real-time user notifications',
-          implementation: 'Firebase Cloud Messaging for cross-platform notifications'
-        }
-      ],
-      architecture: 'Component-based architecture with state management',
-      suggestedPattern: 'Feature-based folder structure with shared components and utilities',
-      navigationFlow: 'Splash → Onboarding/Login → Dashboard → Feature Screens → Settings/Profile'
+      screens,
+      userRoles,
+      navigationFlow,
+      dataModels: [], // Remove data models section as requested
+      modals,
+      states,
+      integrations,
+      pageFlow: generatePageFlow(screens),
+      architecture: generateArchitecturePattern(platforms, designStyle),
+      suggestedPattern: generateSuggestedPattern(platforms, designStyle)
     };
+  };
+
+  const generateDynamicScreens = (idea: string, appName: string, platforms: string[]): Screen[] => {
+    const screens: Screen[] = [];
+    
+    // Always start with a main screen based on the app idea
+    const mainScreen = generateMainScreen(idea, appName);
+    screens.push(mainScreen);
+    
+    // Add authentication screens if the app idea suggests user accounts
+    if (idea.includes('user') || idea.includes('account') || idea.includes('profile') || 
+        idea.includes('social') || idea.includes('community') || idea.includes('collaborate') ||
+        idea.includes('share') || idea.includes('connect')) {
+      screens.push({
+        id: 'login',
+        name: 'Login/Sign In',
+        purpose: 'User authentication and account access',
+        type: 'auth',
+        components: ['Email input', 'Password input', 'Login button', 'Social login options', 'Forgot password link'],
+        navigation: ['dashboard', 'signup', 'forgot-password'],
+        subPages: ['forgot-password', 'reset-password'],
+        edgeCases: ['Invalid credentials', 'Account locked', 'Network error']
+      });
+      
+      screens.push({
+        id: 'signup',
+        name: 'Sign Up',
+        purpose: 'New user registration',
+        type: 'auth',
+        components: ['Name input', 'Email input', 'Password input', 'Confirm password', 'Terms checkbox', 'Sign up button'],
+        navigation: ['dashboard', 'login', 'email-verification'],
+        subPages: ['email-verification', 'profile-setup'],
+        edgeCases: ['Email already exists', 'Weak password', 'Terms not accepted']
+      });
+    }
+    
+    // Add feature-specific screens based on the app idea
+    if (idea.includes('upload') || idea.includes('create') || idea.includes('add') || idea.includes('post') || 
+        idea.includes('share') || idea.includes('collaborate')) {
+      screens.push({
+        id: 'create',
+        name: 'Create/Upload',
+        purpose: 'Create new content or upload files',
+        type: 'feature',
+        components: ['Form inputs', 'File upload', 'Preview', 'Submit button'],
+        navigation: ['dashboard', 'list', 'profile'],
+        subPages: ['draft', 'preview'],
+        edgeCases: ['File too large', 'Invalid format', 'Network error']
+      });
+    }
+    
+    // Always add browse/search for content-based apps
+    if (idea.includes('list') || idea.includes('browse') || idea.includes('search') || idea.includes('feed') ||
+        idea.includes('share') || idea.includes('collaborate') || idea.includes('content') || idea.includes('note')) {
+      screens.push({
+        id: 'list',
+        name: 'Browse/Search',
+        purpose: 'View and search through content',
+        type: 'feature',
+        components: ['Search bar', 'Filter options', 'Content grid/list', 'Sort controls'],
+        navigation: ['dashboard', 'create', 'detail'],
+        subPages: ['search-results', 'filtered-view'],
+        edgeCases: ['No results', 'Search error', 'Loading state']
+      });
+    }
+    
+    // Always add detail view for content-based apps
+    if (idea.includes('detail') || idea.includes('view') || idea.includes('show') || idea.includes('profile') ||
+        idea.includes('share') || idea.includes('collaborate') || idea.includes('content') || idea.includes('note')) {
+      screens.push({
+        id: 'detail',
+        name: 'Detail View',
+        purpose: 'View detailed information about content',
+        type: 'feature',
+        components: ['Content display', 'Action buttons', 'Related items', 'Comments/reviews'],
+        navigation: ['dashboard', 'list', 'edit'],
+        subPages: ['edit', 'share', 'report'],
+        edgeCases: ['Content not found', 'Permission denied', 'Loading error']
+      });
+    }
+    
+    // Add profile/settings if user management is involved
+    if (idea.includes('user') || idea.includes('account') || idea.includes('profile') || 
+        idea.includes('settings') || idea.includes('preferences') || idea.includes('social') || 
+        idea.includes('share') || idea.includes('collaborate')) {
+      screens.push({
+        id: 'profile',
+        name: 'User Profile',
+        purpose: 'User profile management and personal information',
+        type: 'feature',
+        components: ['Profile picture', 'User info display', 'Edit profile button', 'Activity history'],
+        navigation: ['dashboard', 'settings', 'edit-profile'],
+        subPages: ['edit-profile', 'activity-history', 'achievements'],
+        edgeCases: ['Profile incomplete', 'Image upload error']
+      });
+      
+      screens.push({
+        id: 'settings',
+        name: 'Settings',
+        purpose: 'App configuration and user preferences',
+        type: 'settings',
+        components: ['Preference toggles', 'Account settings', 'Privacy controls', 'Logout button'],
+        navigation: ['dashboard', 'profile', 'privacy', 'notifications'],
+        subPages: ['account', 'privacy', 'notifications', 'about'],
+        edgeCases: ['Settings save error', 'Permission denied']
+      });
+    }
+    
+    // Add dashboard if multiple features exist
+    if (screens.length > 2) {
+      screens.unshift({
+        id: 'dashboard',
+        name: 'Dashboard/Home',
+        purpose: 'Main hub with overview and quick actions',
+        type: 'main',
+        components: ['Header with user info', 'Quick stats/metrics', 'Recent activity', 'Action buttons', 'Navigation menu'],
+        navigation: screens.filter(s => s.id !== 'dashboard').map(s => s.id),
+        subPages: ['notifications', 'search'],
+        edgeCases: ['No data available', 'Loading state', 'Error state']
+      });
+    }
+    
+    // Add splash/onboarding only for mobile apps or if explicitly needed
+    if (platforms.includes('mobile') && screens.length > 3) {
+      screens.unshift({
+        id: 'splash',
+        name: 'Splash Screen',
+        purpose: 'App loading and branding',
+        type: 'loading',
+        components: ['App logo', 'Loading indicator', 'Version info'],
+        navigation: ['onboarding', 'login', 'dashboard'],
+        subPages: [],
+        edgeCases: ['Network error', 'App update required']
+      });
+      
+      screens.splice(1, 0, {
+        id: 'onboarding',
+        name: 'Onboarding Flow',
+        purpose: 'Introduce app features and benefits',
+        type: 'onboarding',
+        components: ['Feature highlights', 'Skip button', 'Next/Previous buttons', 'Progress indicator'],
+        navigation: ['login', 'signup'],
+        subPages: ['welcome', 'features', 'permissions'],
+        edgeCases: ['Skip onboarding', 'Return user']
+      });
+    }
+    
+    return screens;
+  };
+
+  const generateMainScreen = (idea: string, appName: string): Screen => {
+    // Determine the main feature based on the app idea
+    let mainFeatureName = 'Main Feature';
+    let purpose = 'Core functionality of the application';
+    
+    // Check for specific app types first (more specific matches)
+    if (idea.includes('fitness') || idea.includes('workout')) {
+      mainFeatureName = 'Fitness Tracker';
+      purpose = 'Monitor fitness activities and health metrics';
+    } else if (idea.includes('habit') && !idea.includes('fitness') && !idea.includes('workout')) {
+      mainFeatureName = 'Habit Tracker';
+      purpose = 'Track and manage daily habits and routines';
+    } else if (idea.includes('task') || idea.includes('todo')) {
+      mainFeatureName = 'Task Manager';
+      purpose = 'Create, organize, and complete tasks';
+    } else if (idea.includes('social') || idea.includes('chat') || idea.includes('community')) {
+      mainFeatureName = 'Social Feed';
+      purpose = 'Connect with others and share content';
+    } else if (idea.includes('shop') || idea.includes('store') || idea.includes('marketplace')) {
+      mainFeatureName = 'Product Catalog';
+      purpose = 'Browse and discover products or services';
+    } else if (idea.includes('learn') || idea.includes('course') || idea.includes('education')) {
+      mainFeatureName = 'Learning Hub';
+      purpose = 'Access educational content and track progress';
+    } else if (idea.includes('finance') || idea.includes('budget') || idea.includes('money')) {
+      mainFeatureName = 'Finance Manager';
+      purpose = 'Track expenses, income, and financial goals';
+    } else if (idea.includes('recipe') || idea.includes('food') || idea.includes('cooking')) {
+      mainFeatureName = 'Recipe Collection';
+      purpose = 'Store, organize, and discover recipes';
+    } else if (idea.includes('travel') || idea.includes('trip') || idea.includes('vacation')) {
+      mainFeatureName = 'Travel Planner';
+      purpose = 'Plan trips and organize travel details';
+    } else if (idea.includes('event') || idea.includes('calendar') || idea.includes('schedule')) {
+      mainFeatureName = 'Event Manager';
+      purpose = 'Create and manage events and schedules';
+    } else if (idea.includes('note') || idea.includes('document') || idea.includes('writing')) {
+      mainFeatureName = 'Note Taking';
+      purpose = 'Create, organize, and manage notes and documents';
+    } else if (idea.includes('photo') || idea.includes('image') || idea.includes('gallery')) {
+      mainFeatureName = 'Photo Gallery';
+      purpose = 'Store, organize, and share photos and images';
+    } else if (idea.includes('music') || idea.includes('audio') || idea.includes('playlist')) {
+      mainFeatureName = 'Music Player';
+      purpose = 'Play, organize, and discover music and audio content';
+    } else if (idea.includes('book') || idea.includes('reading') || idea.includes('library')) {
+      mainFeatureName = 'Digital Library';
+      purpose = 'Access and organize digital books and reading materials';
+    } else if (idea.includes('calculator') || idea.includes('math') || idea.includes('calculate')) {
+      mainFeatureName = 'Calculator';
+      purpose = 'Perform mathematical calculations and operations';
+    }
+    
+    return {
+      id: 'main-feature',
+      name: mainFeatureName,
+      purpose,
+      type: 'feature',
+      components: ['Feature interface', 'Action buttons', 'Data display', 'Filter/sort options'],
+      navigation: ['dashboard', 'detail', 'create'],
+      subPages: ['detail', 'create', 'edit', 'list'],
+      edgeCases: ['Empty state', 'Loading', 'Error', 'No permissions']
+    };
+  };
+
+  const generateDynamicUserRoles = (idea: string): UserRole[] => {
+    const roles: UserRole[] = [
+      {
+        name: 'User',
+        permissions: ['view_content', 'create_content', 'edit_own_content', 'delete_own_content'],
+        description: 'Standard app user with basic functionality access'
+      }
+    ];
+
+    if (idea.includes('admin') || idea.includes('manage') || idea.includes('moderate')) {
+      roles.push({
+        name: 'Admin',
+        permissions: ['view_all_content', 'create_content', 'edit_any_content', 'delete_any_content', 'manage_users', 'view_analytics'],
+        description: 'Administrator with full app management capabilities'
+      });
+    }
+
+    if (idea.includes('teacher') || idea.includes('instructor') || idea.includes('educator')) {
+      roles.push({
+        name: 'Instructor',
+        permissions: ['view_content', 'create_content', 'edit_own_content', 'manage_students', 'view_progress'],
+        description: 'Educational content creator and student manager'
+      });
+    }
+
+    if (idea.includes('business') || idea.includes('owner') || idea.includes('vendor') || idea.includes('seller')) {
+      roles.push({
+        name: 'Business Owner',
+        permissions: ['view_analytics', 'manage_content', 'manage_users', 'view_reports'],
+        description: 'Business owner with analytics and management access'
+      });
+    }
+
+    if (idea.includes('moderator') || idea.includes('community') || idea.includes('forum')) {
+      roles.push({
+        name: 'Moderator',
+        permissions: ['view_content', 'moderate_content', 'manage_users', 'enforce_rules'],
+        description: 'Community moderator with content oversight capabilities'
+      });
+    }
+
+    return roles;
+  };
+
+  const generateNavigationFlow = (screens: Screen[]): string => {
+    if (screens.length === 0) return 'No screens defined';
+    
+    const screenNames = screens.map(s => s.name);
+    const firstScreen = screenNames[0];
+    const lastScreen = screenNames[screenNames.length - 1];
+    
+    if (screens.length === 1) {
+      return `${firstScreen}`;
+    } else if (screens.length === 2) {
+      return `${firstScreen} → ${lastScreen}`;
+    } else {
+      const middleScreens = screenNames.slice(1, -1);
+      return `${firstScreen} → ${middleScreens.join(' → ')} → ${lastScreen}`;
+    }
+  };
+
+  const generateDynamicModals = (screens: Screen[]): Modal[] => {
+    const modals: Modal[] = [];
+    
+    // Add confirmation modal if there are destructive actions
+    if (screens.some(s => s.components.some(c => c.includes('delete') || c.includes('remove')))) {
+      modals.push({
+        id: 'confirmation',
+        name: 'Confirmation Dialog',
+        purpose: 'Confirm destructive actions',
+        triggerScreens: screens.filter(s => s.components.some(c => c.includes('delete') || c.includes('remove'))).map(s => s.id),
+        components: ['Message text', 'Confirm button', 'Cancel button']
+      });
+    }
+    
+    // Add loading modal if there are async operations
+    if (screens.some(s => s.components.some(c => c.includes('upload') || c.includes('submit') || c.includes('save')))) {
+      modals.push({
+        id: 'loading',
+        name: 'Loading Modal',
+        purpose: 'Show loading state for long operations',
+        triggerScreens: screens.filter(s => s.components.some(c => c.includes('upload') || c.includes('submit') || c.includes('save'))).map(s => s.id),
+        components: ['Loading spinner', 'Progress text', 'Cancel button']
+      });
+    }
+    
+    return modals;
+  };
+
+  const generateDynamicIntegrations = (idea: string, platforms: string[]): Integration[] => {
+    const integrations: Integration[] = [];
+    
+    // Add authentication if user management is involved
+    if (idea.includes('user') || idea.includes('account') || idea.includes('login')) {
+      integrations.push({
+        name: 'Authentication',
+        type: 'auth',
+        description: 'User authentication and authorization',
+        implementation: 'Firebase Auth or Auth0 for social login and user management'
+      });
+    }
+    
+    // Add storage if file/content management is involved
+    if (idea.includes('upload') || idea.includes('file') || idea.includes('image') || idea.includes('document')) {
+      integrations.push({
+        name: 'Cloud Storage',
+        type: 'storage',
+        description: 'File and data storage',
+        implementation: 'Firebase Storage or AWS S3 for user-generated content'
+      });
+    }
+    
+    // Add notifications if real-time updates are needed
+    if (idea.includes('social') || idea.includes('chat') || idea.includes('notification') || idea.includes('alert')) {
+      integrations.push({
+        name: 'Push Notifications',
+        type: 'notification',
+        description: 'Real-time user notifications',
+        implementation: 'Firebase Cloud Messaging for cross-platform notifications'
+      });
+    }
+    
+    // Add payments if e-commerce is involved
+    if (idea.includes('shop') || idea.includes('store') || idea.includes('payment') || idea.includes('subscription')) {
+      integrations.push({
+        name: 'Payment Processing',
+        type: 'payment',
+        description: 'Handle payments and subscriptions',
+        implementation: 'Stripe or PayPal for secure payment processing'
+      });
+    }
+    
+    // Add analytics for user insights
+    if (idea.includes('track') || idea.includes('analytics') || idea.includes('insights')) {
+      integrations.push({
+        name: 'Analytics',
+        type: 'analytics',
+        description: 'User behavior and app performance tracking',
+        implementation: 'Google Analytics or Mixpanel for user insights'
+      });
+    }
+    
+    return integrations;
+  };
+
+  const generateDynamicStates = (screens: Screen[]): AppState[] => {
+    const states: AppState[] = [];
+    
+    // Add loading state if there are async operations
+    if (screens.some(s => s.components.some(c => c.includes('upload') || c.includes('submit') || c.includes('save')))) {
+      states.push({
+        name: 'Loading',
+        description: 'Data is being fetched or processed',
+        screens: screens.filter(s => s.components.some(c => c.includes('upload') || c.includes('submit') || c.includes('save'))).map(s => s.id),
+        conditions: ['api_request_pending', 'data_processing']
+      });
+    }
+    
+    // Add empty state if there's content display
+    if (screens.some(s => s.components.some(c => c.includes('list') || c.includes('grid') || c.includes('feed')))) {
+      states.push({
+        name: 'Empty',
+        description: 'No data available to display',
+        screens: screens.filter(s => s.components.some(c => c.includes('list') || c.includes('grid') || c.includes('feed'))).map(s => s.id),
+        conditions: ['no_data_found', 'first_time_user', 'filtered_results_empty']
+      });
+    }
+    
+    // Add error state for all screens
+    states.push({
+      name: 'Error',
+      description: 'An error occurred during operation',
+      screens: screens.map(s => s.id),
+      conditions: ['network_error', 'server_error', 'permission_denied']
+    });
+    
+    return states;
+  };
+
+  const generatePageFlow = (screens: Screen[]): PageFlow[] => {
+    const flows: PageFlow[] = [];
+    
+    // Generate flows based on screen navigation
+    screens.forEach(screen => {
+      screen.navigation.forEach(targetScreen => {
+        flows.push({
+          from: screen.id,
+          to: targetScreen,
+          condition: 'user_action',
+          action: 'navigate'
+        });
+      });
+    });
+    
+    return flows;
+  };
+
+  const generateArchitecturePattern = (platforms: string[], designStyle: string): string => {
+    if (platforms.includes('mobile') && platforms.includes('web')) {
+      return 'Cross-platform architecture with shared business logic';
+    } else if (platforms.includes('mobile')) {
+      return 'Native mobile architecture with platform-specific UI';
+    } else {
+      return 'Web-based architecture with responsive design';
+    }
+  };
+
+  const generateSuggestedPattern = (platforms: string[], designStyle: string): string => {
+    if (platforms.includes('mobile') && platforms.includes('web')) {
+      return 'React Native or Flutter for cross-platform development';
+    } else if (platforms.includes('mobile')) {
+      return 'Native iOS/Android or React Native for mobile development';
+    } else {
+      return 'React/Next.js, Vue/Nuxt.js, or Angular for web development';
+    }
   };
 
   const getMainFeatureName = () => {

@@ -41,7 +41,8 @@ class ProjectService {
 
   private async loadFromSupabase() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData.user;
       if (!user) {
         this.projects = [];
         return;
@@ -68,7 +69,8 @@ class ProjectService {
 
   private async saveToSupabase(project: Project) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData.user;
       if (!user) throw new Error('No user authenticated');
 
       const { error } = await supabase
@@ -122,7 +124,8 @@ class ProjectService {
 
   // Create new project
   async createProject(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>): Promise<Project> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: authData } = await supabase.auth.getUser();
+    const user = authData.user;
     if (!user) throw new Error('No user authenticated');
 
     const newProject: Project = {

@@ -125,11 +125,31 @@ export const supabaseHelpers = {
 
 // Mock Supabase client for services that need it
 export const supabase = {
+  auth: {
+    getUser: async () => ({ 
+      data: { 
+        user: { 
+          id: 'mock-user-id',
+          email: 'mock@example.com'
+        } 
+      }, 
+      error: null 
+    })
+  },
   from: (table: string) => ({
     upsert: async (data: any, options?: any) => ({ error: null }),
     insert: async (data: any) => ({ error: null }),
-    select: async () => ({ data: [], error: null }),
-    update: async (data: any) => ({ error: null }),
-    delete: async () => ({ error: null })
+    select: (columns?: string) => ({
+      order: (column: string, options: { ascending: boolean }) => ({
+        data: [],
+        error: null
+      })
+    }),
+    update: (data: any) => ({
+      eq: (column: string, value: any) => ({ error: null })
+    }),
+    delete: () => ({
+      eq: (column: string, value: any) => ({ error: null })
+    })
   })
 };
