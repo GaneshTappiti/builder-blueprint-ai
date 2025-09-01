@@ -136,11 +136,6 @@ export default function WorkspacePage() {
 
   // Store hooks
   const { canCreateNewIdea, setHasActiveIdea, setCurrentStep, setActiveIdea } = useIdeaContext();
-    canCreateNewIdea: state.canCreateNewIdea,
-    setHasActiveIdea: state.setHasActiveIdea,
-    setCurrentStep: state.setCurrentStep,
-    setActiveIdea: state.setActiveIdea
-  }));
 
   const [showTemplates, setShowTemplates] = useState(false);
 

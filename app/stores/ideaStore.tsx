@@ -1,5 +1,7 @@
+"use client";
+
 // Idea management using React Context API
-import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import React, { createContext, useReducer, useContext, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 
@@ -133,17 +135,17 @@ export const IdeaProvider: React.FC<{children: React.ReactNode}> = ({ children }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, [state.ideas]);
 
-  const setActiveIdea = async (idea: ActiveIdea | null) => {
+  const setActiveIdea = useCallback(async (idea: ActiveIdea | null) => {
     if (idea) {
       await saveIdeaToSupabase(idea);
     } else {
       dispatch({ type: 'SET_ACTIVE_IDEA', payload: null });
     }
-  };
+  }, [saveIdeaToSupabase]);
 
-  const fetchUserIdeas = async () => {
+  const fetchUserIdeas = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -170,10 +172,18 @@ export const IdeaProvider: React.FC<{children: React.ReactNode}> = ({ children }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, []);
 
   return (
-    <IdeaContext.Provider value={{ ...state, setCurrentStep, setHasActiveIdea, setActiveIdea, fetchUserIdeas, saveIdeaToSupabase, canCreateNewIdea }}>
+    <IdeaContext.Provider value={{ 
+      ...state, 
+      setCurrentStep, 
+      setHasActiveIdea, 
+      setActiveIdea, 
+      fetchUserIdeas, 
+      saveIdeaToSupabase, 
+      canCreateNewIdea 
+    }}>
       {children}
     </IdeaContext.Provider>
   );
@@ -188,7 +198,6 @@ export const useIdeaContext = () => {
 };
 
 // Helper hook to maintain backward compatibility
-
 export const useActiveIdea = () => {
   const context = useIdeaContext();
   return {
@@ -201,113 +210,7 @@ export const useActiveIdea = () => {
 };
 
 // Deprecated export for backward compatibility - will be removed in future versions
-
 export const useIdeaStore = () => {
   console.warn('useIdeaStore is deprecated, use useIdeaContext instead');
   return useIdeaContext();
-};
-
-  currentStep: 'workshop',
-  hasActiveIdea: false,
-  activeIdea: null,
-  ideas: [],
-  isLoading: false,
-  error: null,
-
-  canCreateNewIdea: () => !get().hasActiveIdea,
-
-  setCurrentStep: (step: string) => set({ currentStep: step }),
-
-  setHasActiveIdea: (hasIdea: boolean) => set({ hasActiveIdea: hasIdea }),
-
-  saveIdeaToSupabase: async (idea: ActiveIdea) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user authenticated');
-
-      const ideaWithUser = { ...idea, user_id: user.id, updated_at: new Date().toISOString() };
-
-      if (idea.id) {
-        // Update existing idea
-        const { error } = await supabase
-          .from('ideas')
-          .update(ideaWithUser)
-          .eq('id', idea.id);
-
-        if (error) throw error;
-        toast({ title: 'Idea updated successfully' });
-        set(state => ({
-          ideas: state.ideas.map(i => i.id === idea.id ? idea : i),
-          activeIdea: idea
-        }));
-      } else {
-        // Create new idea
-        const newIdea = { ...ideaWithUser, id: crypto.randomUUID(), created_at: new Date().toISOString() };
-        const { error } = await supabase
-          .from('ideas')
-          .insert(newIdea);
-
-        if (error) throw error;
-        toast({ title: 'Idea saved to vault' });
-        set(state => ({
-          ideas: [newIdea, ...state.ideas],
-          hasActiveIdea: true,
-          activeIdea: newIdea as ActiveIdea
-        }));
-      }
-    } catch (error) {
-      console.error('Error saving idea:', error);
-      toast({ title: 'Failed to save idea', variant: 'destructive' });
-      throw error;
-    }
-  },
-
-  setActiveIdea: async (idea: ActiveIdea | null) => {
-    if (idea) {
-      await get().saveIdeaToSupabase(idea);
-    } else {
-      set({ activeIdea: null });
-    }
-  },
-
-  fetchUserIdeas: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        set({ ideas: [], isLoading: false });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('ideas')
-        .select('*')
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      const ideas = data as ActiveIdea[];
-      set({
-        ideas,
-        hasActiveIdea: ideas.length > 0,
-        activeIdea: ideas.length > 0 ? ideas[0] : null,
-        isLoading: false
-      });
-    } catch (error) {
-      console.error('Error fetching ideas:', error);
-      toast({ title: 'Failed to load ideas', variant: 'destructive' });
-      set({ error: error instanceof Error ? error.message : 'Failed to load ideas', isLoading: false });
-    }
-  }
-}));
-
-// Helper hook to access active idea functionality
-export const useActiveIdea = () => {
-  const ideaStore = useIdeaStore();
-  return {
-    activeIdea: ideaStore.activeIdea,
-    setActiveIdea: ideaStore.setActiveIdea,
-    fetchUserIdeas: ideaStore.fetchUserIdeas,
-    isLoading: ideaStore.isLoading,
-    error: ideaStore.error
-  };
 };
