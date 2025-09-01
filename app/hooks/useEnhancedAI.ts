@@ -31,6 +31,8 @@ export function useEnhancedAI(): UseEnhancedAIReturn {
     setError(null);
 
     try {
+      console.log('Making AI request:', { type, prompt, options });
+      
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: {
@@ -43,16 +45,20 @@ export function useEnhancedAI(): UseEnhancedAIReturn {
         }),
       });
 
+      console.log('API response status:', response.status);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API response data:', data);
       
       if (!data.success) {
         throw new Error(data.error || 'AI request failed');
       }
 
+      console.log('Returning data.data:', data.data);
       return data.data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';

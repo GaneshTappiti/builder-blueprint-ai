@@ -465,13 +465,17 @@ export default function WorkspacePage() {
 
       Draw from Y Combinator principles, IndieHackers insights, and successful founder strategies. Provide specific, practical guidance.`
 
-      // Initialize AI engine with startup expertise
-      const response = await aiEngine.generateText(enhancedPrompt, {
+      // Use the AI instance from useEnhancedAI hook
+      console.log('Sending AI request with prompt:', enhancedPrompt);
+      const response = await ai.generateText(enhancedPrompt, {
         temperature: 0.7,
         maxTokens: 1500
       });
+      
+      console.log('AI response received:', response);
 
       if (!response || !response.text) {
+        console.error('Invalid response format:', response);
         throw new Error('No response received from AI service');
       }
 

@@ -54,14 +54,6 @@ export default function MVPStudioPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => setIsWizardOpen(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium px-4 py-2"
-                  size="sm"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  RAG-Enhanced Wizard
-                </Button>
                 <Badge variant="secondary" className="bg-blue-600/20 text-blue-300 border-blue-600/40">
                   BETA
                 </Badge>
@@ -94,27 +86,13 @@ export default function MVPStudioPage() {
               </div>
               <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
                 <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">� MVP Templates</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">🚀 MVP Templates</h3>
                 <p className="text-gray-400 text-sm">Pre-built project templates</p>
               </div>
               <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
                 <Zap className="h-8 w-8 text-green-400 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-white mb-2">🛠️ AI Tools Hub</h3>
                 <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
-              </div>
-            </div>
-
-            {/* RAG Wizard Card */}
-            <div className="mt-8 max-w-2xl mx-auto">
-              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors cursor-pointer border border-purple-500/30" onClick={() => setIsWizardOpen(true)}>
-                <Brain className="h-10 w-10 text-purple-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">🧠 RAG-Enhanced Wizard</h3>
-                <p className="text-gray-300 mb-4">Experience our advanced AI wizard with Retrieval-Augmented Generation for tool-specific, context-aware prompt generation.</p>
-                <div className="flex justify-center gap-2 text-sm text-gray-400">
-                  <span className="bg-purple-500/20 px-2 py-1 rounded">Tool-Specific</span>
-                  <span className="bg-blue-500/20 px-2 py-1 rounded">Context-Aware</span>
-                  <span className="bg-green-500/20 px-2 py-1 rounded">Enhanced Prompts</span>
-                </div>
               </div>
             </div>
           </div>
