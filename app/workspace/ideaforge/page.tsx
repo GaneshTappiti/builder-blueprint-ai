@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { MinimalHeader } from "@/components/MinimalHeader";
 import {
@@ -16,7 +15,7 @@ import {
   Lightbulb,
   BookOpen,
   Layers,
-  GitBranch,
+
   MessageSquare,
   Rocket,
   FileText,
@@ -28,6 +27,12 @@ import { IdeaInput, StoredIdea, IdeaStatus, IdeaForgeTab, IdeaForgeSidebarItem }
 import NewIdeaModal from "@/components/ideaforge/NewIdeaModal";
 import IdeaEmptyState from "@/components/ideaforge/IdeaEmptyState";
 import WikiView from "@/components/ideaforge/WikiView";
+import BlueprintView from "@/components/ideaforge/BlueprintView";
+
+import FeedbackView from "@/components/ideaforge/FeedbackView";
+import IdeaOverview from "@/components/ideaforge/IdeaOverview";
+import IdeaSummaryModal from "@/components/ideaforge/IdeaSummaryModal";
+import ShareIdeaModal from "@/components/ideaforge/ShareIdeaModal";
 
 export default function IdeaForgePage() {
   const router = useRouter();
@@ -40,6 +45,7 @@ export default function IdeaForgePage() {
   const [activeTab, setActiveTab] = useState<IdeaForgeTab>('overview');
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showNewIdeaModal, setShowNewIdeaModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isEditingIdea, setIsEditingIdea] = useState(false);
@@ -111,13 +117,19 @@ export default function IdeaForgePage() {
     }
   }, [ideaId, ideas, router]);
 
+  // Reset modal states when currentIdea changes
+  useEffect(() => {
+    setShowSummaryModal(false);
+    setShowShareModal(false);
+    setShowNewIdeaModal(false);
+  }, [currentIdea]);
+
   // Sidebar configuration
   const sidebarItems: IdeaForgeSidebarItem[] = [
     { id: 'overview', label: 'Idea Overview', icon: Lightbulb },
-    { id: 'wiki', label: 'Wiki', icon: BookOpen, progress: currentIdea?.progress.wiki },
-    { id: 'blueprint', label: 'Blueprint', icon: Layers, progress: currentIdea?.progress.blueprint },
-    { id: 'journey', label: 'Journey', icon: GitBranch, progress: currentIdea?.progress.journey },
-    { id: 'feedback', label: 'Feedback', icon: MessageSquare, progress: currentIdea?.progress.feedback },
+    { id: 'wiki', label: 'Wiki', icon: BookOpen, progress: currentIdea?.progress?.wiki },
+    { id: 'blueprint', label: 'Blueprint', icon: Layers, progress: currentIdea?.progress?.blueprint },
+    { id: 'feedback', label: 'Feedback', icon: MessageSquare, progress: currentIdea?.progress?.feedback },
   ];
 
   const handleCreateIdea = async (idea: IdeaInput) => {
@@ -145,6 +157,7 @@ export default function IdeaForgePage() {
       setIdeas(prev => [newIdea, ...prev]);
       setCurrentIdea(newIdea);
       setIsEditingIdea(false);
+      setShowNewIdeaModal(false);
 
       // Update URL to show the new idea
       router.push(`/workspace/ideaforge?id=${newIdea.id}`);
@@ -164,10 +177,7 @@ export default function IdeaForgePage() {
   };
 
   const handleExport = (type: string) => {
-    toast({
-      title: "Export Feature",
-      description: `Exporting ${type} - feature coming soon!`,
-    });
+    setShowSummaryModal(true);
   };
 
   const getStatusColor = (status: IdeaStatus) => {
@@ -220,14 +230,14 @@ export default function IdeaForgePage() {
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Overall Progress</span>
                   <span className="text-gray-400">
-                    {Math.round((idea.progress.wiki + idea.progress.blueprint + idea.progress.journey + idea.progress.feedback) / 4)}%
+                    {Math.round(((idea.progress?.wiki || 0) + (idea.progress?.blueprint || 0) + (idea.progress?.feedback || 0)) / 3)}%
                   </span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full transition-all duration-300"
                     style={{
-                      width: `${Math.round((idea.progress.wiki + idea.progress.blueprint + idea.progress.journey + idea.progress.feedback) / 4)}%`
+                      width: `${Math.round(((idea.progress?.wiki || 0) + (idea.progress?.blueprint || 0) + (idea.progress?.feedback || 0)) / 3)}%`
                     }}
                   ></div>
                 </div>
@@ -264,31 +274,43 @@ export default function IdeaForgePage() {
               onToggleSidebar={() => setSidebarOpen(true)}
               backToPath="/workspace/ideaforge"
               backToLabel="Back to Ideas"
-              showSearch={false}
-              showNotifications={false}
-              showProfile={false}
             />
             
-            {/* Action Buttons */}
-            <div className="px-6 py-4 flex justify-end gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowShareModal(true)}
-                className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport('summary')}
-                className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+            {/* Header & Status Section */}
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push('/workspace/ideaforge')}
+                    className="text-gray-400 hover:text-white hover:bg-black/60"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Back to Ideas List
+                  </Button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowShareModal(true)}
+                    className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExport('summary')}
+                    className="bg-black/60 border-white/20 hover:bg-black/80 text-gray-300"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {/* Main Content */}
@@ -298,7 +320,7 @@ export default function IdeaForgePage() {
                 <div className="flex items-center gap-3 mb-2">
                   <Lightbulb className="h-8 w-8 text-green-400" />
                   <h1 className="text-3xl md:text-4xl font-bold text-white">{currentIdea.title}</h1>
-                  <Badge className={getStatusColor(currentIdea.status)}>
+                  <Badge className={`${getStatusColor(currentIdea.status)} border-0 px-3 py-1 text-sm font-medium`}>
                     {currentIdea.status}
                   </Badge>
                 </div>
@@ -338,31 +360,38 @@ export default function IdeaForgePage() {
 
               {/* Tab Content */}
               <div className="animate-in fade-in-50 duration-300">
-                {activeTab === 'overview' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold text-white mb-4">Overview Coming Soon</h3>
-                    <p className="text-gray-400">Detailed overview with progress tracking and quick actions.</p>
-                  </div>
+                {activeTab === 'overview' && currentIdea && (
+                  <IdeaOverview
+                    idea={currentIdea}
+                    onUpdate={(updates) => {
+                      setIdeas(prev => prev.map(i => 
+                        i.id === currentIdea.id ? { ...i, ...updates } : i
+                      ));
+                      setCurrentIdea(prev => prev ? { ...prev, ...updates } : null);
+                    }}
+                    onNavigateToTab={(tab) => setActiveTab(tab as IdeaForgeTab)}
+                    onAddNote={() => {
+                      toast({
+                        title: "Add Note",
+                        description: "Note feature coming soon!",
+                      });
+                    }}
+                    onShare={() => setShowShareModal(true)}
+                    onExport={() => handleExport('summary')}
+                  />
                 )}
-                {activeTab === 'wiki' && currentIdea && <WikiView idea={currentIdea} />}
-                {activeTab === 'blueprint' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold text-white mb-4">Blueprint Coming Soon</h3>
-                    <p className="text-gray-400">Product blueprint with features and tech stack planning.</p>
-                  </div>
+                {activeTab === 'wiki' && currentIdea && (
+                  <WikiView 
+                    idea={currentIdea} 
+                    onContentUpdate={(sectionId, content) => {
+                      // Handle content updates if needed
+                      console.log('Wiki content updated:', sectionId, content);
+                    }}
+                  />
                 )}
-                {activeTab === 'journey' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold text-white mb-4">Journey Coming Soon</h3>
-                    <p className="text-gray-400">Founder's journey with insights and milestones.</p>
-                  </div>
-                )}
-                {activeTab === 'feedback' && (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-semibold text-white mb-4">Feedback Coming Soon</h3>
-                    <p className="text-gray-400">Feedback collection and validation tracking.</p>
-                  </div>
-                )}
+                {activeTab === 'blueprint' && currentIdea && <BlueprintView idea={currentIdea} />}
+
+                {activeTab === 'feedback' && currentIdea && <FeedbackView idea={currentIdea} />}
               </div>
             </div>
           </>
@@ -377,15 +406,13 @@ export default function IdeaForgePage() {
              
              {/* New Idea Button */}
              <div className="px-6 py-4 flex justify-end">
-               <Dialog>
-                 <DialogTrigger asChild>
-                   <Button className="bg-green-600 hover:bg-green-700">
-                     <PlusCircle className="h-4 w-4 mr-2" />
-                     New Idea
-                   </Button>
-                 </DialogTrigger>
-                 <NewIdeaModal onCreateIdea={handleCreateIdea} />
-               </Dialog>
+               <Button 
+                 className="bg-green-600 hover:bg-green-700"
+                 onClick={() => setShowNewIdeaModal(true)}
+               >
+                 <PlusCircle className="h-4 w-4 mr-2" />
+                 New Idea
+               </Button>
              </div>
 
             {/* Main Content */}
@@ -408,6 +435,38 @@ export default function IdeaForgePage() {
                 {renderIdeasList()}
               </div>
             </div>
+          </>
+        )}
+
+        {/* Modals - Always render but control with open state */}
+        <NewIdeaModal
+          open={showNewIdeaModal}
+          onClose={() => setShowNewIdeaModal(false)}
+          onCreateIdea={handleCreateIdea}
+        />
+        
+        {currentIdea && (
+          <>
+            <IdeaSummaryModal
+              isOpen={showSummaryModal}
+              onClose={() => setShowSummaryModal(false)}
+              idea={currentIdea}
+              wikiContent={{}}
+              blueprintContent={{
+                features: [],
+                techStack: [],
+                mvpPhases: []
+              }}
+              feedbackContent={{
+                feedback: [],
+                aiSummary: ''
+              }}
+            />
+            <ShareIdeaModal
+              isOpen={showShareModal}
+              onClose={() => setShowShareModal(false)}
+              idea={currentIdea}
+            />
           </>
         )}
       </main>

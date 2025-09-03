@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,38 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useIdeaForgePersistence } from "@/hooks/useIdeaForgePersistence";
+import { Feature, TechStackItem } from "@/utils/ideaforge-persistence";
 import {
   Layers, Plus, Smartphone, Code, Database, Edit, Trash2, Save, X,
-  Monitor, Globe, Zap, Settings, ArrowUp, ArrowDown, Star
+  Monitor, Globe, Zap, Settings, ArrowUp, ArrowDown, Star, Brain,
+  CheckCircle, Circle, Clock, AlertTriangle, Target, Rocket, Users, TrendingUp,
+  Copy, Download, Share2, ExternalLink, History, FileText, Package, 
+  ChevronRight, Play, RefreshCw, Archive, Eye, EyeOff
 } from "lucide-react";
-import { StoredIdea } from "@/types/ideaforge";
-import IdeaProgressOverview from "./IdeaProgressOverview";
-import AIAssistant from "./AIAssistant";
-
-interface Feature {
-  id: string;
-  name: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'planned' | 'in-progress' | 'completed';
-  category: 'core' | 'enhancement' | 'integration' | 'ui-ux';
-  estimatedHours?: number;
-}
-
-interface TechStackItem {
-  id: string;
-  name: string;
-  category: 'frontend' | 'backend' | 'database' | 'infrastructure' | 'tools';
-  description: string;
-  reason: string;
-}
-
-interface AppConfig {
-  type: 'web-app' | 'mobile-app' | 'desktop-app' | 'browser-extension';
-  platforms: string[];
-  targetAudience: string;
-  monetization: string;
-}
+import { StoredIdea, MVPStudioData, PromptHistoryItem, BlueprintAnalytics } from "@/types/ideaforge";
+import { useToast } from "@/hooks/use-toast";
 
 interface BlueprintViewProps {
   idea: StoredIdea;
@@ -48,340 +28,570 @@ interface BlueprintViewProps {
 }
 
 const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
-  const [features, setFeatures] = useState<Feature[]>([]);
-  const [techStack, setTechStack] = useState<TechStackItem[]>([]);
-  const [appConfig, setAppConfig] = useState<AppConfig>({
-    type: 'mobile-app',
-    platforms: ['iOS', 'Android'],
-    targetAudience: 'Fitness enthusiasts and beginners',
-    monetization: 'Freemium with premium features'
-  });
+  const { toast } = useToast();
+  const {
+    features,
+    techStack,
+    appConfig,
+    addFeature,
+    updateFeature,
+    deleteFeature,
+    reorderFeatures,
+    addTechStackItem,
+    updateTechStackItem,
+    deleteTechStackItem,
+    updateAppConfig,
+    isLoading
+  } = useIdeaForgePersistence(idea.id);
 
-  const [isAddingFeature, setIsAddingFeature] = useState(false);
-  const [isAddingTech, setIsAddingTech] = useState(false);
-  const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
-  const [editingTech, setEditingTech] = useState<TechStackItem | null>(null);
+  // Mock MVP Studio completion status - in real app this would come from actual MVP Studio data
+  const [mvpStudioCompleted, setMvpStudioCompleted] = useState(false);
+  const [mvpStudioData, setMvpStudioData] = useState<MVPStudioData | null>(null);
+
+  // Mock data for demonstration - in real app this would come from MVP Studio
+  useEffect(() => {
+    // Simulate checking if MVP Studio is completed
+    const mockMvpData: MVPStudioData = {
+      isCompleted: true,
+      completedAt: new Date().toISOString(),
+      wizardData: {
+        step1: { appName: idea.title, appType: "web-app" },
+        step2: { theme: "dark", designStyle: "minimal", selectedTool: "lovable" },
+        step3: { platforms: ["web"] },
+        step4: { selectedAI: "gpt-4" },
+        userPrompt: idea.description
+      },
+      generatedFramework: {
+        prompts: {
+          framework: `Create a modern web application called "${idea.title}". ${idea.description}. Use Lovable for development with a dark theme and minimal design style.`,
+          pages: [
+            {
+              pageName: "Home",
+              prompt: "Create a landing page with hero section, features overview, and call-to-action buttons",
+              components: ["Hero", "Features", "CTA"],
+              layout: "Single column with sections",
+              interactions: ["Smooth scroll", "Hover effects"]
+            },
+            {
+              pageName: "Dashboard",
+              prompt: "Build a user dashboard with navigation sidebar, main content area, and user profile section",
+              components: ["Sidebar", "ContentArea", "Profile"],
+              layout: "Two-column layout",
+              interactions: ["Collapsible sidebar", "Dynamic content"]
+            }
+          ],
+          linking: "Implement smooth navigation between pages with proper routing and state management"
+        },
+        recommendedTools: [
+          {
+            name: "Lovable",
+            description: "Full-stack web application builder",
+            url: "https://lovable.dev",
+            bestFor: ["Web apps", "Full-stack development"],
+            category: "no-code"
+          }
+        ],
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          toolUsed: "lovable",
+          confidence: 0.95
+        }
+      },
+      promptHistory: [
+        {
+          id: "1",
+          type: "framework",
+          content: `Create a modern web application called "${idea.title}"...`,
+          timestamp: new Date().toISOString(),
+          version: 1,
+          toolUsed: "lovable",
+          confidence: 0.95
+        }
+      ],
+      analytics: {
+        screensCount: 2,
+        userRolesCount: 1,
+        chosenTool: "lovable",
+        exportFormats: ["Markdown", "JSON", "PDF"],
+        totalPrompts: 3,
+        lastUpdated: new Date().toISOString(),
+        completionPercentage: 100
+      }
+    };
+
+    setMvpStudioData(mockMvpData);
+    setMvpStudioCompleted(true);
+  }, [idea]);
+
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [newFeature, setNewFeature] = useState({
-    name: '',
-    description: '',
-    priority: 'medium' as Feature['priority'],
-    category: 'core' as Feature['category'],
-    estimatedHours: 0
-  });
-
-  const [newTech, setNewTech] = useState({
-    name: '',
-    category: 'frontend' as TechStackItem['category'],
-    description: '',
-    reason: ''
-  });
-
-  // Initialize with default data
-  useEffect(() => {
-    const defaultFeatures: Feature[] = [
-      {
-        id: '1',
-        name: 'AI Workout Generation',
-        description: 'Personalized workout plans based on user goals, fitness level, and preferences',
-        priority: 'high',
-        status: 'planned',
-        category: 'core',
-        estimatedHours: 40
-      },
-      {
-        id: '2',
-        name: 'Form Analysis',
-        description: 'Real-time computer vision feedback for exercise form correction',
-        priority: 'high',
-        status: 'planned',
-        category: 'core',
-        estimatedHours: 60
-      },
-      {
-        id: '3',
-        name: 'Progress Tracking',
-        description: 'Comprehensive analytics and insights on user progress',
-        priority: 'medium',
-        status: 'planned',
-        category: 'core',
-        estimatedHours: 25
-      },
-      {
-        id: '4',
-        name: 'Social Features',
-        description: 'Community challenges, sharing, and social motivation',
-        priority: 'low',
-        status: 'planned',
-        category: 'enhancement',
-        estimatedHours: 35
-      }
-    ];
-
-    const defaultTechStack: TechStackItem[] = [
-      {
-        id: '1',
-        name: 'React Native',
-        category: 'frontend',
-        description: 'Cross-platform mobile development framework',
-        reason: 'Enables single codebase for iOS and Android with native performance'
-      },
-      {
-        id: '2',
-        name: 'Node.js + Express',
-        category: 'backend',
-        description: 'JavaScript runtime and web framework',
-        reason: 'Fast development, large ecosystem, good for real-time features'
-      },
-      {
-        id: '3',
-        name: 'PostgreSQL',
-        category: 'database',
-        description: 'Relational database with JSON support',
-        reason: 'Reliable, scalable, supports complex queries and user data'
-      },
-      {
-        id: '4',
-        name: 'TensorFlow.js',
-        category: 'tools',
-        description: 'Machine learning library for JavaScript',
-        reason: 'Required for computer vision and AI workout generation features'
-      }
-    ];
-
-    setFeatures(defaultFeatures);
-    setTechStack(defaultTechStack);
-  }, []);
-
-  const priorityColors = {
-    high: 'bg-red-600/20 text-red-400 border-red-600/30',
-    medium: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30',
-    low: 'bg-green-600/20 text-green-400 border-green-600/30'
+  // Utility functions
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied to clipboard",
+        description: `${label} has been copied to your clipboard.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy content to clipboard.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const statusColors = {
-    planned: 'bg-gray-600/20 text-gray-400 border-gray-600/30',
-    'in-progress': 'bg-blue-600/20 text-blue-400 border-blue-600/30',
-    completed: 'bg-green-600/20 text-green-400 border-green-600/30'
-  };
-
-  const categoryIcons = {
-    core: '⭐',
-    enhancement: '✨',
-    integration: '🔗',
-    'ui-ux': '🎨'
-  };
-
-  const techCategoryIcons = {
-    frontend: '🖥️',
-    backend: '⚙️',
-    database: '🗄️',
-    infrastructure: '☁️',
-    tools: '🛠️'
-  };
-
-  const handleDeleteFeature = (featureId: string) => {
-    setFeatures(prev => prev.filter(f => f.id !== featureId));
-  };
-
-  const handleDeleteTech = (techId: string) => {
-    setTechStack(prev => prev.filter(t => t.id !== techId));
-  };
-
-  const moveFeature = (featureId: string, direction: 'up' | 'down') => {
-    setFeatures(prev => {
-      const index = prev.findIndex(f => f.id === featureId);
-      if (index === -1) return prev;
-
-      const newIndex = direction === 'up' ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= prev.length) return prev;
-
-      const newFeatures = [...prev];
-      [newFeatures[index], newFeatures[newIndex]] = [newFeatures[newIndex], newFeatures[index]];
-      return newFeatures;
+  const handleExport = (format: string) => {
+    if (!mvpStudioData) return;
+    
+    let content = '';
+    let filename = '';
+    
+    switch (format) {
+      case 'markdown':
+        content = generateMarkdownExport();
+        filename = `${idea.title}-blueprint.md`;
+        break;
+      case 'json':
+        content = JSON.stringify(mvpStudioData, null, 2);
+        filename = `${idea.title}-blueprint.json`;
+        break;
+      case 'pdf':
+        // In real app, this would generate PDF
+        toast({
+          title: "PDF Export",
+          description: "PDF export feature coming soon!",
+        });
+        return;
+    }
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export Complete",
+      description: `${format.toUpperCase()} file has been downloaded.`,
     });
   };
 
+  const generateMarkdownExport = () => {
+    if (!mvpStudioData) return '';
+    
+    return `# ${idea.title} - Blueprint
+
+## Project Overview
+${idea.description}
+
+## Generated Framework
+${mvpStudioData.generatedFramework.prompts.framework}
+
+## Page Prompts
+${mvpStudioData.generatedFramework.prompts.pages.map(page => 
+  `### ${page.pageName}\n${page.prompt}\n\n**Components:** ${page.components.join(', ')}\n**Layout:** ${page.layout}\n**Interactions:** ${page.interactions.join(', ')}\n`
+).join('\n')}
+
+## Linking Strategy
+${mvpStudioData.generatedFramework.prompts.linking}
+
+## Recommended Tools
+${mvpStudioData.generatedFramework.recommendedTools.map(tool => 
+  `- **${tool.name}**: ${tool.description}\n  - Best for: ${tool.bestFor.join(', ')}\n  - URL: ${tool.url}\n`
+).join('\n')}
+
+---
+*Generated on ${new Date(mvpStudioData.generatedFramework.metadata.generatedAt).toLocaleString()}*
+*Tool used: ${mvpStudioData.generatedFramework.metadata.toolUsed}*
+*Confidence: ${Math.round(mvpStudioData.generatedFramework.metadata.confidence * 100)}%*`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Progress Overview */}
-      <IdeaProgressOverview
-        wikiProgress={75}
-        blueprintProgress={60}
-        journeyProgress={40}
-        feedbackProgress={30}
-        showOverallProgress={true}
-      />
-
-      {/* Header */}
+      {/* Header & Context */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Layers className="h-6 w-6 text-green-400" />
-          <h2 className="workspace-title">Product Blueprint</h2>
-          <Badge className="bg-green-600/20 text-green-400 border-green-500/30">
-            {features.length} features
-          </Badge>
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Layers className="h-6 w-6 text-green-400" />
+            {idea.title} - Blueprint
+          </h2>
+          <div className="flex items-center gap-3 mt-2">
+            <Badge className={mvpStudioCompleted ? "bg-green-600/20 text-green-400 border-green-500/30" : "bg-yellow-600/20 text-yellow-400 border-yellow-500/30"}>
+              {mvpStudioCompleted ? "Blueprint Ready" : "Incomplete"}
+            </Badge>
+            {mvpStudioData?.completedAt && (
+              <span className="text-sm text-gray-400">
+                Completed {new Date(mvpStudioData.completedAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
-          <Button className="workspace-button">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature
+          <Button
+            variant="outline"
+            onClick={() => handleExport('markdown')}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </Button>
-          <AIAssistant
-            onContentGenerated={(content, category) => {
-              if (category === 'blueprint') {
-                // Parse AI content and add as features or tech stack items
-                console.log('AI Generated Blueprint Content:', content);
-              }
-            }}
-            ideaContext={{
-              title: idea.title,
-              description: idea.description,
-              category: 'blueprint'
-            }}
-          />
+          <Button
+            variant="outline"
+            onClick={() => {/* Share functionality */}}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
         </div>
       </div>
 
-      {/* App Configuration */}
-      <Card className="glass-effect-theme">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Settings className="h-5 w-5 text-green-400" />
-            App Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="glass-effect p-4 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <Smartphone className="h-5 w-5 text-green-400" />
-                <span className="font-medium text-white">App Type</span>
+      {/* Conditional Display */}
+      {!mvpStudioCompleted ? (
+        /* MVP Studio NOT completed - Show guidance */
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardContent className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <div className="p-4 bg-yellow-600/20 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-yellow-400" />
               </div>
-              <p className="text-gray-300">{appConfig.type.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+              <h3 className="text-xl font-semibold text-white mb-3">Your Blueprint is not ready yet</h3>
+              <p className="text-gray-400 mb-6">
+                Please complete the 6-Stage MVP Studio to auto-generate prompts and create your comprehensive blueprint.
+              </p>
+              <Button
+                onClick={() => {/* Navigate to MVP Studio */}}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Go to MVP Studio
+              </Button>
             </div>
-            <div className="glass-effect p-4 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <Globe className="h-5 w-5 text-green-400" />
-                <span className="font-medium text-white">Platforms</span>
-              </div>
-              <p className="text-gray-300">{appConfig.platforms.join(', ')}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Core Features */}
-      <Card className="glass-effect-theme">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Star className="h-5 w-5 text-green-400" />
-              Core Features
-            </CardTitle>
-            <Button variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-600/10">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Feature
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {features.map((feature, index) => (
-              <div key={feature.id} className="glass-effect p-4 rounded-lg hover:bg-white/5 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{categoryIcons[feature.category]}</span>
-                    <div>
-                      <h4 className="font-medium text-white">{feature.name}</h4>
-                      <p className="text-sm text-gray-400">{feature.description}</p>
-                    </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* MVP Studio completed - Show Blueprint Repository */
+        <div className="space-y-6">
+          {/* Analytics & Insights */}
+          {mvpStudioData?.analytics && (
+            <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  Analytics & Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.screensCount}</div>
+                    <div className="text-sm text-gray-400">Screens</div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={priorityColors[feature.priority]}>
-                      {feature.priority}
-                    </Badge>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => moveFeature(feature.id, 'up')}
-                        disabled={index === 0}
-                        className="text-gray-400 hover:text-green-400 hover:bg-green-600/10"
-                      >
-                        <ArrowUp className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => moveFeature(feature.id, 'down')}
-                        disabled={index === features.length - 1}
-                        className="text-gray-400 hover:text-green-400 hover:bg-green-600/10"
-                      >
-                        <ArrowDown className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteFeature(feature.id)}
-                        className="text-gray-400 hover:text-red-400 hover:bg-red-600/10"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.userRolesCount}</div>
+                    <div className="text-sm text-gray-400">User Roles</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.totalPrompts}</div>
+                    <div className="text-sm text-gray-400">Total Prompts</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.completionPercentage}%</div>
+                    <div className="text-sm text-gray-400">Complete</div>
                   </div>
                 </div>
-                {feature.estimatedHours && (
-                  <div className="text-xs text-gray-500">
-                    Estimated: {feature.estimatedHours} hours
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Chosen Tool:</span>
+                    <Badge className="bg-blue-600/20 text-blue-400 border-blue-500/30">
+                      {mvpStudioData.analytics.chosenTool}
+                    </Badge>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Tech Stack */}
-      <Card className="glass-effect-theme">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Code className="h-5 w-5 text-green-400" />
-              Tech Stack
-            </CardTitle>
-            <Button variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-600/10">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Technology
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {techStack.map((tech) => (
-              <div key={tech.id} className="glass-effect p-4 rounded-lg hover:bg-white/5 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{techCategoryIcons[tech.category]}</span>
-                    <span className="font-medium text-white">{tech.name}</span>
-                  </div>
+          {/* Unified App Prompt */}
+          {mvpStudioData?.generatedFramework.prompts.framework && (
+            <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-green-400" />
+                  Unified App Prompt
+                </CardTitle>
+                <p className="text-sm text-gray-400">Overall brief combining all 6 stages</p>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-black/20 p-4 rounded-lg border border-white/10">
+                  <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
+                    {mvpStudioData.generatedFramework.prompts.framework}
+                  </pre>
+                </div>
+                <div className="flex gap-2 mt-4">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => handleDeleteTech(tech.id)}
-                    className="text-gray-400 hover:text-red-400 hover:bg-red-600/10"
+                    onClick={() => handleCopy(mvpStudioData.generatedFramework.prompts.framework, "Unified prompt")}
+                    className="border-white/20 text-white hover:bg-white/10"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Prompt
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExport('markdown')}
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
                   </Button>
                 </div>
-                <p className="text-sm text-gray-400 mb-2">{tech.description}</p>
-                <p className="text-xs text-gray-500">{tech.reason}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Page-by-Page Prompts */}
+          {mvpStudioData?.generatedFramework.prompts.pages && mvpStudioData.generatedFramework.prompts.pages.length > 0 && (
+            <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-blue-400" />
+                  Page-by-Page Prompts
+                </CardTitle>
+                <p className="text-sm text-gray-400">Individual screen prompts from Stage 4 & 5</p>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible className="w-full">
+                  {mvpStudioData.generatedFramework.prompts.pages.map((page, index) => (
+                    <AccordionItem key={index} value={`page-${index}`} className="border-white/10">
+                      <AccordionTrigger className="text-white hover:text-green-400">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">📱</span>
+                          <span className="font-medium">{page.pageName}</span>
+                          <Badge className="bg-blue-600/20 text-blue-400 border-blue-500/30 text-xs">
+                            {page.components.length} components
+                          </Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4">
+                        <div className="bg-black/20 p-4 rounded-lg border border-white/10">
+                          <h5 className="font-medium text-white mb-2">Prompt</h5>
+                          <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
+                            {page.prompt}
+                          </pre>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h6 className="font-medium text-white mb-2">Components</h6>
+                            <div className="flex flex-wrap gap-1">
+                              {page.components.map((component, idx) => (
+                                <Badge key={idx} className="bg-white/10 text-gray-300 border-white/20 text-xs">
+                                  {component}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <h6 className="font-medium text-white mb-2">Interactions</h6>
+                            <div className="flex flex-wrap gap-1">
+                              {page.interactions.map((interaction, idx) => (
+                                <Badge key={idx} className="bg-green-600/20 text-green-400 border-green-500/30 text-xs">
+                                  {interaction}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopy(page.prompt, `${page.pageName} prompt`)}
+                            className="border-white/20 text-white hover:bg-white/10"
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Screen Prompt
+                          </Button>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Chosen Tool Context */}
+          {mvpStudioData?.generatedFramework.recommendedTools && mvpStudioData.generatedFramework.recommendedTools.length > 0 && (
+            <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-purple-400" />
+                  Chosen Tool Context
+                </CardTitle>
+                <p className="text-sm text-gray-400">Tool selected in Stage 3 with optimized prompts</p>
+              </CardHeader>
+              <CardContent>
+                {mvpStudioData.generatedFramework.recommendedTools.map((tool, index) => (
+                  <div key={index} className="bg-black/20 p-4 rounded-lg border border-white/10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium text-white">{tool.name}</h4>
+                        <p className="text-sm text-gray-400">{tool.description}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(tool.url, '_blank')}
+                        className="border-white/20 text-white hover:bg-white/10"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Visit Tool
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-sm text-gray-400">Best for:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {tool.bestFor.map((use, idx) => (
+                            <Badge key={idx} className="bg-blue-600/20 text-blue-400 border-blue-500/30 text-xs">
+                              {use}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-400">Category:</span>
+                        <Badge className="bg-purple-600/20 text-purple-400 border-purple-500/30 text-xs ml-2">
+                          {tool.category}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Prompt History */}
+          {mvpStudioData?.promptHistory && mvpStudioData.promptHistory.length > 0 && (
+            <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <History className="h-5 w-5 text-cyan-400" />
+                  Prompt History
+                </CardTitle>
+                <p className="text-sm text-gray-400">Timeline of all generated prompts with rollback capability</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {mvpStudioData.promptHistory.map((item, index) => (
+                    <div key={item.id} className="bg-black/20 p-4 rounded-lg border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-cyan-600/20 text-cyan-400 border-cyan-500/30 text-xs">
+                            {item.type}
+                          </Badge>
+                          <span className="text-sm text-gray-400">
+                            v{item.version} • {new Date(item.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {item.confidence && (
+                            <span className="text-xs text-gray-400">
+                              {Math.round(item.confidence * 100)}% confidence
+                            </span>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopy(item.content, `${item.type} prompt`)}
+                            className="border-white/20 text-white hover:bg-white/10"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="bg-black/40 p-3 rounded border border-white/10">
+                        <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono line-clamp-3">
+                          {item.content}
+                        </pre>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Actions */}
+          <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-400" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const allPrompts = [
+                      mvpStudioData?.generatedFramework.prompts.framework,
+                      ...(mvpStudioData?.generatedFramework.prompts.pages.map(p => p.prompt) || [])
+                    ].filter(Boolean).join('\n\n---\n\n');
+                    handleCopy(allPrompts, "All prompts");
+                  }}
+                  className="border-white/20 text-white hover:bg-white/10 h-auto p-4"
+                >
+                  <div className="text-center">
+                    <Copy className="h-6 w-6 mx-auto mb-2" />
+                    <div className="font-medium">Copy All Prompts</div>
+                    <div className="text-xs text-gray-400 mt-1">Unified + Screens</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleExport('json')}
+                  className="border-white/20 text-white hover:bg-white/10 h-auto p-4"
+                >
+                  <div className="text-center">
+                    <Package className="h-6 w-6 mx-auto mb-2" />
+                    <div className="font-medium">Download Package</div>
+                    <div className="text-xs text-gray-400 mt-1">Complete Blueprint</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {/* Navigate back to MVP Studio */}}
+                  className="border-white/20 text-white hover:bg-white/10 h-auto p-4"
+                >
+                  <div className="text-center">
+                    <RefreshCw className="h-6 w-6 mx-auto mb-2" />
+                    <div className="font-medium">Re-open MVP Studio</div>
+                    <div className="text-xs text-gray-400 mt-1">Regenerate if needed</div>
+                  </div>
+                </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -13,10 +14,12 @@ import {
 import { IdeaInput } from "@/types/ideaforge";
 
 interface NewIdeaModalProps {
+  open: boolean;
+  onClose: () => void;
   onCreateIdea: (idea: IdeaInput) => void;
 }
 
-const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ onCreateIdea }) => {
+const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ open, onClose, onCreateIdea }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -34,10 +37,7 @@ const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ onCreateIdea }) => {
     
     onCreateIdea(newIdea);
     handleReset();
-    
-    // Close modal
-    const closeButton = document.querySelector("[data-dialog-close]") as HTMLButtonElement;
-    if (closeButton) closeButton.click();
+    onClose();
   };
   
   const handleReset = () => {
@@ -46,7 +46,13 @@ const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ onCreateIdea }) => {
     setTags("");
   };
 
+  const handleClose = () => {
+    handleReset();
+    onClose();
+  };
+
   return (
+    <Dialog open={open} onOpenChange={handleClose}>
     <DialogContent className="sm:max-w-[550px] bg-black/90 backdrop-blur-xl border-white/10">
       <form onSubmit={handleSubmit}>
         <DialogHeader>
@@ -105,7 +111,7 @@ const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ onCreateIdea }) => {
         
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" onClick={handleReset} className="border-gray-600 text-gray-300 hover:bg-gray-800">
+            <Button type="button" variant="outline" onClick={handleClose} className="border-gray-600 text-gray-300 hover:bg-gray-800">
               Cancel
             </Button>
           </DialogClose>
@@ -113,6 +119,7 @@ const NewIdeaModal: React.FC<NewIdeaModalProps> = ({ onCreateIdea }) => {
         </DialogFooter>
       </form>
     </DialogContent>
+    </Dialog>
   );
 };
 

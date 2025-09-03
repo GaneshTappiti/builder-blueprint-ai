@@ -9,6 +9,12 @@ export interface StoredIdea {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  progress: {
+    wiki: number;
+    blueprint: number;
+    journey: number;
+    feedback: number;
+  };
   content?: {
     problemStatement?: string;
     targetMarket?: string;
@@ -43,7 +49,18 @@ class IdeaForgeStorage {
       if (!stored) return [];
       
       const data = JSON.parse(stored);
-      return Array.isArray(data) ? data : [];
+      const ideas = Array.isArray(data) ? data : [];
+      
+      // Ensure backwards compatibility by adding progress property if missing
+      return ideas.map(idea => ({
+        ...idea,
+        progress: idea.progress || {
+          wiki: 0,
+          blueprint: 0,
+          journey: 0,
+          feedback: 0
+        }
+      }));
     } catch (error) {
       console.error('Error loading ideas from storage:', error);
       return [];
@@ -91,6 +108,12 @@ class IdeaForgeStorage {
         tags: idea.tags || [],
         createdAt: now,
         updatedAt: now,
+        progress: idea.progress || {
+          wiki: 0,
+          blueprint: 0,
+          journey: 0,
+          feedback: 0
+        },
         content: idea.content || {},
         metadata: {
           version: 1,

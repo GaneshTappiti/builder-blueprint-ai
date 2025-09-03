@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ThumbsUp, MessageSquare, Tag, ArrowLeft, Edit, Trash, Menu } from "lucide-react";
+import { ThumbsUp, MessageSquare, Tag, ArrowLeft, Edit, Trash, Menu, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
+import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
 
 interface IdeaComment {
   id: number;
@@ -18,22 +19,113 @@ interface IdeaComment {
 interface IdeaDetailsData {
   id: string;
   title: string;
-  longDescription: string;
+  description: string;
   tags: string[];
-  status: 'validated' | 'exploring' | 'draft';
-  votes: number;
-  comments: IdeaComment[];
-  updatedAt: string;
+  status: 'validated' | 'exploring' | 'draft' | 'archived';
+  category: string;
+  validation_score?: number;
+  market_opportunity?: string;
+  risk_assessment?: string;
+  monetization_strategy?: string;
+  key_features?: string[];
+  next_steps?: string[];
+  competitor_analysis?: string;
+  target_market?: string;
+  problem_statement?: string;
+  created_at: string;
+  updated_at: string;
+  user_id?: string;
 }
 
 export default function IdeaDetailsPage({ params }: { params: { ideaId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [idea, setIdea] = useState<IdeaDetailsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // In production, this would load the idea from the database using params.ideaId
-  const idea: IdeaDetailsData | null = null; // Will be loaded from user's actual idea data
+  // Load the specific idea using the ideaId from params
+  useEffect(() => {
+    const loadIdea = async () => {
+      try {
+        console.log('🔄 Loading idea with ID:', params.ideaId);
+        setIsLoading(true);
+        
+        // Load all ideas and find the one with matching ID
+        const { data: ideas, error } = await supabaseHelpers.getIdeas();
+        
+        if (error) {
+          console.error('Error loading ideas:', error);
+          // Fallback to localStorage
+          const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+          const foundIdea = storedIdeas.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
+          setIdea(foundIdea || null);
+        } else {
+          const foundIdea = ideas?.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
+          setIdea(foundIdea || null);
+        }
+      } catch (error) {
+        console.error('Error loading idea:', error);
+        // Fallback to localStorage
+        const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+        const foundIdea = storedIdeas.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
+        setIdea(foundIdea || null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (params.ideaId) {
+      loadIdea();
+    }
+  }, [params.ideaId]);
   
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
+        <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <main className="layout-main transition-all duration-300">
+          {/* Top Navigation Bar */}
+          <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-white hover:bg-black/30"
+                    onClick={() => setSidebarOpen(true)}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-white"
+                    onClick={() => router.push('/workspace/idea-vault')}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Idea Vault
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading Content */}
+          <div className="px-6 py-8 max-w-4xl mx-auto">
+            <div className="flex flex-col items-center justify-center min-h-[50vh]">
+              <Loader2 className="h-12 w-12 text-green-500 animate-spin" />
+              <p className="mt-4 text-gray-400">Loading idea details...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show not found state
   if (!idea) {
     return (
       <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
@@ -70,6 +162,7 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
           <div className="px-6 py-8 max-w-4xl mx-auto">
             <div className="text-center">
               <h1 className="text-2xl font-bold text-white mb-4">Idea not found</h1>
+              <p className="text-gray-400 mb-6">The idea you're looking for doesn't exist or has been removed.</p>
               <Button 
                 className="bg-green-600 hover:bg-green-700" 
                 onClick={() => router.push("/workspace/idea-vault")}
@@ -151,7 +244,7 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
             </div>
             
             <div className="flex flex-wrap gap-2 mt-4">
-              {idea.tags.map((tag, index) => (
+              {idea.tags && idea.tags.map((tag, index) => (
                 <div key={index} className="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full text-xs flex items-center text-gray-300">
                   <Tag className="h-3 w-3 mr-1" />
                   {tag}
@@ -174,21 +267,67 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
                   className="h-4 w-4 cursor-pointer hover:text-green-400 transition-colors" 
                   onClick={handleVote}
                 />
-                <span>{idea.votes}</span>
+                <span>0</span>
               </div>
               <div className="flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />
-                <span>{idea.comments.length}</span>
+                <span>0</span>
               </div>
-              <span>Updated {idea.updatedAt}</span>
+              <span>Updated {new Date(idea.updated_at).toLocaleDateString()}</span>
             </div>
           </div>
           
           <Card className="mb-8 bg-black/40 backdrop-blur-sm border-white/10">
             <CardContent className="pt-6">
-              <p className="whitespace-pre-line text-gray-300">{idea.longDescription}</p>
+              <h3 className="text-lg font-semibold text-white mb-3">Description</h3>
+              <p className="whitespace-pre-line text-gray-300">{idea.description}</p>
             </CardContent>
           </Card>
+
+          {/* Additional Idea Details */}
+          {idea.problem_statement && (
+            <Card className="mb-8 bg-black/40 backdrop-blur-sm border-white/10">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Problem Statement</h3>
+                <p className="text-gray-300">{idea.problem_statement}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {idea.target_market && (
+            <Card className="mb-8 bg-black/40 backdrop-blur-sm border-white/10">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Target Market</h3>
+                <p className="text-gray-300">{idea.target_market}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {idea.key_features && idea.key_features.length > 0 && (
+            <Card className="mb-8 bg-black/40 backdrop-blur-sm border-white/10">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Key Features</h3>
+                <ul className="list-disc list-inside text-gray-300 space-y-1">
+                  {idea.key_features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {idea.next_steps && idea.next_steps.length > 0 && (
+            <Card className="mb-8 bg-black/40 backdrop-blur-sm border-white/10">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold text-white mb-3">Next Steps</h3>
+                <ul className="list-disc list-inside text-gray-300 space-y-1">
+                  {idea.next_steps.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
           
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4 text-white">Comments</h2>
@@ -209,23 +348,7 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
               </CardContent>
             </Card>
             
-            {idea.comments.length > 0 ? (
-              <div className="space-y-4">
-                {idea.comments.map(comment => (
-                  <Card key={comment.id} className="bg-black/40 backdrop-blur-sm border-white/10">
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium text-white">{comment.author}</span>
-                        <span className="text-sm text-gray-400">{comment.date}</span>
-                      </div>
-                      <p className="text-gray-300">{comment.text}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400">No comments yet. Be the first to comment!</p>
-            )}
+            <p className="text-gray-400">No comments yet. Be the first to comment!</p>
           </div>
         </div>
       </main>

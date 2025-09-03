@@ -37,9 +37,9 @@ export const aiEngine = {
 
       // Fallback to mock response if Gemini fails
       const fallbackResponses = [
-        "This is an innovative idea with strong market potential. Consider focusing on user experience and scalability.",
-        "The concept shows promise but needs refinement in the value proposition. Market research would be beneficial.",
-        "Excellent technical approach. The implementation strategy should prioritize MVP development and user feedback."
+        `Based on your idea, this solution addresses a specific market need. The platform provides value by solving real problems that users face in their daily lives. By focusing on user experience and practical functionality, it offers a compelling alternative to existing solutions.`,
+        `This idea enters a competitive market with unique positioning. It differentiates itself through its approach to solving the core problem and serving the target audience effectively. The implementation strategy should prioritize MVP development and user feedback.`,
+        `The concept shows strong potential for addressing user needs. Consider focusing on user experience, scalability, and market validation. The technical approach should prioritize core functionality and user feedback integration.`
       ];
 
       return {
@@ -47,7 +47,7 @@ export const aiEngine = {
         confidence: 0.6,
         metadata: {
           model: 'fallback-mock',
-          error: 'Gemini AI unavailable',
+          error: 'Gemini AI unavailable - API key not configured',
           tokens: 150,
           temperature: options?.temperature || 0.7
         }

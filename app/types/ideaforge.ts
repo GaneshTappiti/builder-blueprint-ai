@@ -1,6 +1,6 @@
 // IdeaForge Types
 export type IdeaStatus = 'draft' | 'researching' | 'validated' | 'building';
-export type IdeaForgeTab = 'overview' | 'wiki' | 'blueprint' | 'journey' | 'feedback';
+export type IdeaForgeTab = 'overview' | 'wiki' | 'blueprint' | 'feedback';
 
 // RAG Tool Types (from RAG repository)
 export type RAGTool =
@@ -183,6 +183,38 @@ export interface StoredIdea {
     journey: number;
     feedback: number;
   };
+  // MVP Studio integration
+  mvpStudioData?: MVPStudioData;
+}
+
+// MVP Studio Data Structure
+export interface MVPStudioData {
+  isCompleted: boolean;
+  completedAt?: string;
+  wizardData: MVPWizardData;
+  generatedFramework: GeneratedFramework;
+  promptHistory: PromptHistoryItem[];
+  analytics: BlueprintAnalytics;
+}
+
+export interface PromptHistoryItem {
+  id: string;
+  type: 'framework' | 'page' | 'linking' | 'tool-specific';
+  content: string;
+  timestamp: string;
+  version: number;
+  toolUsed?: RAGTool;
+  confidence?: number;
+}
+
+export interface BlueprintAnalytics {
+  screensCount: number;
+  userRolesCount: number;
+  chosenTool: RAGTool | null;
+  exportFormats: string[];
+  totalPrompts: number;
+  lastUpdated: string;
+  completionPercentage: number;
 }
 
 export interface IdeaForgeSidebarItem {
@@ -219,14 +251,7 @@ export interface ExportData {
       category?: string;
     }>;
   };
-  journey?: {
-    entries?: Array<{
-      title?: string;
-      content?: string;
-      date?: string;
-      type?: string;
-    }>;
-  };
+
   feedback?: {
     items?: Array<{
       title?: string;

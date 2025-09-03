@@ -1,318 +1,494 @@
-"use client"
+"use client";
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
   Download, 
   Share2, 
+  Copy, 
+  CheckCircle, 
+  Clock, 
   Target, 
-  Users, 
-  DollarSign,
   TrendingUp,
-  CheckCircle,
-  AlertCircle,
+  Users,
   Lightbulb,
-  BarChart3,
+  BookOpen,
+  Layers,
+  GitBranch,
+  MessageSquare,
   Calendar,
-  Rocket
-} from "lucide-react";
+  Tag,
+  Star,
+  ArrowRight
+} from 'lucide-react';
+import { StoredIdea } from '@/types/ideaforge';
+import { useToast } from '@/hooks/use-toast';
 
 interface IdeaSummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ideaData?: {
-    title: string;
-    description: string;
-    status: string;
-    tags: string[];
-    createdAt: string;
+  idea: StoredIdea;
+  wikiContent?: Record<string, string>;
+  blueprintContent?: {
+    features: any[];
+    techStack: any[];
+    mvpPhases: any[];
+  };
+  journeyContent?: {
+    sections: any[];
+    nodes: any[];
+  };
+  feedbackContent?: {
+    feedback: any[];
+    aiSummary?: string;
   };
 }
 
-const IdeaSummaryModal: React.FC<IdeaSummaryModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  ideaData = {
-    title: "AI-Powered Fitness Coach",
-    description: "A personalized fitness app that uses AI to create custom workout plans",
-    status: "validated",
-    tags: ["AI", "Fitness", "Mobile App", "Health"],
-    createdAt: "2024-01-15"
-  }
+const IdeaSummaryModal: React.FC<IdeaSummaryModalProps> = ({
+  isOpen,
+  onClose,
+  idea,
+  wikiContent = {},
+  blueprintContent = { features: [], techStack: [], mvpPhases: [] },
+  journeyContent = { sections: [], nodes: [] },
+  feedbackContent = { feedback: [], aiSummary: '' }
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'markdown' | 'json'>('markdown');
+  const { toast } = useToast();
 
-  // Mock analysis data
-  const analysisData = {
-    validationScore: 78,
-    marketPotential: 85,
-    technicalFeasibility: 72,
-    competitiveAdvantage: 68,
-    strengths: [
-      "Growing health and fitness market",
-      "AI personalization trend",
-      "Mobile-first approach",
-      "Subscription revenue model"
-    ],
-    weaknesses: [
-      "High competition from established players",
-      "Requires significant AI development",
-      "User acquisition costs may be high"
-    ],
-    opportunities: [
-      "Integration with wearable devices",
-      "Corporate wellness programs",
-      "Nutrition tracking expansion",
-      "Virtual reality workouts"
-    ],
-    threats: [
-      "Big tech companies entering market",
-      "Privacy concerns with health data",
-      "Economic downturn affecting discretionary spending"
-    ]
-  };
-
-  const milestones = [
-    { name: "Market Research", status: "completed", date: "Week 1-2" },
-    { name: "MVP Development", status: "in-progress", date: "Week 3-8" },
-    { name: "Beta Testing", status: "upcoming", date: "Week 9-12" },
-    { name: "Launch", status: "upcoming", date: "Week 13-16" }
-  ];
-
-  const handleExport = (format: 'pdf' | 'json' | 'markdown') => {
-    // In a real app, this would generate and download the file
-    console.log(`Exporting summary as ${format}`);
+  const getOverallProgress = () => {
+    // Handle missing progress property gracefully
+    const progress = idea.progress || { wiki: 0, blueprint: 0, journey: 0, feedback: 0 };
+    return Math.round((progress.wiki + progress.blueprint + progress.journey + progress.feedback) / 4);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-400';
-      case 'in-progress': return 'text-blue-400';
-      case 'upcoming': return 'text-gray-400';
-      default: return 'text-gray-400';
+      case 'draft': return 'bg-gray-600/20 text-gray-400';
+      case 'researching': return 'bg-blue-600/20 text-blue-400';
+      case 'validated': return 'bg-green-600/20 text-green-400';
+      case 'building': return 'bg-purple-600/20 text-purple-400';
+      default: return 'bg-gray-600/20 text-gray-400';
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-400" />;
-      case 'in-progress': return <AlertCircle className="h-4 w-4 text-blue-400" />;
-      case 'upcoming': return <Calendar className="h-4 w-4 text-gray-400" />;
-      default: return <Calendar className="h-4 w-4 text-gray-400" />;
+  const generateMarkdownExport = () => {
+    const progress = idea.progress || { wiki: 0, blueprint: 0, journey: 0, feedback: 0 };
+    const sections = [
+      `# ${idea.title}`,
+      `**Status:** ${idea.status}`,
+      `**Created:** ${new Date(idea.createdAt).toLocaleDateString()}`,
+      `**Last Updated:** ${new Date(idea.updatedAt).toLocaleDateString()}`,
+      `**Overall Progress:** ${getOverallProgress()}%`,
+      '',
+      `## Description`,
+      idea.description,
+      '',
+      `## Progress Overview`,
+      `- Wiki: ${progress.wiki}%`,
+      `- Blueprint: ${progress.blueprint}%`,
+      `- Journey: ${progress.journey}%`,
+      `- Feedback: ${progress.feedback}%`,
+      ''
+    ];
+
+    if (idea.tags.length > 0) {
+      sections.push(`## Tags`, idea.tags.map(tag => `- ${tag}`).join('\n'), '');
+    }
+
+    if (Object.keys(wikiContent).length > 0) {
+      sections.push('## Wiki Analysis');
+      Object.entries(wikiContent).forEach(([key, content]) => {
+        sections.push(`### ${key.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`, content, '');
+      });
+    }
+
+    if (blueprintContent.features.length > 0) {
+      sections.push('## Product Features');
+      blueprintContent.features.forEach(feature => {
+        sections.push(`- **${feature.name}**: ${feature.description} (${feature.priority} priority)`);
+      });
+      sections.push('');
+    }
+
+    if (blueprintContent.techStack.length > 0) {
+      sections.push('## Technology Stack');
+      blueprintContent.techStack.forEach(tech => {
+        sections.push(`- **${tech.name}** (${tech.category}): ${tech.description}`);
+      });
+      sections.push('');
+    }
+
+    if (feedbackContent.feedback.length > 0) {
+      sections.push('## Feedback Summary');
+      feedbackContent.feedback.forEach(feedback => {
+        sections.push(`- **${feedback.type}** by ${feedback.author}: ${feedback.content}`);
+      });
+      sections.push('');
+    }
+
+    if (feedbackContent.aiSummary) {
+      sections.push('## AI Analysis', feedbackContent.aiSummary, '');
+    }
+
+    return sections.join('\n');
+  };
+
+  const generateJSONExport = () => {
+    const progress = idea.progress || { wiki: 0, blueprint: 0, journey: 0, feedback: 0 };
+    return JSON.stringify({
+      idea: {
+        ...idea,
+        progress: {
+          wiki: progress.wiki,
+          blueprint: progress.blueprint,
+          journey: progress.journey,
+          feedback: progress.feedback
+        }
+      },
+      wiki: wikiContent,
+      blueprint: blueprintContent,
+      journey: journeyContent,
+      feedback: feedbackContent,
+      exportedAt: new Date().toISOString()
+    }, null, 2);
+  };
+
+  const handleExport = () => {
+    let content = '';
+    let filename = '';
+    let mimeType = '';
+
+    switch (exportFormat) {
+      case 'markdown':
+        content = generateMarkdownExport();
+        filename = `${idea.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_summary.md`;
+        mimeType = 'text/markdown';
+        break;
+      case 'json':
+        content = generateJSONExport();
+        filename = `${idea.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_data.json`;
+        mimeType = 'application/json';
+        break;
+      case 'pdf':
+        toast({
+          title: "PDF Export",
+          description: "PDF export feature coming soon!",
+        });
+        return;
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: `${filename} has been downloaded successfully.`,
+    });
+  };
+
+  const handleCopyToClipboard = async () => {
+    const content = generateMarkdownExport();
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: "Copied!",
+        description: "Idea summary copied to clipboard.",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy to clipboard.",
+        variant: "destructive",
+      });
     }
   };
+
+  const progressSections = [
+    {
+      id: 'wiki',
+      label: 'Wiki',
+      progress: (idea.progress || { wiki: 0 }).wiki,
+      icon: BookOpen,
+      color: 'text-blue-400',
+      description: 'Market research and business analysis'
+    },
+    {
+      id: 'blueprint',
+      label: 'Blueprint',
+      progress: (idea.progress || { blueprint: 0 }).blueprint,
+      icon: Layers,
+      color: 'text-green-400',
+      description: 'Product features and technical architecture'
+    },
+    {
+      id: 'journey',
+      label: 'Journey',
+      progress: (idea.progress || { journey: 0 }).journey,
+      icon: GitBranch,
+      color: 'text-orange-400',
+      description: 'Development timeline and milestones'
+    },
+    {
+      id: 'feedback',
+      label: 'Feedback',
+      progress: (idea.progress || { feedback: 0 }).feedback,
+      icon: MessageSquare,
+      color: 'text-purple-400',
+      description: 'Community feedback and validation'
+    }
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto bg-black/90 border-white/10 text-white">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-black/95 backdrop-blur-sm border-white/10">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <FileText className="h-5 w-5 text-green-400" />
-            Idea Summary Report
+          <DialogTitle className="text-white flex items-center gap-3">
+            <FileText className="h-6 w-6 text-green-400" />
+            {idea.title} - Comprehensive Summary
+            <Badge className={getStatusColor(idea.status)}>
+              {idea.status}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Idea Header */}
-          <div className="p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20">
-            <h2 className="text-xl font-bold text-white mb-2">{ideaData.title}</h2>
-            <p className="text-gray-300 mb-3">{ideaData.description}</p>
-            <div className="flex flex-wrap gap-2">
-              {ideaData.tags.map((tag, index) => (
-                <Badge key={index} className="bg-green-500/20 text-green-400 border-green-500/30">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-black/40">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-green-600">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="data-[state=active]:bg-green-600">
+              Progress
+            </TabsTrigger>
+            <TabsTrigger value="content" className="data-[state=active]:bg-green-600">
+              Content
+            </TabsTrigger>
+            <TabsTrigger value="export" className="data-[state=active]:bg-green-600">
+              Export
+            </TabsTrigger>
+          </TabsList>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-black/20">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
-              <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
-              <TabsTrigger value="export">Export</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="workspace-card">
-                  <CardContent className="p-4 text-center">
-                    <Target className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-white">{analysisData.validationScore}%</p>
-                    <p className="text-xs text-gray-400">Validation Score</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="workspace-card">
-                  <CardContent className="p-4 text-center">
-                    <TrendingUp className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-white">{analysisData.marketPotential}%</p>
-                    <p className="text-xs text-gray-400">Market Potential</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="workspace-card">
-                  <CardContent className="p-4 text-center">
-                    <BarChart3 className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-white">{analysisData.technicalFeasibility}%</p>
-                    <p className="text-xs text-gray-400">Technical Feasibility</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="workspace-card">
-                  <CardContent className="p-4 text-center">
-                    <Rocket className="h-8 w-8 text-orange-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-white">{analysisData.competitiveAdvantage}%</p>
-                    <p className="text-xs text-gray-400">Competitive Edge</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="workspace-card">
-                <CardHeader>
-                  <CardTitle className="text-white">Key Insights</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <h4 className="font-medium text-green-400 mb-2">Strengths</h4>
-                    <ul className="space-y-1">
-                      {analysisData.strengths.map((strength, index) => (
-                        <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
-                          <CheckCircle className="h-3 w-3 text-green-400" />
-                          {strength}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="analysis" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="workspace-card">
-                  <CardHeader>
-                    <CardTitle className="text-red-400">Challenges</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {analysisData.weaknesses.map((weakness, index) => (
-                        <li key={index} className="text-sm text-gray-300 flex items-start gap-2">
-                          <AlertCircle className="h-3 w-3 text-red-400 mt-0.5" />
-                          {weakness}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="workspace-card">
-                  <CardHeader>
-                    <CardTitle className="text-blue-400">Opportunities</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {analysisData.opportunities.map((opportunity, index) => (
-                        <li key={index} className="text-sm text-gray-300 flex items-start gap-2">
-                          <Lightbulb className="h-3 w-3 text-blue-400 mt-0.5" />
-                          {opportunity}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="roadmap" className="space-y-4">
-              <Card className="workspace-card">
-                <CardHeader>
-                  <CardTitle className="text-white">Development Roadmap</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {milestones.map((milestone, index) => (
-                    <div key={index} className="flex items-center gap-4">
-                      {getStatusIcon(milestone.status)}
-                      <div className="flex-1">
-                        <p className={`font-medium ${getStatusColor(milestone.status)}`}>
-                          {milestone.name}
-                        </p>
-                        <p className="text-sm text-gray-400">{milestone.date}</p>
-                      </div>
-                      <Badge 
-                        className={
-                          milestone.status === 'completed' 
-                            ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : milestone.status === 'in-progress'
-                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                            : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-                        }
-                      >
-                        {milestone.status.replace('-', ' ')}
-                      </Badge>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Project Details</h3>
+                  <div className="bg-black/20 p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Status:</span>
+                      <Badge className={getStatusColor(idea.status)}>{idea.status}</Badge>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="export" className="space-y-4">
-              <Card className="workspace-card">
-                <CardHeader>
-                  <CardTitle className="text-white">Export Options</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Button
-                      onClick={() => handleExport('pdf')}
-                      variant="outline"
-                      className="justify-start border-white/10 hover:bg-white/5"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      PDF Report
-                    </Button>
-                    
-                    <Button
-                      onClick={() => handleExport('json')}
-                      variant="outline"
-                      className="justify-start border-white/10 hover:bg-white/5"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      JSON Data
-                    </Button>
-                    
-                    <Button
-                      onClick={() => handleExport('markdown')}
-                      variant="outline"
-                      className="justify-start border-white/10 hover:bg-white/5"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Markdown
-                    </Button>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Created:</span>
+                      <span className="text-white">{new Date(idea.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Last Updated:</span>
+                      <span className="text-white">{new Date(idea.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Overall Progress:</span>
+                      <span className="text-green-400 font-bold">{getOverallProgress()}%</span>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-            <Button className="bg-green-600 hover:bg-green-700">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Summary
-            </Button>
-          </div>
-        </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                  <p className="text-gray-300 bg-black/20 p-4 rounded-lg">{idea.description}</p>
+                </div>
+
+                {idea.tags.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {idea.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="border-gray-600 text-gray-400">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Quick Stats</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-green-400">{blueprintContent.features.length}</div>
+                    <div className="text-sm text-gray-400">Features</div>
+                  </div>
+                  <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-blue-400">{blueprintContent.techStack.length}</div>
+                    <div className="text-sm text-gray-400">Technologies</div>
+                  </div>
+                  <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-orange-400">{journeyContent.nodes?.length || 0}</div>
+                    <div className="text-sm text-gray-400">Journey Nodes</div>
+                  </div>
+                  <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <div className="text-2xl font-bold text-purple-400">{feedbackContent.feedback.length}</div>
+                    <div className="text-sm text-gray-400">Feedback Items</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="progress" className="space-y-4">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Overall Progress</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-medium">Total Progress</span>
+                    <span className="text-green-400 font-bold text-lg">{getOverallProgress()}%</span>
+                  </div>
+                  <Progress value={getOverallProgress()} className="h-3 bg-gray-700" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {progressSections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <div key={section.id} className="bg-black/20 p-4 rounded-lg">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 rounded-lg bg-${section.color.split('-')[1]}-600/20`}>
+                          <Icon className={`h-4 w-4 ${section.color}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-white font-medium">{section.label}</span>
+                            <span className={`text-sm font-bold ${section.color}`}>
+                              {section.progress}%
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400">{section.description}</p>
+                        </div>
+                      </div>
+                      <Progress value={section.progress} className="h-2 bg-gray-700 mt-2" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-4">
+            <div className="space-y-6">
+              {Object.keys(wikiContent).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-blue-400" />
+                    Wiki Analysis
+                  </h3>
+                  <div className="space-y-3">
+                    {Object.entries(wikiContent).map(([key, content]) => (
+                      <div key={key} className="bg-black/20 p-4 rounded-lg">
+                        <h4 className="text-white font-medium mb-2">
+                          {key.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </h4>
+                        <p className="text-gray-300 text-sm line-clamp-3">{content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {feedbackContent.aiSummary && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-400" />
+                    AI Analysis Summary
+                  </h3>
+                  <div className="bg-black/20 p-4 rounded-lg">
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{feedbackContent.aiSummary}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="export" className="space-y-4">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-4">Export Options</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      exportFormat === 'markdown' 
+                        ? 'border-green-500 bg-green-600/10' 
+                        : 'border-gray-600 bg-black/20 hover:border-gray-500'
+                    }`}
+                    onClick={() => setExportFormat('markdown')}
+                  >
+                    <FileText className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                    <h4 className="text-white font-medium text-center">Markdown</h4>
+                    <p className="text-gray-400 text-sm text-center">Human-readable format</p>
+                  </div>
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      exportFormat === 'json' 
+                        ? 'border-green-500 bg-green-600/10' 
+                        : 'border-gray-600 bg-black/20 hover:border-gray-500'
+                    }`}
+                    onClick={() => setExportFormat('json')}
+                  >
+                    <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                    <h4 className="text-white font-medium text-center">JSON</h4>
+                    <p className="text-gray-400 text-sm text-center">Machine-readable format</p>
+                  </div>
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      exportFormat === 'pdf' 
+                        ? 'border-green-500 bg-green-600/10' 
+                        : 'border-gray-600 bg-black/20 hover:border-gray-500'
+                    }`}
+                    onClick={() => setExportFormat('pdf')}
+                  >
+                    <FileText className="h-8 w-8 text-red-400 mx-auto mb-2" />
+                    <h4 className="text-white font-medium text-center">PDF</h4>
+                    <p className="text-gray-400 text-sm text-center">Coming soon</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleExport}
+                  className="bg-green-600 hover:bg-green-700 flex-1"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export {exportFormat.toUpperCase()}
+                </Button>
+                <Button
+                  onClick={handleCopyToClipboard}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-600/10"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy to Clipboard
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

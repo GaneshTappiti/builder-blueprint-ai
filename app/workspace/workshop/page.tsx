@@ -26,7 +26,7 @@ import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { supabaseHelpers } from "@/lib/supabase";
+import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
 import { useIdeaStore } from "@/stores/ideaStore";
 import EnhancedUpgradePrompt from "@/components/EnhancedUpgradePrompt";
 
@@ -95,6 +95,7 @@ export default function WorkshopPage() {
       monetizationStrategy: extractSection('MONETIZATION STRATEGY'),
       nextSteps: extractList('NEXT ACTIONABLE STEPS'),
       validationScore: extractScore(),
+      marketOpportunity: extractSection('MARKET OPPORTUNITY'),
       riskAssessment: extractSection('RISK ASSESSMENT'),
       competitorAnalysis: extractSection('COMPETITOR ANALYSIS')
     };
@@ -250,6 +251,8 @@ export default function WorkshopPage() {
 
       const { data, error } = await supabaseHelpers.createIdea(newIdeaData);
 
+      console.log('💾 Workshop save result:', { data, error });
+
       if (error) throw error;
 
       // Save to Zustand store as active idea
@@ -272,7 +275,8 @@ export default function WorkshopPage() {
           target_market: savedIdea.target_market,
           problem_statement: savedIdea.problem_statement,
           created_at: savedIdea.created_at,
-          updated_at: savedIdea.updated_at
+          updated_at: savedIdea.updated_at,
+          user_id: savedIdea.user_id || ''
         });
         setHasActiveIdea(true);
         setCurrentStep('vault');
