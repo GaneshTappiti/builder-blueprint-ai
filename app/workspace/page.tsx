@@ -47,11 +47,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAI } from '@/hooks/useEnhancedAI';
 // import FlowProgress from "@/components/dashboard/FlowProgress";
 // import QuickStats from "@/components/dashboard/QuickStats";
-import { useActiveIdea, useIdeaContext } from "@/stores/ideaStore";
+import { useActiveIdea, useIdeaContext, type ActiveIdea } from "@/stores/ideaStore";
 // import { AISettingsPanel } from '@/components/ai-settings';
 // import AdminStatusIndicator from '@/components/admin/AdminStatusIndicator';
 // import AdminQuickActions from '@/components/admin/AdminQuickActions';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { supabaseHelpers } from '@/lib/supabase-connection-helpers';
 // import { WorkspaceContainer, WorkspaceHeader } from '@/components/ui/workspace-layout';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { searchService, SearchResult } from '@/services/searchService';
@@ -1230,10 +1233,25 @@ export default function WorkspacePage() {
                               className="py-8"
                             />
                           ) : (
-                            <div className="prose prose-invert max-w-none">
-                              <div className="text-gray-300 whitespace-pre-wrap text-sm md:text-base">
+                            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-code:bg-gray-800 prose-code:text-gray-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-pre:bg-gray-800 prose-pre:text-gray-200 prose-pre:p-4 prose-pre:rounded prose-blockquote:border-l-blue-400 prose-blockquote:bg-gray-800/50 prose-blockquote:pl-4 prose-blockquote:py-2 prose-blockquote:rounded-r prose-ul:my-3 prose-ol:my-3 prose-li:my-1 prose-li:text-gray-300 prose-table:border prose-table:border-gray-600 prose-th:border prose-th:border-gray-600 prose-th:bg-gray-800 prose-th:p-3 prose-th:text-white prose-td:border prose-td:border-gray-600 prose-td:p-3 prose-td:text-gray-300 prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  h1: ({ children }) => <h1 className="text-xl font-bold text-white mb-4">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-lg font-semibold text-white mb-3">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-base font-medium text-white mb-2">{children}</h3>,
+                                  p: ({ children }) => <p className="text-gray-300 mb-3 leading-relaxed text-sm md:text-base">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc list-inside text-gray-300 mb-3 space-y-1">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal list-inside text-gray-300 mb-3 space-y-1">{children}</ol>,
+                                  li: ({ children }) => <li className="text-gray-300">{children}</li>,
+                                  strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                                  em: ({ children }) => <em className="italic text-gray-200">{children}</em>,
+                                  code: ({ children }) => <code className="bg-gray-800 text-gray-200 px-2 py-1 rounded text-sm font-mono">{children}</code>,
+                                  blockquote: ({ children }) => <blockquote className="border-l-4 border-blue-400 bg-gray-800/50 pl-4 py-2 rounded-r text-gray-300 italic">{children}</blockquote>,
+                                }}
+                              >
                                 {aiResponse}
-                              </div>
+                              </ReactMarkdown>
                             </div>
                           )}
                         </div>
@@ -1436,6 +1454,138 @@ export default function WorkspacePage() {
           </div>
         </div>
       </main>
+
+      {/* Startup Brief Modal */}
+      <Dialog open={showStartupBrief} onOpenChange={setShowStartupBrief}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Comprehensive Startup Analysis</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowStartupBrief(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <StartupBriefGenerator
+              ideaDescription={briefPrompt}
+              onGenerated={(brief) => {
+                console.log('Startup brief generated:', brief);
+                toast({
+                  title: "Startup Brief Generated!",
+                  description: "Your comprehensive startup analysis is ready.",
+                });
+              }}
+              onSaveToVault={async (brief) => {
+                console.log('🚀 onSaveToVault called with brief:', brief.substring(0, 100) + '...');
+                
+                if (!user) {
+                  console.log('❌ No user found');
+                  toast({
+                    title: "Authentication Required",
+                    description: "Please sign in to save ideas to your vault.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+
+                try {
+                  console.log('💾 Starting save process...');
+                  
+                  // Extract title from brief (first line or first 50 chars)
+                  const title = brief.split('\n')[0].replace(/^#+\s*/, '') || 
+                               brief.substring(0, 50) + (brief.length > 50 ? '...' : '');
+                  
+                  console.log('📝 Extracted title:', title);
+                  
+                  // Test localStorage access first
+                  console.log('🧪 Testing localStorage access...');
+                  const testKey = 'test-idea-vault';
+                  localStorage.setItem(testKey, 'test-value');
+                  const testValue = localStorage.getItem(testKey);
+                  console.log('🧪 localStorage test result:', testValue);
+                  localStorage.removeItem(testKey);
+                  
+                  // Use the proper supabaseHelpers.createIdea method
+                  const { data, error } = await supabaseHelpers.createIdea({
+                    title: title,
+                    description: brief,
+                    category: 'startup-brief',
+                    tags: ['startup-brief', 'ai-generated', 'comprehensive-analysis']
+                  });
+
+                  console.log('💾 Save result:', { data, error });
+
+                  if (error) {
+                    console.error('❌ Save error:', error);
+                    throw new Error(error.message || 'Failed to save idea');
+                  }
+
+                  if (data && data.length > 0) {
+                    const savedIdea = data[0]; // Get the first (and only) idea from the array
+                    console.log('✅ Idea saved successfully:', savedIdea);
+                    
+                    // Verify the idea was actually saved to localStorage
+                    const savedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+                    console.log('🔍 Verification - Ideas in localStorage:', savedIdeas.length);
+                    console.log('🔍 Latest saved idea:', savedIdeas[0]);
+                    
+                    // Set this as the active idea in the store
+                    try {
+                      await setActiveIdea({
+                        id: savedIdea.id,
+                        title: savedIdea.title,
+                        description: savedIdea.description,
+                        status: 'validated',
+                        category: savedIdea.category,
+                        tags: savedIdea.tags,
+                        validation_score: 85,
+                        market_opportunity: extractSection(brief, 'Market Opportunity'),
+                        problem_statement: extractSection(brief, 'Problem Statement'),
+                        target_market: extractSection(brief, 'Target Market'),
+                        monetization_strategy: extractSection(brief, 'Business Model'),
+                        key_features: extractListSection(brief, 'Key Features'),
+                        next_steps: extractListSection(brief, 'Next Steps'),
+                        competitor_analysis: extractSection(brief, 'Competitive Advantage'),
+                        created_at: savedIdea.created_at,
+                        updated_at: savedIdea.updated_at,
+                        user_id: user.id
+                      });
+                      console.log('✅ Active idea set successfully');
+                    } catch (storeError) {
+                      console.warn('⚠️ Failed to set active idea in store:', storeError);
+                      // Continue anyway since the idea is saved to localStorage
+                    }
+                    
+                    // Show success toast immediately
+                    toast({
+                      title: "Saved to Idea Vault!",
+                      description: "Your startup brief has been saved to your Idea Vault.",
+                    });
+
+                    // Close modal and navigate to idea vault
+                    setShowStartupBrief(false);
+                    router.push('/workspace/idea-vault');
+                  } else {
+                    console.error('❌ No data returned from save');
+                    throw new Error('No data returned from save operation');
+                  }
+                } catch (error) {
+                  console.error('❌ Error saving to idea vault:', error);
+                  toast({
+                    title: "Save Failed",
+                    description: `Failed to save to Idea Vault: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    variant: "destructive"
+                  });
+                }
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </ErrorBoundary>
   );

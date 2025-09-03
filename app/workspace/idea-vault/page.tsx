@@ -63,7 +63,7 @@ export default function IdeaVaultPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { activeIdea, fetchUserIdeas } = useActiveIdea();
-  const { setHasActiveIdea } = useIdeaContext();
+  const { setHasActiveIdea, setActiveIdea, setCurrentStep } = useIdeaContext();
 
   // Mock subscription data for demonstration
   const isFreeTier = true;
@@ -72,16 +72,21 @@ export default function IdeaVaultPage() {
 
   // Load ideas using supabaseHelpers
   const loadIdeas = useCallback(async () => {
+    console.log('🔄 Loading ideas in Idea Vault...');
     setIsLoading(true);
     try {
       // Load ideas using the same helper that saves them
       const { data: ideas, error } = await supabaseHelpers.getIdeas();
+      console.log('📊 Ideas loaded:', { ideas, error });
+      
       if (error) {
         console.error('Error loading ideas:', error);
         // Fallback to localStorage if supabaseHelpers fails
         const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+        console.log('🔄 Fallback to localStorage:', storedIdeas);
         setIdeas(storedIdeas);
       } else {
+        console.log('✅ Ideas set from supabaseHelpers:', ideas);
         setIdeas(ideas || []);
       }
       await fetchUserIdeas();
@@ -90,6 +95,7 @@ export default function IdeaVaultPage() {
       console.error('Error loading ideas:', error);
       // Fallback to localStorage
       const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      console.log('🔄 Fallback to localStorage (catch):', storedIdeas);
       setIdeas(storedIdeas);
       setIsLoading(false);
     }
@@ -203,10 +209,10 @@ export default function IdeaVaultPage() {
               <Loader2 className="h-12 w-12 text-green-500 animate-spin" />
               <p className="mt-4 text-gray-400">Loading your ideas...</p>
             </div>
-          ) : !activeIdea ? (
+          ) : ideas.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
               <Lightbulb className="h-16 w-16 text-gray-700 mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">No active idea</h2>
+              <h2 className="text-2xl font-semibold mb-2">No ideas yet</h2>
               <p className="text-gray-400 max-w-md mb-8">Start your startup journey by creating and validating an idea in the Workshop.</p>
               <Button onClick={startNewIdea} size="lg">
                 <Sparkles className="h-5 w-5 mr-2" />
@@ -216,117 +222,80 @@ export default function IdeaVaultPage() {
           ) : (
             <div>
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Active Idea</h2>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">Edit</Button>
-                  <Button variant="ghost" size="sm">Archive</Button>
-                </div>
+                <h2 className="text-2xl font-bold">Your Ideas ({ideas.length})</h2>
+                <Button onClick={startNewIdea} size="sm">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  New Idea
+                </Button>
               </div>
 
-              {/* Active Idea Display */}
-              <Card className="bg-gray-900 border-gray-800">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-2xl text-white mb-2">{activeIdea.title}</CardTitle>
-                      <p className="text-gray-400">{activeIdea.description}</p>
-                    </div>
-                    <Badge className={getStatusBadge(activeIdea.status).color}>
-                      {getStatusBadge(activeIdea.status).text}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Tags */}
-                  {activeIdea.tags && activeIdea.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {activeIdea.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="border-gray-600 text-gray-300">
-                          {tag}
+              {/* Ideas Grid */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {ideas.map((idea) => (
+                  <Card key={idea.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg text-white mb-2 line-clamp-2">{idea.title}</CardTitle>
+                          <p className="text-gray-400 text-sm line-clamp-3">{idea.description}</p>
+                        </div>
+                        <Badge className={getStatusBadge(idea.status).color}>
+                          {getStatusBadge(idea.status).text}
                         </Badge>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Tags */}
+                      {idea.tags && idea.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {idea.tags.slice(0, 3).map((tag, index) => (
+                            <Badge key={index} variant="outline" className="border-gray-600 text-gray-300 text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {idea.tags.length > 3 && (
+                            <Badge variant="outline" className="border-gray-600 text-gray-300 text-xs">
+                              +{idea.tags.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
 
-                  {/* Key Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    {activeIdea.market_opportunity && (
-                      <div className="bg-black/20 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-green-400 mb-2">Market Opportunity</h4>
-                        <p className="text-gray-300 text-sm">{activeIdea.market_opportunity}</p>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-4">
+                        <Button 
+                          size="sm" 
+                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                          onClick={() => {
+                            // Set as active idea and continue to next step
+                            setActiveIdea({
+                              ...idea,
+                              user_id: 'mock-user-id' // Add missing user_id field
+                            });
+                            setHasActiveIdea(true);
+                            setCurrentStep('vault');
+                            router.push('/workspace/idea-forge');
+                          }}
+                        >
+                          <ArrowRight className="h-4 w-4 mr-2" />
+                          Continue
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                          onClick={() => {
+                            // View idea details
+                            router.push(`/workspace/idea-vault/${idea.id}`);
+                          }}
+                        >
+                          View
+                        </Button>
                       </div>
-                    )}
-                    {activeIdea.target_market && (
-                      <div className="bg-black/20 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-blue-400 mb-2">Target Market</h4>
-                        <p className="text-gray-300 text-sm">{activeIdea.target_market}</p>
-                      </div>
-                    )}
-                    {activeIdea.monetization_strategy && (
-                      <div className="bg-black/20 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-yellow-400 mb-2">Monetization</h4>
-                        <p className="text-gray-300 text-sm">{activeIdea.monetization_strategy}</p>
-                      </div>
-                    )}
-                    {activeIdea.risk_assessment && (
-                      <div className="bg-black/20 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-red-400 mb-2">Risk Assessment</h4>
-                        <p className="text-gray-300 text-sm">{activeIdea.risk_assessment}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Key Features */}
-                  {activeIdea.key_features && activeIdea.key_features.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="text-sm font-medium text-white mb-3">Key Features</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {activeIdea.key_features.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-2 text-gray-300 text-sm">
-                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                            {feature}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Next Steps */}
-                  {activeIdea.next_steps && activeIdea.next_steps.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="text-sm font-medium text-white mb-3">Next Steps</h4>
-                      <div className="space-y-2">
-                        {activeIdea.next_steps.map((step, index) => (
-                          <div key={index} className="flex items-center gap-2 text-gray-300 text-sm">
-                            <div className="w-5 h-5 bg-blue-600/20 rounded-full flex items-center justify-center text-xs text-blue-400 font-medium">
-                              {index + 1}
-                            </div>
-                            {step}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={continueToIdeaForge}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <ArrowRight className="h-4 w-4 mr-2" />
-                      Continue to IdeaForge
-                    </Button>
-                    <Button
-                      onClick={archiveIdea}
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                    >
-                      Archive
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
         </div>
