@@ -1190,9 +1190,9 @@ export default function WorkspacePage() {
                           <Button
                             type="submit"
                             className="absolute right-1 top-1 bg-green-600 hover:bg-green-500 h-8 md:h-10"
-                            disabled={!!(isLoading || !gptInput.trim())}
+                            disabled={!!(isLoading('aiResponse') || !gptInput.trim())}
                           >
-                            {isLoading ? (
+                            {isLoading('aiResponse') ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                             ) : (
                               <Rocket className="h-4 w-4" />

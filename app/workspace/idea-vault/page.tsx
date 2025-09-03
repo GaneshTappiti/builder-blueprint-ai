@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useToast } from "@/hooks/use-toast";
+import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
 
 // Define IdeaProps interface for export
 export interface IdeaProps {
@@ -69,19 +70,45 @@ export default function IdeaVaultPage() {
   const usage = { ideasCreated: 1 };
   const currentPlan = { limits: { ideas: 1 } };
 
-  // Mock data for demonstration - in real app this would come from database/store
+  // Load ideas using supabaseHelpers
   const loadIdeas = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Load ideas using the same helper that saves them
+      const { data: ideas, error } = await supabaseHelpers.getIdeas();
+      if (error) {
+        console.error('Error loading ideas:', error);
+        // Fallback to localStorage if supabaseHelpers fails
+        const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+        setIdeas(storedIdeas);
+      } else {
+        setIdeas(ideas || []);
+      }
       await fetchUserIdeas();
       setIsLoading(false);
     } catch (error) {
+      console.error('Error loading ideas:', error);
+      // Fallback to localStorage
+      const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      setIdeas(storedIdeas);
       setIsLoading(false);
     }
   }, [fetchUserIdeas]);
 
   useEffect(() => {
     loadIdeas();
+  }, [loadIdeas]);
+
+  // Refresh ideas when the page becomes visible (e.g., when navigating back from workshop)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadIdeas();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [loadIdeas]);
 
   const continueToIdeaForge = () => {

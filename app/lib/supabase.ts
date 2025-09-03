@@ -93,18 +93,32 @@ export const supabaseHelpers = {
 
   // Ideas
   async getIdeas() {
-    return { data: mockIdeas, error: null };
+    try {
+      const ideas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      return { data: ideas, error: null };
+    } catch (error) {
+      return { data: [], error: null };
+    }
   },
 
   async createIdea(idea: Omit<Idea, 'id' | 'created_at' | 'updated_at'>) {
-    const newIdea: Idea = {
-      ...idea,
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    mockIdeas.unshift(newIdea);
-    return { data: newIdea, error: null };
+    try {
+      const existingIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      
+      const newIdea: Idea = {
+        ...idea,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      existingIdeas.unshift(newIdea);
+      localStorage.setItem('ideaVault', JSON.stringify(existingIdeas));
+      
+      return { data: newIdea, error: null };
+    } catch (error) {
+      return { data: null, error: { message: 'Failed to save idea' } };
+    }
   },
 
   // Real-time subscriptions (mock)

@@ -3,19 +3,52 @@
 
 export const supabaseHelpers = {
   async getIdeas() {
-    // Mock implementation
-    return {
-      data: [],
-      error: null
-    };
+    try {
+      // Get ideas from localStorage
+      const ideas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      return {
+        data: ideas,
+        error: null
+      };
+    } catch (error) {
+      console.error('Error getting ideas:', error);
+      return {
+        data: [],
+        error: error instanceof Error ? error.message : 'Failed to get ideas'
+      };
+    }
   },
 
   async createIdea(idea: any) {
-    // Mock implementation
-    return {
-      data: { id: Date.now(), ...idea },
-      error: null
-    };
+    try {
+      // Get existing ideas from localStorage
+      const existingIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      
+      // Create new idea with proper structure
+      const newIdea = {
+        id: Date.now().toString(),
+        ...idea,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add to the beginning of the array
+      existingIdeas.unshift(newIdea);
+      
+      // Save back to localStorage
+      localStorage.setItem('ideaVault', JSON.stringify(existingIdeas));
+      
+      return {
+        data: [newIdea], // Return as array to match expected format
+        error: null
+      };
+    } catch (error) {
+      console.error('Error saving idea to localStorage:', error);
+      return {
+        data: null,
+        error: { message: 'Failed to save idea' }
+      };
+    }
   },
 
   async updateIdea(id: string, updates: any) {
@@ -242,7 +275,13 @@ export const investorHelpers = {
 // IdeaForge specific helpers
 export const ideaForgeHelpers = {
   async getIdeas() {
-    return { data: [], error: null };
+    try {
+      const ideas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
+      return { data: ideas, error: null };
+    } catch (error) {
+      console.error('Error loading ideas from localStorage:', error);
+      return { data: [], error: null };
+    }
   },
   async createIdea(idea: any) {
     return { data: { id: Date.now(), ...idea }, error: null };

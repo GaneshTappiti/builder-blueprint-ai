@@ -65,9 +65,43 @@ export default function WorkshopPage() {
 
   // Fallback function in case canCreateNewIdea is not available
   const canCreateNewIdeaSafe = canCreateNewIdea || (() => !hasActiveIdea);
+
+  // Parse AI validation response
+  const parseValidationResponse = (text: string): IdeaValidation => {
+    const extractSection = (sectionName: string): string => {
+      const regex = new RegExp(`## ${sectionName.toUpperCase()}[\\s\\S]*?(?=##|$)`, 'i');
+      const match = text.match(regex);
+      return match ? match[0].replace(`## ${sectionName.toUpperCase()}`.toUpperCase(), '').trim() : '';
+    };
+
+    const extractList = (sectionName: string): string[] => {
+      const content = extractSection(sectionName);
+      return content
+        .split('\n')
+        .filter(line => line.trim().startsWith('-'))
+        .map(line => line.replace(/^-\s*/, '').trim())
+        .filter(item => item.length > 0);
+    };
+
+    const extractScore = (): number => {
+      const scoreMatch = text.match(/validation score[:\s]*(\d+)/i);
+      return scoreMatch ? parseInt(scoreMatch[1]) : 75;
+    };
+
+    return {
+      problemStatement: extractSection('PROBLEM STATEMENT'),
+      targetMarket: extractSection('TARGET MARKET ANALYSIS'),
+      keyFeatures: extractList('KEY MVP FEATURES'),
+      monetizationStrategy: extractSection('MONETIZATION STRATEGY'),
+      nextSteps: extractList('NEXT ACTIONABLE STEPS'),
+      validationScore: extractScore(),
+      riskAssessment: extractSection('RISK ASSESSMENT'),
+      competitorAnalysis: extractSection('COMPETITOR ANALYSIS')
+    };
+  };
   
-  // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
+  // Initialize Gemini AI - will be handled by API route
+  // const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
   const checkActiveIdea = useCallback(async () => {
     try {
@@ -100,7 +134,7 @@ export default function WorkshopPage() {
     setIsValidating(true);
     
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      // Model initialization removed - using API route instead
       
       const prompt = `
       As an expert startup consultant, analyze this idea and provide a comprehensive validation:
@@ -148,23 +182,34 @@ export default function WorkshopPage() {
       Use proper markdown formatting with headers (##), bullet points (-), and clear section separation for better readability.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      // Use API route instead of direct client-side API call
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          type: 'text'
+        })
+      });
 
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const validationData = JSON.parse(jsonMatch[0]);
-        setValidation(validationData);
-        
-        toast({
-          title: "Idea Validated!",
-          description: `Validation score: ${validationData.validationScore}/100`,
-        });
-      } else {
-        throw new Error("Could not parse AI response");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate AI response');
       }
+
+      const data = await response.json();
+      const text = data.data.text;
+
+      // Parse the structured response text
+      const validationData = parseValidationResponse(text);
+      setValidation(validationData);
+      
+      toast({
+        title: "Idea Validated!",
+        description: `Validation score: ${validationData.validationScore}/100`,
+      });
     } catch (error) {
       console.error('Error validating idea:', error);
       toast({
