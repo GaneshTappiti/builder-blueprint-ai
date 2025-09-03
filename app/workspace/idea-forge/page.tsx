@@ -301,7 +301,7 @@ const IdeaForgePage = () => {
           {/* Main Content Container */}
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
             {ideas.length === 0 ? (
-              <IdeaEmptyState onCreateIdea={() => setIsNewIdeaModalOpen(true)} />
+              <IdeaEmptyState onCreateClick={() => setIsNewIdeaModalOpen(true)} />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Ideas Sidebar */}
@@ -540,19 +540,19 @@ const IdeaForgePage = () => {
         <NewIdeaModal
           open={isNewIdeaModalOpen}
           onClose={() => setIsNewIdeaModalOpen(false)}
-          onSubmit={handleCreateIdea}
+          onCreateIdea={handleCreateIdea}
         />
 
         {selectedIdea && (
           <>
             <ShareIdeaModal
-              open={isShareModalOpen}
+              isOpen={isShareModalOpen}
               onClose={() => setIsShareModalOpen(false)}
               idea={selectedIdea}
             />
 
             <IdeaSummaryModal
-              open={isSummaryModalOpen}
+              isOpen={isSummaryModalOpen}
               onClose={() => setIsSummaryModalOpen(false)}
               idea={selectedIdea}
             />
