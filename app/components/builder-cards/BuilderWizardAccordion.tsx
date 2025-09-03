@@ -17,16 +17,16 @@ import {
   ArrowRight
 } from "lucide-react";
 import { BuilderProvider, useBuilder, builderActions } from "@/lib/builderContext";
-import { AppIdeaCard } from "./builder-cards/AppIdeaCard";
-import { ValidationCard } from "./builder-cards/ValidationCard";
-import { BlueprintCard } from "./builder-cards/BlueprintCard";
-import { PromptGeneratorCard } from "./builder-cards/PromptGeneratorCard";
-import { FlowDescriptionCard } from "./builder-cards/FlowDescriptionCard";
-import { ExportComposerCard } from "./builder-cards/ExportComposerCard";
-import { ProjectHistory } from "./ProjectHistory";
-import { ErrorDisplay } from "./ErrorDisplay";
-import { GenerationProgress, StaggeredFadeIn, FloatingActionButton } from "./LoadingStates";
-import { ResponsiveContainer, ResponsiveStack } from "./ResponsiveContainer";
+import { AppIdeaCard } from "./AppIdeaCard";
+import { ValidationCard } from "./ValidationCard";
+import { BlueprintCard } from "./BlueprintCard";
+import { PromptGeneratorCard } from "./PromptGeneratorCard";
+import { FlowDescriptionCard } from "./FlowDescriptionCard";
+import { ExportComposerCard } from "./ExportComposerCard";
+import { ProjectHistory } from "../ProjectHistory";
+import { ErrorDisplay } from "../ErrorDisplay";
+import { GenerationProgress, StaggeredFadeIn, FloatingActionButton } from "../LoadingStates";
+import { ResponsiveContainer, ResponsiveStack } from "../ResponsiveContainer";
 
 const builderStages = [
   {

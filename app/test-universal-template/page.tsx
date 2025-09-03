@@ -441,7 +441,7 @@ export default function TestUniversalTemplatePage() {
                 Generated Universal Prompt
                 {result && (
                   <Badge variant="outline" className="text-xs">
-                    {Math.round(result.length / 100) / 10}k chars
+                    {Math.round(result.prompt.length / 100) / 10}k chars
                   </Badge>
                 )}
               </CardTitle>

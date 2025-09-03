@@ -338,84 +338,6 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
         </CardContent>
       </Card>
 
-      {/* Quick Export Actions */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
-            <ExternalLink className="h-4 w-4 text-purple-400" />
-            Quick Export Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const prompt = navigationPrompt || await generateAndCachePrompt();
-                const figmaPrompt = `# Figma Design Brief\n\n${prompt}\n\n## Design Requirements\n- Create wireframes for each screen\n- Show navigation flow between screens\n- Include modal overlays and transitions\n- Use ${state.appIdea.designStyle} design style`;
-                navigator.clipboard.writeText(figmaPrompt);
-                toast({
-                  title: "Figma Brief Copied!",
-                  description: "Design brief optimized for Figma plugins.",
-                });
-              }}
-              className="border-pink-500/30 text-pink-300 hover:bg-pink-500/10 text-xs"
-            >
-              🎨 Figma Brief
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const prompt = navigationPrompt || await generateAndCachePrompt();
-                const devPrompt = `# Development Specification\n\n${prompt}\n\n## Technical Requirements\n- Implement navigation stack\n- Handle state management\n- Add loading and error states\n- Follow ${state.appIdea.platforms.join('/')} best practices`;
-                navigator.clipboard.writeText(devPrompt);
-                toast({
-                  title: "Dev Spec Copied!",
-                  description: "Technical specification for developers.",
-                });
-              }}
-              className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10 text-xs"
-            >
-              💻 Dev Spec
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const prompt = navigationPrompt || await generateAndCachePrompt();
-                const noCodePrompt = `# No-Code Implementation Guide\n\n${prompt}\n\n## No-Code Setup\n- Configure screen routing\n- Set up conditional navigation\n- Create modal components\n- Implement user flow logic`;
-                navigator.clipboard.writeText(noCodePrompt);
-                toast({
-                  title: "No-Code Guide Copied!",
-                  description: "Implementation guide for no-code tools.",
-                });
-              }}
-              className="border-green-500/30 text-green-300 hover:bg-green-500/10 text-xs"
-            >
-              🔧 No-Code
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const prompt = navigationPrompt || await generateAndCachePrompt();
-                const aiPrompt = `# AI Design Assistant Prompt\n\n${prompt}\n\n## AI Instructions\n- Generate UI mockups for each screen\n- Create consistent design system\n- Show user flow connections\n- Apply ${state.appIdea.designStyle} styling`;
-                navigator.clipboard.writeText(aiPrompt);
-                toast({
-                  title: "AI Prompt Copied!",
-                  description: "Optimized prompt for AI design tools.",
-                });
-              }}
-              className="border-orange-500/30 text-orange-300 hover:bg-orange-500/10 text-xs"
-            >
-              🤖 AI Tools
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Individual Sections Header */}
       <div className="text-center py-2">
         <h4 className="text-sm font-medium text-gray-400">
@@ -479,36 +401,6 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
         </CardContent>
       </Card>
 
-      {/* Back Button Behavior */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
-            <ArrowLeftIcon className="h-4 w-4 text-orange-400" />
-            Back Button Behavior
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
-            {state.appFlow.backButtonBehavior}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Modal Logic */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-white">
-            <ExternalLink className="h-4 w-4 text-pink-400" />
-            Modal Logic
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-white/10 backdrop-blur-sm p-3 rounded text-sm text-gray-300 border border-white/10">
-            {state.appFlow.modalLogic}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Screen Transitions */}
       <Card className="bg-black/40 backdrop-blur-sm border-white/10">
         <CardHeader>
@@ -555,32 +447,6 @@ ${ragContext.optimizationTips.slice(0, 3).map(tip => `- ${tip}`).join('\n')}`;
               <div className="text-xs text-gray-400">
                 Users flow through authentication, land on the main dashboard, and navigate to specific features based on their needs and permissions.
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* App Architecture Summary */}
-      <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm border-green-500/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-green-300">
-            <Settings className="h-4 w-4" />
-            Architecture Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <h5 className="font-medium text-green-300">Screens</h5>
-              <p className="text-green-200">{state.appBlueprint?.screens.length || 0} total screens</p>
-            </div>
-            <div>
-              <h5 className="font-medium text-green-300">User Roles</h5>
-              <p className="text-green-200">{state.appBlueprint?.userRoles.length || 0} role types</p>
-            </div>
-            <div>
-              <h5 className="font-medium text-green-300">Data Models</h5>
-              <p className="text-green-200">{state.appBlueprint?.dataModels.length || 0} data entities</p>
             </div>
           </div>
         </CardContent>

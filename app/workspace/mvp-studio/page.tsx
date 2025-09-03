@@ -56,26 +56,6 @@ export default function MVPStudioPage() {
         {/* Bottom Section - Quick Actions and Features */}
         <div className="px-6 py-12 bg-black/40 backdrop-blur-xl border-t border-white/10">
           <div className="max-w-4xl mx-auto">
-
-
-            {/* Feature Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
-                <Layers className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">🧱 Builder Cards</h3>
-                <p className="text-gray-400 text-sm">Interactive builder recommendations</p>
-              </div>
-              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
-                <Target className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">🚀 MVP Templates</h3>
-                <p className="text-gray-400 text-sm">Pre-built project templates</p>
-              </div>
-              <div className="glass-effect-theme p-6 rounded-lg text-center hover:bg-white/5 transition-colors">
-                <Zap className="h-8 w-8 text-green-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">🛠️ AI Tools Hub</h3>
-                <p className="text-gray-400 text-sm">Comprehensive tool directory</p>
-              </div>
-            </div>
           </div>
         </div>
       </main>
