@@ -36,7 +36,15 @@ import {
   Download,
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  Brain,
+  Rocket,
+  Star,
+  Award,
+  Compass,
+  Search,
+  Send,
+  FileDown
 } from 'lucide-react';
 import { StoredIdea } from '@/types/ideaforge';
 import { aiEngine } from '@/services/aiEngine';
@@ -44,27 +52,34 @@ import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-interface AIEnhancedDescription {
-  oneLiner: string;
-  detailedOverview: string;
-  context: string;
+interface AIOverviewContent {
+  problemStatement: string;
+  proposedSolution: string;
+  targetAudience: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+  };
+  uniqueValue: string;
+  coreFeatures: string[];
+  narrative: string;
   lastGenerated?: Date;
 }
 
-interface AISmartSection {
-  id: string;
-  title: string;
-  content: string;
-  icon: React.ComponentType<any>;
+interface IdeaStage {
+  current: 'researching' | 'validated' | 'blueprinted' | 'mvp-studio';
+  label: string;
+  description: string;
   color: string;
   bgColor: string;
 }
 
-interface DeepDiveContent {
-  futureUseCases: string;
-  risksMitigations: string;
-  monetizationPaths: string;
-  lastGenerated?: Date;
+interface QuickStats {
+  status: string;
+  createdDate: string;
+  lastUpdated: string;
+  currentStage: IdeaStage;
+  aiValidated: boolean;
 }
 
 interface IdeaOverviewProps {
@@ -87,85 +102,107 @@ const IdeaOverview: React.FC<IdeaOverviewProps> = ({
   const { toast } = useToast();
   
   // State management
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [editedDescription, setEditedDescription] = useState(idea.description);
-  const [aiDescription, setAiDescription] = useState<AIEnhancedDescription | null>(null);
-  const [smartSections, setSmartSections] = useState<AISmartSection[]>([]);
-  const [deepDiveContent, setDeepDiveContent] = useState<DeepDiveContent | null>(null);
-  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
-  const [isGeneratingSections, setIsGeneratingSections] = useState(false);
-  const [isGeneratingDeepDive, setIsGeneratingDeepDive] = useState(false);
-  const [showDeepDive, setShowDeepDive] = useState(false);
+  const [aiOverview, setAiOverview] = useState<AIOverviewContent | null>(null);
+  const [quickStats, setQuickStats] = useState<QuickStats | null>(null);
+  const [isGeneratingOverview, setIsGeneratingOverview] = useState(false);
+  const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [pitchOneLiner, setPitchOneLiner] = useState<string>('');
 
   // AI Generation Functions
-  const generateAIDescription = async () => {
-    setIsGeneratingDescription(true);
+  const generateAIOverview = async () => {
+    setIsGeneratingOverview(true);
     try {
-      const prompt = `You are an expert startup consultant. Transform this basic idea into a comprehensive, professional description:
+      const prompt = `You are a senior startup consultant and pitch deck specialist. Transform this basic idea into a comprehensive, professional overview that makes founders feel their idea has already taken shape.
 
 IDEA TITLE: "${idea.title}"
 CURRENT DESCRIPTION: "${idea.description}"
 
-IMPORTANT: Base your response entirely on the specific idea provided above. Do NOT give generic responses like "This is an innovative idea" or "The concept shows promise."
+CRITICAL INSTRUCTIONS:
+- Base your response ENTIRELY on the specific idea provided above
+- Be specific, actionable, and inspiring
+- Use concrete examples and data where possible
+- Make it compelling for founders, team members, mentors, and investors
+- Create content that feels like the idea is already a real business
 
-For the idea "${idea.title}", create:
+For the idea "${idea.title}", create a comprehensive overview with:
 
-1. ONE-LINER (under 15 words): A punchy elevator pitch that captures the essence
-2. DETAILED OVERVIEW (2-3 paragraphs): 
-   - What specific problem does this solve?
-   - Who are the target users?
-   - How does it work?
-   - What makes it valuable?
-3. MARKET CONTEXT: How this fits in the competitive landscape
+1. PROBLEM STATEMENT: A clear, sharp, human-readable problem statement that goes beyond what the user typed
+2. PROPOSED SOLUTION: A solution story that explains how the idea works and why it's effective
+3. TARGET AUDIENCE: Auto-detect and specify primary, secondary, and tertiary audiences
+4. UNIQUE VALUE: Highlight what makes this different from competitors with specific positioning
+5. CORE FEATURES: List 4-6 essential features that make this solution work
+6. NARRATIVE: A professional one-pager that tells the story of this idea in an inspiring way
 
-Example transformation:
-Input: "AI fitness coach app"
-Output: 
-- One-liner: "Personal AI trainer that adapts workouts to your schedule and progress"
-- Overview: "FitnessAI addresses the $96B fitness industry's personalization gap. While gyms offer one-size-fits-all programs and apps provide static routines, users struggle with motivation and plateauing results. Our AI analyzes your performance, preferences, and schedule to create dynamic workout plans that evolve with your progress. The platform serves busy professionals aged 25-45 who want effective workouts without the complexity of personal trainers or the monotony of generic apps."
+Example transformation for "students share notes app":
+- Problem: "Students waste hours searching WhatsApp groups, Telegram channels, or scattered Google Drives to find quality notes. This leads to stress, uneven preparation, and missed opportunities for collaborative learning."
+- Solution: "Scollab is a peer-to-peer note-sharing platform where students can upload, rate, and access verified notes instantly. With intelligent search, version history, and gamified rewards, students save time, find quality resources, and feel motivated to contribute."
+- Target Audience: Primary: College students, Secondary: Tutors/coaching centers, Tertiary: Academic admins
+- Unique Value: "Unlike Google Drive folders or Telegram groups, Scollab ensures quality through peer ratings + gamification credits for contributors."
+- Core Features: ["Upload & share notes", "Intelligent search & filters", "Peer rating system", "Contributor rewards system", "Profile & collaboration features"]
+- Narrative: "Scollab – Peer-to-Peer Learning Made Simple. Today's students waste hours hunting for notes. Scollab transforms this experience by creating a trusted academic hub where knowledge flows seamlessly. Whether preparing for exams, collaborating on projects, or revising concepts, students can instantly find and share resources. With AI-enhanced organization, gamified motivation, and a community-driven trust system, Scollab empowers students to learn faster, together."
 
 Respond ONLY in this JSON format:
 {
-  "oneLiner": "specific elevator pitch for this exact idea",
-  "detailedOverview": "detailed analysis of this specific idea's problem, users, and solution",
-  "context": "market positioning specific to this idea"
+  "problemStatement": "refined problem statement for this exact idea",
+  "proposedSolution": "solution story for this exact idea",
+  "targetAudience": {
+    "primary": "primary target audience",
+    "secondary": "secondary target audience", 
+    "tertiary": "tertiary target audience"
+  },
+  "uniqueValue": "unique positioning and competitive advantage",
+  "coreFeatures": ["feature 1", "feature 2", "feature 3", "feature 4", "feature 5"],
+  "narrative": "professional one-pager narrative"
 }`;
 
       const response = await aiEngine.generateText(prompt, {
-        maxTokens: 1200,
+        maxTokens: 1500,
         temperature: 0.8
       });
 
-      console.log('AI Response:', response.text); // Debug log
+      console.log('AI Overview Response:', response.text);
 
       try {
         const parsed = JSON.parse(response.text);
-        const enhanced: AIEnhancedDescription = {
-          oneLiner: parsed.oneLiner || `${idea.title} - AI-enhanced solution`,
-          detailedOverview: parsed.detailedOverview || `Based on "${idea.title}", this solution addresses specific market needs through innovative approaches. The platform targets users seeking efficient alternatives to existing solutions, providing unique value through its core functionality.`,
-          context: parsed.context || `This idea positions itself in a competitive market by offering distinct advantages over existing alternatives.`,
+        const overview: AIOverviewContent = {
+          problemStatement: parsed.problemStatement || `The problem "${idea.title}" addresses is a specific market need that current solutions don't adequately solve.`,
+          proposedSolution: parsed.proposedSolution || `"${idea.title}" solves this problem through its innovative approach and unique value proposition.`,
+          targetAudience: {
+            primary: parsed.targetAudience?.primary || 'Primary target users',
+            secondary: parsed.targetAudience?.secondary || 'Secondary market segment',
+            tertiary: parsed.targetAudience?.tertiary || 'Tertiary opportunity'
+          },
+          uniqueValue: parsed.uniqueValue || `"${idea.title}" differentiates itself through its unique approach and competitive advantages.`,
+          coreFeatures: parsed.coreFeatures || ['Core feature 1', 'Core feature 2', 'Core feature 3', 'Core feature 4'],
+          narrative: parsed.narrative || `"${idea.title}" represents an innovative solution that addresses real market needs through its unique approach and value proposition.`,
           lastGenerated: new Date()
         };
-        setAiDescription(enhanced);
+        setAiOverview(overview);
         
         toast({
-          title: "✅ AI Description Generated",
-          description: "Your idea has been enhanced with AI-generated insights",
+          title: "✅ AI Overview Generated",
+          description: "Your idea has been transformed into a professional overview",
           duration: 3000,
         });
       } catch (parseError) {
         console.error('JSON Parse Error:', parseError);
-        console.log('Raw response:', response.text);
         
-        // Better fallback content
-        const enhanced: AIEnhancedDescription = {
-          oneLiner: `${idea.title} - Innovative solution for modern needs`,
-          detailedOverview: `Based on your idea "${idea.title}", this solution addresses a specific market need. The platform provides value by solving real problems that users face in their daily lives. By focusing on user experience and practical functionality, it offers a compelling alternative to existing solutions.`,
-          context: `This idea enters a competitive market with unique positioning. It differentiates itself through its approach to solving the core problem and serving the target audience effectively.`,
+        // Fallback content
+        const overview: AIOverviewContent = {
+          problemStatement: `The problem "${idea.title}" addresses is a specific market need that current solutions don't adequately solve. Users face challenges that this solution directly targets.`,
+          proposedSolution: `"${idea.title}" solves this problem through its innovative approach. The solution provides specific value by addressing the core issues users face in this domain.`,
+          targetAudience: {
+            primary: 'Primary target users who need this solution',
+            secondary: 'Secondary market segment with related needs',
+            tertiary: 'Tertiary opportunity for expansion'
+          },
+          uniqueValue: `"${idea.title}" differentiates itself through its unique approach and competitive advantages over existing alternatives.`,
+          coreFeatures: ['Core functionality', 'User experience features', 'Key capabilities', 'Essential tools'],
+          narrative: `"${idea.title}" represents an innovative solution that addresses real market needs. This platform provides value by solving specific problems that users face, offering a compelling alternative to existing solutions.`,
           lastGenerated: new Date()
         };
-        setAiDescription(enhanced);
+        setAiOverview(overview);
         
         toast({
           title: "⚠️ Partial Generation",
@@ -174,231 +211,111 @@ Respond ONLY in this JSON format:
         });
       }
     } catch (error) {
-      console.error('Error generating AI description:', error);
+      console.error('Error generating AI overview:', error);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate AI-enhanced description. Please try again.",
+        description: "Failed to generate AI overview. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingDescription(false);
+      setIsGeneratingOverview(false);
     }
   };
 
-  const generateSmartSections = async () => {
-    setIsGeneratingSections(true);
+  const generatePitchOneLiner = async () => {
+    setIsGeneratingPitch(true);
     try {
-      const prompt = `You are a startup analyst. Break down this specific idea into actionable insights:
+      const prompt = `You are a startup pitch expert. Create a compelling one-liner for this idea that's perfect for LinkedIn posts, tweets, or elevator pitches.
 
 IDEA: "${idea.title}"
 DESCRIPTION: "${idea.description}"
 
-CRITICAL: Provide specific, detailed analysis for THIS exact idea. Do NOT give generic responses.
+Create a punchy, memorable one-liner (under 15 words) that:
+- Captures the essence and value proposition
+- Is LinkedIn/tweet-friendly
+- Makes people want to learn more
+- Sounds professional and exciting
 
-For each section, provide concrete, actionable insights:
+Examples:
+- "Personal AI trainer that adapts workouts to your schedule and progress"
+- "Peer-to-peer note sharing platform that gamifies academic collaboration"
+- "AI-powered meal planning that eliminates food waste and saves money"
 
-1. **Problem**: What specific problem does "${idea.title}" solve?
-   - Identify the exact pain point
-   - Why do current solutions fail?
-   - What's the cost of this problem?
-
-2. **Solution**: How does "${idea.title}" solve this problem?
-   - What's the core approach?
-   - What makes it work?
-   - What's the key innovation?
-
-3. **Target Audience**: Who specifically will use "${idea.title}"?
-   - Demographics and psychographics
-   - Where to find them
-   - What drives their decisions?
-
-4. **Key Features**: What are the essential features of "${idea.title}"?
-   - Core functionality
-   - User experience elements
-   - Technical capabilities
-
-5. **Differentiation**: Why is "${idea.title}" better than alternatives?
-   - Direct competitors
-   - Unique advantages
-   - Barriers to competition
-
-Respond ONLY in this JSON format:
-[
-  {
-    "id": "problem",
-    "title": "Problem",
-    "content": "specific problem analysis for this exact idea"
-  },
-  {
-    "id": "solution",
-    "title": "Solution", 
-    "content": "specific solution analysis for this exact idea"
-  },
-  {
-    "id": "target-audience",
-    "title": "Target Audience",
-    "content": "specific audience analysis for this exact idea"
-  },
-  {
-    "id": "key-features",
-    "title": "Key Features",
-    "content": "specific features analysis for this exact idea"
-  },
-  {
-    "id": "differentiation",
-    "title": "Differentiation",
-    "content": "specific competitive analysis for this exact idea"
-  }
-]`;
+Respond with just the one-liner, no quotes or extra text.`;
 
       const response = await aiEngine.generateText(prompt, {
-        maxTokens: 1800,
-        temperature: 0.8
+        maxTokens: 50,
+        temperature: 0.9
       });
 
-      console.log('Smart Sections AI Response:', response.text); // Debug log
-
-      try {
-        const parsed = JSON.parse(response.text);
-        const sections: AISmartSection[] = parsed.map((section: any, index: number) => {
-          const icons = [AlertTriangle, Zap, Users, Target, TrendingUp];
-          const colors = ['text-red-400', 'text-green-400', 'text-blue-400', 'text-purple-400', 'text-orange-400'];
-          const bgColors = ['bg-red-600/20', 'bg-green-600/20', 'bg-blue-600/20', 'bg-purple-600/20', 'bg-orange-600/20'];
-          
-          return {
-            id: section.id || `section-${index}`,
-            title: section.title || 'Section',
-            content: section.content || 'AI-generated content',
-            icon: icons[index] || Target,
-            color: colors[index] || 'text-gray-400',
-            bgColor: bgColors[index] || 'bg-gray-600/20'
-          };
-        });
-        
-        setSmartSections(sections);
+      const oneLiner = response.text.trim().replace(/^["']|["']$/g, '');
+      setPitchOneLiner(oneLiner);
         
         toast({
-          title: "✅ Smart Sections Generated",
-          description: "AI has broken down your idea into structured insights",
+        title: "✅ Pitch One-Liner Generated",
+        description: "Perfect for LinkedIn, tweets, and elevator pitches",
           duration: 3000,
         });
-      } catch (parseError) {
-        console.error('Smart Sections JSON Parse Error:', parseError);
-        console.log('Raw smart sections response:', response.text);
-        
-        // Better fallback sections with idea-specific content
-        const fallbackSections: AISmartSection[] = [
-          {
-            id: 'problem',
-            title: 'Problem',
-            content: `The problem "${idea.title}" addresses is a specific market need that current solutions don't adequately solve. Users face challenges that this solution directly targets through its unique approach.`,
-            icon: AlertTriangle,
-            color: 'text-red-400',
-            bgColor: 'bg-red-600/20'
-          },
-          {
-            id: 'solution',
-            title: 'Solution',
-            content: `"${idea.title}" solves this problem through its innovative approach. The solution provides specific value by addressing the core issues users face in this domain.`,
-            icon: Zap,
-            color: 'text-green-400',
-            bgColor: 'bg-green-600/20'
-          },
-          {
-            id: 'target-audience',
-            title: 'Target Audience',
-            content: `The target audience for "${idea.title}" consists of users who need this specific solution. They are motivated by the benefits this platform provides and represent a significant market opportunity.`,
-            icon: Users,
-            color: 'text-blue-400',
-            bgColor: 'bg-blue-600/20'
-          }
-        ];
-        setSmartSections(fallbackSections);
-        
-        toast({
-          title: "⚠️ Partial Generation",
-          description: "AI generated content but formatting was incomplete. Showing enhanced sections.",
-          duration: 3000,
-        });
-      }
     } catch (error) {
-      console.error('Error generating smart sections:', error);
+      console.error('Error generating pitch one-liner:', error);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate smart sections. Please try again.",
+        description: "Failed to generate pitch one-liner. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingSections(false);
+      setIsGeneratingPitch(false);
     }
   };
 
-  const generateDeepDiveContent = async () => {
-    setIsGeneratingDeepDive(true);
-    try {
-      const prompt = `Provide deep dive analysis for this idea:
-
-Idea: "${idea.title}"
-Description: "${idea.description}"
-
-Generate:
-1. Future Use Cases - how it scales beyond MVP
-2. Potential Risks & Mitigations - key risks and how to address them
-3. AI-recommended Monetization Paths - revenue strategies
-
-Format as JSON:
-{
-  "futureUseCases": "detailed future scaling scenarios",
-  "risksMitigations": "key risks and mitigation strategies", 
-  "monetizationPaths": "recommended revenue models and strategies"
-}`;
-
-      const response = await aiEngine.generateText(prompt, {
-        maxTokens: 1200,
-        temperature: 0.7
-      });
-
-      try {
-        const parsed = JSON.parse(response.text);
-        const deepDive: DeepDiveContent = {
-          futureUseCases: parsed.futureUseCases || "Future scaling analysis",
-          risksMitigations: parsed.risksMitigations || "Risk assessment",
-          monetizationPaths: parsed.monetizationPaths || "Monetization strategies",
-          lastGenerated: new Date()
-        };
-        setDeepDiveContent(deepDive);
-        
-        toast({
-          title: "✅ Deep Dive Analysis Complete",
-          description: "Advanced insights and strategies have been generated",
-          duration: 3000,
-        });
-      } catch (parseError) {
-        const deepDive: DeepDiveContent = {
-          futureUseCases: response.text,
-          risksMitigations: "Risk analysis and mitigation strategies",
-          monetizationPaths: "Revenue model recommendations",
-          lastGenerated: new Date()
-        };
-        setDeepDiveContent(deepDive);
-      }
-    } catch (error) {
-      console.error('Error generating deep dive content:', error);
-      toast({
-        title: "Generation Failed",
-        description: "Failed to generate deep dive analysis. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingDeepDive(false);
+  const getCurrentStage = (): IdeaStage => {
+    const progress = idea.progress || { wiki: 0, blueprint: 0, feedback: 0 };
+    const overallProgress = Math.round((progress.wiki + progress.blueprint + progress.feedback) / 3);
+    
+    if (overallProgress < 25) {
+      return {
+        current: 'researching',
+        label: 'Researching',
+        description: 'Building foundation with market research',
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-600/20'
+      };
+    } else if (overallProgress < 50) {
+      return {
+        current: 'validated',
+        label: 'Validated',
+        description: 'Problem-solution fit confirmed',
+        color: 'text-green-400',
+        bgColor: 'bg-green-600/20'
+      };
+    } else if (overallProgress < 75) {
+      return {
+        current: 'blueprinted',
+        label: 'Blueprinted',
+        description: 'Product architecture defined',
+        color: 'text-purple-400',
+        bgColor: 'bg-purple-600/20'
+      };
+    } else {
+      return {
+        current: 'mvp-studio',
+        label: 'MVP Studio',
+        description: 'Ready for development',
+        color: 'text-orange-400',
+        bgColor: 'bg-orange-600/20'
+      };
     }
   };
 
-  const handleSaveDescription = () => {
-    if (onUpdate) {
-      onUpdate({ description: editedDescription });
-    }
-    setIsEditingDescription(false);
+  const initializeQuickStats = () => {
+    const stats: QuickStats = {
+      status: idea.status || 'draft',
+      createdDate: new Date(idea.createdAt).toLocaleDateString(),
+      lastUpdated: new Date(idea.updatedAt).toLocaleDateString(),
+      currentStage: getCurrentStage(),
+      aiValidated: !!aiOverview
+    };
+    setQuickStats(stats);
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -418,31 +335,50 @@ Format as JSON:
     }
   };
 
-  const exportSummary = async () => {
+  const exportIdeaOverview = async () => {
     setIsExporting(true);
     try {
-      const summary = `# ${idea.title}
+      if (!aiOverview) {
+        toast({
+          title: "No Overview Available",
+          description: "Please generate AI overview first",
+          variant: "destructive",
+        });
+        return;
+      }
 
-## AI-Enhanced Description
-${aiDescription?.oneLiner || idea.title}
+      const overview = `# ${idea.title} - AI-Generated Overview
 
-${aiDescription?.detailedOverview || idea.description}
+## Problem Statement
+${aiOverview.problemStatement}
 
-${aiDescription?.context ? `## Market Context\n${aiDescription.context}` : ''}
+## Proposed Solution
+${aiOverview.proposedSolution}
 
-## Smart Sections
-${smartSections.map(section => `### ${section.title}\n${section.content}`).join('\n\n')}
+## Target Audience
+- **Primary:** ${aiOverview.targetAudience.primary}
+- **Secondary:** ${aiOverview.targetAudience.secondary}
+- **Tertiary:** ${aiOverview.targetAudience.tertiary}
 
-${deepDiveContent ? `## Deep Dive Analysis\n\n### Future Use Cases\n${deepDiveContent.futureUseCases}\n\n### Risks & Mitigations\n${deepDiveContent.risksMitigations}\n\n### Monetization Paths\n${deepDiveContent.monetizationPaths}` : ''}
+## Unique Value Proposition
+${aiOverview.uniqueValue}
+
+## Core Features
+${aiOverview.coreFeatures.map(feature => `- ${feature}`).join('\n')}
+
+## Professional Narrative
+${aiOverview.narrative}
+
+${pitchOneLiner ? `\n## Pitch One-Liner\n"${pitchOneLiner}"` : ''}
 
 ---
 Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
 
-      await copyToClipboard(summary, "Idea summary");
+      await copyToClipboard(overview, "Idea overview");
     } catch (error) {
       toast({
         title: "Export Failed",
-        description: "Could not export summary",
+        description: "Could not export overview",
         variant: "destructive",
       });
     } finally {
@@ -452,13 +388,15 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
 
   // Auto-generate content on component mount
   useEffect(() => {
-    if (!aiDescription) {
-      generateAIDescription();
+    if (!aiOverview) {
+      generateAIOverview();
     }
-    if (smartSections.length === 0) {
-      generateSmartSections();
-    }
+    initializeQuickStats();
   }, [idea.id]);
+
+  useEffect(() => {
+    initializeQuickStats();
+  }, [aiOverview]);
 
   const getOverallProgress = () => {
     const progress = idea.progress || { wiki: 0, blueprint: 0, feedback: 0 };
@@ -483,7 +421,6 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
         icon: Layers,
         color: "text-green-400"
       };
-
     } else if (progress.feedback < 50) {
       return {
         action: "Gather Feedback",
@@ -505,56 +442,385 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
 
   const nextAction = getNextRecommendedAction();
 
-  const progressSections = [
-    {
-      id: 'wiki',
-      label: 'Wiki',
-      progress: idea.progress?.wiki || 0,
-      icon: BookOpen,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-600/20',
-      description: 'Market research and business analysis'
-    },
-    {
-      id: 'blueprint',
-      label: 'Blueprint',
-      progress: idea.progress?.blueprint || 0,
-      icon: Layers,
-      color: 'text-green-400',
-      bgColor: 'bg-green-600/20',
-      description: 'Product features and technical architecture'
-    },
-
-    {
-      id: 'feedback',
-      label: 'Feedback',
-      progress: idea.progress?.feedback || 0,
-      icon: MessageSquare,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-600/20',
-      description: 'Community feedback and validation'
-    }
-  ];
-
   return (
     <div className="space-y-6">
-      {/* AI-Generated Detailed Description */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+      {/* AI-Powered Idea Overview Header */}
+      <Card className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-sm border-purple-500/30">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+              <Brain className="h-8 w-8 text-purple-400" />
+              AI-Powered Idea Overview
+            </h2>
+            <p className="text-gray-300 mb-6 text-lg">
+              Transform your basic idea into a professional, inspiring overview that makes you feel like your startup has already taken shape
+            </p>
+            <Button
+              onClick={generateAIOverview}
+              disabled={isGeneratingOverview}
+              size="lg"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-3"
+            >
+              {isGeneratingOverview ? (
+                <>
+                  <RefreshCw className="h-5 w-5 mr-3 animate-spin" />
+                  Generating AI Overview...
+                </>
+              ) : (
+                <>
+                  <Rocket className="h-5 w-5 mr-3" />
+                  Generate AI Overview
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-gray-400 mt-3">
+              Creates: Problem Statement, Solution Story, Target Audience, Unique Value, Core Features, and Professional Narrative
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI-Generated Overview Content */}
+      {isGeneratingOverview ? (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardContent className="py-12">
+            <div className="text-center">
+              <RefreshCw className="h-16 w-16 mx-auto text-purple-400 animate-spin mb-6" />
+              <h3 className="text-2xl font-bold text-white mb-3">Generating AI Overview</h3>
+              <p className="text-gray-400 text-lg">AI is transforming your idea into a professional, inspiring overview...</p>
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  Analyzing problem statement
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  Crafting solution story
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
+                  <RefreshCw className="h-4 w-4 text-purple-400 animate-spin" />
+                  Identifying target audience
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : aiOverview ? (
+        <div className="space-y-6">
+          {/* Professional Narrative */}
+          <Card className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-sm border-blue-500/20">
+            <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-green-400" />
-                AI-Generated Detailed Description
+                <Star className="h-5 w-5 text-blue-400" />
+                Professional Narrative
               </CardTitle>
-              <p className="text-gray-400 text-sm mt-1">
-                Transform your basic idea into a comprehensive, professional description
+              <p className="text-gray-400 text-sm">The story of your idea that inspires and excites</p>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-200 prose-strong:text-white">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {aiOverview.narrative}
+                </ReactMarkdown>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={() => copyToClipboard(aiOverview.narrative, "Narrative")}
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Narrative
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Problem & Solution */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-red-600/10 backdrop-blur-sm border-red-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                  Problem Statement
+                </CardTitle>
+                <p className="text-gray-400 text-sm">The refined, sharp problem your idea solves</p>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-200 prose-strong:text-white">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {aiOverview.problemStatement}
+                  </ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-green-600/10 backdrop-blur-sm border-green-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-green-400" />
+                  Proposed Solution
+                </CardTitle>
+                <p className="text-gray-400 text-sm">How your idea solves the problem</p>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-200 prose-strong:text-white">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {aiOverview.proposedSolution}
+                  </ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Target Audience */}
+          <Card className="bg-blue-600/10 backdrop-blur-sm border-blue-500/20">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-400" />
+                Target Audience
+              </CardTitle>
+              <p className="text-gray-400 text-sm">Auto-detected audience segments</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-blue-600/20 p-4 rounded-lg">
+                  <h4 className="text-blue-400 font-medium mb-2">Primary</h4>
+                  <p className="text-gray-200 text-sm">{aiOverview.targetAudience.primary}</p>
+                </div>
+                <div className="bg-blue-600/20 p-4 rounded-lg">
+                  <h4 className="text-blue-400 font-medium mb-2">Secondary</h4>
+                  <p className="text-gray-200 text-sm">{aiOverview.targetAudience.secondary}</p>
+                </div>
+                <div className="bg-blue-600/20 p-4 rounded-lg">
+                  <h4 className="text-blue-400 font-medium mb-2">Tertiary</h4>
+                  <p className="text-gray-200 text-sm">{aiOverview.targetAudience.tertiary}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Unique Value & Core Features */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-purple-600/10 backdrop-blur-sm border-purple-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Award className="h-5 w-5 text-purple-400" />
+                  Unique Value Proposition
+                </CardTitle>
+                <p className="text-gray-400 text-sm">What makes you different from competitors</p>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-200 prose-strong:text-white">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {aiOverview.uniqueValue}
+                  </ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-orange-600/10 backdrop-blur-sm border-orange-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Target className="h-5 w-5 text-orange-400" />
+                  Core Features
+                </CardTitle>
+                <p className="text-gray-400 text-sm">Essential features that make your solution work</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {aiOverview.coreFeatures.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-orange-600/20 rounded-lg">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                      <span className="text-gray-200 text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {aiOverview.lastGenerated && (
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                Generated: {aiOverview.lastGenerated.toLocaleString()}
               </p>
             </div>
-            <div className="flex gap-2">
-              {aiDescription && (
+          )}
+        </div>
+      ) : (
+        <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Brain className="h-16 w-16 mx-auto text-gray-400 mb-6" />
+              <h3 className="text-2xl font-bold text-white mb-3">Transform Your Idea</h3>
+              <p className="text-gray-400 text-lg mb-6">
+                Even a simple idea like "students share notes app" becomes a comprehensive, professional overview that makes founders feel their startup has already taken shape
+              </p>
+              <div className="bg-yellow-600/10 border border-yellow-500/20 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                  <span className="text-sm font-medium text-yellow-400">AI Configuration Notice</span>
+                </div>
+                <p className="text-xs text-yellow-200">
+                  For full AI functionality, configure your Gemini API key in the environment variables. 
+                  Currently showing enhanced fallback content.
+                </p>
+              </div>
+              <Button
+                onClick={generateAIOverview}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                size="lg"
+              >
+                <Rocket className="h-5 w-5 mr-2" />
+                Generate AI Overview
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced Quick Stats */}
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-green-400" />
+            Quick Stats
+          </CardTitle>
+          <p className="text-gray-400 text-sm">AI-validated status and progress tracking</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-black/20 p-4 rounded-lg border border-white/5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-green-600/20">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                </div>
+                <span className="text-white font-medium">Status</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className={quickStats?.currentStage.bgColor + ' ' + quickStats?.currentStage.color}>
+                  {quickStats?.currentStage.label || 'Draft'}
+                </Badge>
+                {quickStats?.aiValidated && (
+                  <Badge className="bg-green-600/20 text-green-400">
+                    AI Validated
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-black/20 p-4 rounded-lg border border-white/5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-blue-600/20">
+                  <Calendar className="h-4 w-4 text-blue-400" />
+                </div>
+                <span className="text-white font-medium">Created</span>
+              </div>
+              <p className="text-gray-300 text-sm">{quickStats?.createdDate || new Date(idea.createdAt).toLocaleDateString()}</p>
+            </div>
+
+            <div className="bg-black/20 p-4 rounded-lg border border-white/5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-purple-600/20">
+                  <RefreshCw className="h-4 w-4 text-purple-400" />
+                </div>
+                <span className="text-white font-medium">Last Updated</span>
+              </div>
+              <p className="text-gray-300 text-sm">{quickStats?.lastUpdated || new Date(idea.updatedAt).toLocaleDateString()}</p>
+            </div>
+
+            <div className="bg-black/20 p-4 rounded-lg border border-white/5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-orange-600/20">
+                  <Compass className="h-4 w-4 text-orange-400" />
+                </div>
+                <span className="text-white font-medium">Current Stage</span>
+              </div>
+              <p className="text-gray-300 text-sm">{quickStats?.currentStage.description || 'Building foundation'}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Smart Quick Actions */}
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Zap className="h-5 w-5 text-green-400" />
+            Smart Quick Actions
+          </CardTitle>
+          <p className="text-gray-400 text-sm">AI-powered actions to refine and share your idea</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button
+              onClick={generateAIOverview}
+              disabled={isGeneratingOverview}
+              className="bg-blue-600 hover:bg-blue-700 h-auto p-4 flex flex-col items-start"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Edit3 className="h-4 w-4" />
+                <span className="font-medium">Refine Problem</span>
+              </div>
+              <span className="text-sm text-blue-100">AI asks clarifying questions and regenerates</span>
+            </Button>
+
+            <Button
+              onClick={generatePitchOneLiner}
+              disabled={isGeneratingPitch}
+              className="bg-green-600 hover:bg-green-700 h-auto p-4 flex flex-col items-start"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {isGeneratingPitch ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                <span className="font-medium">Generate Pitch One-Liner</span>
+              </div>
+              <span className="text-sm text-green-100">Instant LinkedIn/tweet-friendly tagline</span>
+            </Button>
+
+            <Button
+              onClick={() => onNavigateToTab?.('wiki')}
+              className="bg-purple-600 hover:bg-purple-700 h-auto p-4 flex flex-col items-start"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Search className="h-4 w-4" />
+                <span className="font-medium">Send to Wiki</span>
+              </div>
+              <span className="text-sm text-purple-100">Move deeper into competitor analysis</span>
+            </Button>
+
+            <Button
+              onClick={exportIdeaOverview}
+              disabled={isExporting}
+              className="bg-orange-600 hover:bg-orange-700 h-auto p-4 flex flex-col items-start"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                {isExporting ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                <span className="font-medium">Export Idea Overview</span>
+              </div>
+              <span className="text-sm text-orange-100">PDF, Markdown, or copy to clipboard</span>
+            </Button>
+          </div>
+
+          {/* Pitch One-Liner Display */}
+          {pitchOneLiner && (
+            <div className="mt-6 p-4 bg-green-600/10 border border-green-500/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Send className="h-4 w-4 text-green-400" />
+                <span className="text-sm font-medium text-green-400">Generated Pitch One-Liner</span>
+              </div>
+              <p className="text-white font-medium text-lg mb-3">"{pitchOneLiner}"</p>
+              <div className="flex gap-2">
                 <Button
-                  onClick={() => copyToClipboard(aiDescription.detailedOverview, "Description")}
+                  onClick={() => copyToClipboard(pitchOneLiner, "Pitch one-liner")}
                   variant="outline"
                   size="sm"
                   className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
@@ -562,191 +828,28 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
                   <Copy className="h-4 w-4 mr-2" />
                   Copy
                 </Button>
-              )}
-              <Button
-                onClick={generateAIDescription}
-                disabled={isGeneratingDescription}
-                variant="outline"
-                size="sm"
-                className="border-orange-500/30 text-orange-400 hover:bg-orange-600/10"
-              >
-                {isGeneratingDescription ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
+                <Button
+                  onClick={generatePitchOneLiner}
+                  disabled={isGeneratingPitch}
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-500/30 text-orange-400 hover:bg-orange-600/10"
+                >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                {isGeneratingDescription ? 'Generating...' : 'Regenerate'}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isGeneratingDescription ? (
-            <div className="text-center py-8">
-              <RefreshCw className="h-12 w-12 mx-auto text-orange-400 animate-spin mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Generating AI Description</h3>
-              <p className="text-gray-400">AI is creating a comprehensive description of your idea...</p>
-            </div>
-          ) : aiDescription ? (
-            <div className="space-y-4">
-              {/* One Liner */}
-              <div className="bg-green-600/10 border border-green-500/20 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="h-4 w-4 text-green-400" />
-                  <span className="text-sm font-medium text-green-400">Elevator Pitch</span>
-                </div>
-                <p className="text-white font-medium text-lg">{aiDescription.oneLiner}</p>
+                  Regenerate
+                </Button>
               </div>
-
-              {/* Detailed Overview */}
-              <div>
-                <h4 className="text-white font-medium mb-3">Detailed Overview</h4>
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {aiDescription.detailedOverview}
-                  </ReactMarkdown>
-                </div>
-              </div>
-
-              {/* Context */}
-              {aiDescription.context && (
-                <div>
-                  <h4 className="text-white font-medium mb-3">Market Context</h4>
-                  <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {aiDescription.context}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              )}
-
-              {aiDescription.lastGenerated && (
-                <div className="text-xs text-gray-500">
-                  Generated: {aiDescription.lastGenerated.toLocaleString()}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Transform Your Idea</h3>
-              <p className="text-gray-400 mb-4">
-                Even a simple idea like "students share notes app" becomes a comprehensive, professional description
-              </p>
-              <div className="bg-yellow-600/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-400">AI Configuration Notice</span>
-                </div>
-                <p className="text-xs text-yellow-200">
-                  For full AI functionality, configure your Gemini API key in the environment variables. 
-                  Currently showing enhanced fallback content.
-                </p>
-              </div>
-              <Button
-                onClick={generateAIDescription}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate AI Description
-              </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* AI-Smart Sections */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Target className="h-5 w-5 text-green-400" />
-                AI-Smart Sections (Auto-Filled)
-              </CardTitle>
-              <p className="text-gray-400 text-sm mt-1">
-                AI breaks down your idea into structured insights
-              </p>
-            </div>
-            <Button
-              onClick={generateSmartSections}
-              disabled={isGeneratingSections}
-              variant="outline"
-              size="sm"
-              className="border-orange-500/30 text-orange-400 hover:bg-orange-600/10"
-            >
-              {isGeneratingSections ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              {isGeneratingSections ? 'Generating...' : 'Regenerate'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isGeneratingSections ? (
-            <div className="text-center py-8">
-              <RefreshCw className="h-12 w-12 mx-auto text-orange-400 animate-spin mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Generating Smart Sections</h3>
-              <p className="text-gray-400">AI is breaking down your idea into structured insights...</p>
-            </div>
-          ) : smartSections.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {smartSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <div key={section.id} className="bg-black/20 p-4 rounded-lg border border-white/5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg ${section.bgColor}`}>
-                        <Icon className={`h-4 w-4 ${section.color}`} />
-                      </div>
-                      <h4 className="text-white font-medium">{section.title}</h4>
-                    </div>
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-ul:text-gray-300 prose-li:text-gray-300">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {section.content}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Target className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">AI-Smart Sections</h3>
-              <p className="text-gray-400 mb-4">
-                AI breaks down your idea into: Problem, Solution, Target Audience, Key Features, and Differentiation
-              </p>
-              <div className="bg-yellow-600/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-400">AI Configuration Notice</span>
-                </div>
-                <p className="text-xs text-yellow-200">
-                  For full AI functionality, configure your Gemini API key in the environment variables. 
-                  Currently showing enhanced fallback content.
-                </p>
-              </div>
-              <Button
-                onClick={generateSmartSections}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Target className="h-4 w-4 mr-2" />
-                Generate Smart Sections
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Progress & Roadmap Snapshot */}
+      {/* Progress & Next Action */}
       <Card className="bg-black/40 backdrop-blur-sm border-white/10">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-green-400" />
-            Progress & Roadmap
+            Progress & Next Action
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -761,39 +864,6 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
                 value={getOverallProgress()} 
                 className="h-3 bg-gray-700"
               />
-            </div>
-
-            {/* Section Progress */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {progressSections.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <div
-                    key={section.id}
-                    className="bg-black/20 p-4 rounded-lg hover:bg-black/30 transition-all cursor-pointer"
-                    onClick={() => onNavigateToTab?.(section.id)}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`p-2 rounded-lg ${section.bgColor}`}>
-                        <Icon className={`h-4 w-4 ${section.color}`} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">{section.label}</span>
-                          <span className={`text-sm font-bold ${section.color}`}>
-                            {section.progress}%
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400">{section.description}</p>
-                      </div>
-                    </div>
-                    <Progress 
-                      value={section.progress} 
-                      className="h-2 bg-gray-700 mt-2"
-                    />
-                  </div>
-                );
-              })}
             </div>
 
             {/* Next Action Card */}
@@ -821,232 +891,6 @@ Generated by IdeaForge AI • ${new Date().toLocaleDateString()}`;
           </div>
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Zap className="h-5 w-5 text-green-400" />
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              onClick={() => setIsEditingDescription(true)}
-              className="bg-blue-600 hover:bg-blue-700 h-auto p-4 flex flex-col items-start"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Edit3 className="h-4 w-4" />
-                <span className="font-medium">Edit Idea</span>
-              </div>
-              <span className="text-sm text-blue-100">Tweak the auto-generated description</span>
-            </Button>
-
-            <Button
-              onClick={exportSummary}
-              disabled={isExporting}
-              className="bg-green-600 hover:bg-green-700 h-auto p-4 flex flex-col items-start"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                {isExporting ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                <span className="font-medium">Export Summary</span>
-              </div>
-              <span className="text-sm text-green-100">Copy description for pitch deck</span>
-            </Button>
-
-            <Button
-              onClick={onShare}
-              className="bg-purple-600 hover:bg-purple-700 h-auto p-4 flex flex-col items-start"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Share2 className="h-4 w-4" />
-                <span className="font-medium">Share Read-Only</span>
-              </div>
-              <span className="text-sm text-purple-100">Share mini public page</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Deep Dive Mode */}
-      <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-        <Collapsible open={showDeepDive} onOpenChange={setShowDeepDive}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-white/5 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-green-400" />
-                  Deep Dive Mode
-                  <Badge variant="outline" className="border-gray-600 text-gray-400">
-                    Optional
-                  </Badge>
-                </CardTitle>
-                {showDeepDive ? (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent>
-            <CardContent>
-              {!deepDiveContent ? (
-                <div className="text-center py-8">
-                  <Globe className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-white mb-2">Advanced Analysis Available</h3>
-                  <p className="text-gray-400 mb-4">Get AI-generated future use cases, risk analysis, and monetization strategies</p>
-                  <Button
-                    onClick={generateDeepDiveContent}
-                    disabled={isGeneratingDeepDive}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isGeneratingDeepDive ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Globe className="h-4 w-4 mr-2" />
-                    )}
-                    {isGeneratingDeepDive ? 'Generating...' : 'Generate Deep Dive'}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {isGeneratingDeepDive ? (
-                    <div className="text-center py-8">
-                      <RefreshCw className="h-12 w-12 mx-auto text-orange-400 animate-spin mb-4" />
-                      <h3 className="text-lg font-medium text-white mb-2">Generating Deep Dive Analysis</h3>
-                      <p className="text-gray-400">AI is creating advanced insights and strategies...</p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Future Use Cases */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <TrendingUp className="h-4 w-4 text-blue-400" />
-                          <h4 className="text-white font-medium">Future Use Cases</h4>
-                        </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {deepDiveContent.futureUseCases}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-
-                      {/* Risks & Mitigations */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <Shield className="h-4 w-4 text-red-400" />
-                          <h4 className="text-white font-medium">Potential Risks & Mitigations</h4>
-                        </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {deepDiveContent.risksMitigations}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-
-                      {/* Monetization Paths */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <DollarSign className="h-4 w-4 text-green-400" />
-                          <h4 className="text-white font-medium">AI-Recommended Monetization Paths</h4>
-                        </div>
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {deepDiveContent.monetizationPaths}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2 pt-4">
-                        <Button
-                          onClick={generateDeepDiveContent}
-                          disabled={isGeneratingDeepDive}
-                          variant="outline"
-                          size="sm"
-                          className="border-orange-500/30 text-orange-400 hover:bg-orange-600/10"
-                        >
-                          {isGeneratingDeepDive ? (
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                          )}
-                          Regenerate
-                        </Button>
-                        <Button
-                          onClick={() => copyToClipboard(
-                            `Future Use Cases:\n${deepDiveContent.futureUseCases}\n\nRisks & Mitigations:\n${deepDiveContent.risksMitigations}\n\nMonetization Paths:\n${deepDiveContent.monetizationPaths}`,
-                            "Deep dive analysis"
-                          )}
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy All
-                        </Button>
-                      </div>
-
-                      {deepDiveContent.lastGenerated && (
-                        <div className="text-xs text-gray-500">
-                          Generated: {deepDiveContent.lastGenerated.toLocaleString()}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Edit Description Modal */}
-      {isEditingDescription && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="bg-black/90 backdrop-blur-sm border-white/10 w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Edit3 className="h-5 w-5 text-green-400" />
-                Edit Idea Description
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                placeholder="Describe your idea..."
-                rows={6}
-                className="bg-black/20 border-white/10 text-white placeholder:text-gray-400"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button
-                  onClick={() => {
-                    setEditedDescription(idea.description);
-                    setIsEditingDescription(false);
-                  }}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSaveDescription}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 };

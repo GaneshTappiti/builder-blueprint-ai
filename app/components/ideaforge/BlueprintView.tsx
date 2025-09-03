@@ -17,10 +17,12 @@ import {
   Monitor, Globe, Zap, Settings, ArrowUp, ArrowDown, Star, Brain,
   CheckCircle, Circle, Clock, AlertTriangle, Target, Rocket, Users, TrendingUp,
   Copy, Download, Share2, ExternalLink, History, FileText, Package, 
-  ChevronRight, Play, RefreshCw, Archive, Eye, EyeOff
+  ChevronRight, Play, RefreshCw, Archive, Eye, EyeOff, ArrowLeft, 
+  BarChart3, Calendar, FileJson, FileCode, Globe2
 } from "lucide-react";
-import { StoredIdea, MVPStudioData, PromptHistoryItem, BlueprintAnalytics } from "@/types/ideaforge";
+import { StoredIdea, MVPStudioData, PromptHistoryItem, BlueprintAnalytics, RAGTool } from "@/types/ideaforge";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface BlueprintViewProps {
   idea: StoredIdea;
@@ -29,6 +31,7 @@ interface BlueprintViewProps {
 
 const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
   const { toast } = useToast();
+  const router = useRouter();
   const {
     features,
     techStack,
@@ -44,86 +47,110 @@ const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
     isLoading
   } = useIdeaForgePersistence(idea.id);
 
-  // Mock MVP Studio completion status - in real app this would come from actual MVP Studio data
+  // Check for MVP Studio completion status from localStorage
   const [mvpStudioCompleted, setMvpStudioCompleted] = useState(false);
   const [mvpStudioData, setMvpStudioData] = useState<MVPStudioData | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Mock data for demonstration - in real app this would come from MVP Studio
+  // Check for MVP Studio data from localStorage
   useEffect(() => {
-    // Simulate checking if MVP Studio is completed
-    const mockMvpData: MVPStudioData = {
-      isCompleted: true,
-      completedAt: new Date().toISOString(),
-      wizardData: {
-        step1: { appName: idea.title, appType: "web-app" },
-        step2: { theme: "dark", designStyle: "minimal", selectedTool: "lovable" },
-        step3: { platforms: ["web"] },
-        step4: { selectedAI: "gpt-4" },
-        userPrompt: idea.description
-      },
-      generatedFramework: {
-        prompts: {
-          framework: `Create a modern web application called "${idea.title}". ${idea.description}. Use Lovable for development with a dark theme and minimal design style.`,
-          pages: [
-            {
-              pageName: "Home",
-              prompt: "Create a landing page with hero section, features overview, and call-to-action buttons",
-              components: ["Hero", "Features", "CTA"],
-              layout: "Single column with sections",
-              interactions: ["Smooth scroll", "Hover effects"]
-            },
-            {
-              pageName: "Dashboard",
-              prompt: "Build a user dashboard with navigation sidebar, main content area, and user profile section",
-              components: ["Sidebar", "ContentArea", "Profile"],
-              layout: "Two-column layout",
-              interactions: ["Collapsible sidebar", "Dynamic content"]
-            }
-          ],
-          linking: "Implement smooth navigation between pages with proper routing and state management"
-        },
-        recommendedTools: [
-          {
-            name: "Lovable",
-            description: "Full-stack web application builder",
-            url: "https://lovable.dev",
-            bestFor: ["Web apps", "Full-stack development"],
-            category: "no-code"
+    const checkMvpStudioData = () => {
+      try {
+        // Check if there's any completed MVP Studio project
+        const builderHistory = localStorage.getItem('builder-blueprint-history');
+        if (builderHistory) {
+          const projects = JSON.parse(builderHistory);
+          const completedProject = projects.find((project: any) => 
+            project.isCompleted && 
+            project.appName.toLowerCase().includes(idea.title.toLowerCase())
+          );
+
+          if (completedProject) {
+            // Convert builder project data to MVPStudioData format
+            const mvpData: MVPStudioData = {
+              isCompleted: true,
+              completedAt: completedProject.dateModified,
+              wizardData: {
+                step1: { 
+                  appName: completedProject.state.appIdea.appName, 
+                  appType: "web-app" 
+                },
+                step2: { 
+                  theme: "dark", 
+                  designStyle: completedProject.state.appIdea.designStyle, 
+                  selectedTool: completedProject.state.validationQuestions.selectedTool as RAGTool
+                },
+                step3: { 
+                  platforms: completedProject.state.appIdea.platforms as any[]
+                },
+                step4: { 
+                  selectedAI: "gpt-4" 
+                },
+                userPrompt: completedProject.state.appIdea.ideaDescription
+              },
+              generatedFramework: {
+                prompts: {
+                  framework: completedProject.state.exportPrompts?.unifiedPrompt || `Create a modern application called "${completedProject.state.appIdea.appName}". ${completedProject.state.appIdea.ideaDescription}`,
+                  pages: completedProject.state.screenPrompts?.map((screen: any) => ({
+                    pageName: screen.title,
+                    prompt: `${screen.layout}\n\nComponents: ${screen.components}\n\nBehavior: ${screen.behavior}`,
+                    components: screen.components.split(',').map((c: string) => c.trim()),
+                    layout: screen.layout,
+                    interactions: screen.conditionalLogic ? [screen.conditionalLogic] : []
+                  })) || [],
+                  linking: completedProject.state.appFlow?.flowLogic || "Implement proper navigation and user flow"
+                },
+                recommendedTools: [
+                  {
+                    name: completedProject.state.validationQuestions.selectedTool || "Cursor",
+                    description: "AI-powered development tool",
+                    url: "https://cursor.sh",
+                    bestFor: ["Web apps", "Full-stack development"],
+                    category: "ai-coding"
+                  }
+                ],
+                metadata: {
+                  generatedAt: completedProject.dateModified,
+                  toolUsed: completedProject.state.validationQuestions.selectedTool as RAGTool,
+                  confidence: 0.95
+                }
+              },
+              promptHistory: completedProject.state.screenPrompts?.map((screen: any, index: number) => ({
+                id: screen.screenId,
+                type: "page" as const,
+                content: `${screen.layout}\n\nComponents: ${screen.components}\n\nBehavior: ${screen.behavior}`,
+                timestamp: completedProject.dateModified,
+                version: index + 1,
+                toolUsed: completedProject.state.validationQuestions.selectedTool as RAGTool,
+                confidence: 0.95
+              })) || [],
+              analytics: {
+                screensCount: completedProject.state.screenPrompts?.length || 0,
+                userRolesCount: completedProject.state.appBlueprint?.userRoles?.length || 0,
+                chosenTool: completedProject.state.validationQuestions.selectedTool as RAGTool,
+                exportFormats: ["Markdown", "JSON", "PDF"],
+                totalPrompts: (completedProject.state.screenPrompts?.length || 0) + 1,
+                lastUpdated: completedProject.dateModified,
+                completionPercentage: 100
+              }
+            };
+
+            setMvpStudioData(mvpData);
+            setMvpStudioCompleted(true);
+            return;
           }
-        ],
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          toolUsed: "lovable",
-          confidence: 0.95
         }
-      },
-      promptHistory: [
-        {
-          id: "1",
-          type: "framework",
-          content: `Create a modern web application called "${idea.title}"...`,
-          timestamp: new Date().toISOString(),
-          version: 1,
-          toolUsed: "lovable",
-          confidence: 0.95
-        }
-      ],
-      analytics: {
-        screensCount: 2,
-        userRolesCount: 1,
-        chosenTool: "lovable",
-        exportFormats: ["Markdown", "JSON", "PDF"],
-        totalPrompts: 3,
-        lastUpdated: new Date().toISOString(),
-        completionPercentage: 100
+      } catch (error) {
+        console.error('Error checking MVP Studio data:', error);
       }
+      
+      // No completed MVP Studio found
+      setMvpStudioCompleted(false);
+      setMvpStudioData(null);
     };
 
-    setMvpStudioData(mockMvpData);
-    setMvpStudioCompleted(true);
-  }, [idea]);
-
-  const [activeTab, setActiveTab] = useState('overview');
+    checkMvpStudioData();
+  }, [idea.title]);
 
   // Utility functions
   const handleCopy = async (text: string, label: string) => {
@@ -142,6 +169,34 @@ const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
     }
   };
 
+  const handleNavigateToMvpStudio = () => {
+    // Navigate to MVP Studio with the current idea context
+    router.push('/workspace/mvp-studio');
+  };
+
+  const handleShareBlueprint = () => {
+    if (!mvpStudioData) return;
+    
+    // Create a shareable link (in a real app, this would generate a unique URL)
+    const shareableData = {
+      ideaTitle: idea.title,
+      blueprintData: mvpStudioData,
+      shareUrl: `${window.location.origin}/shared-blueprint/${idea.id}`
+    };
+    
+    const shareText = `Check out my ${idea.title} blueprint: ${shareableData.shareUrl}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${idea.title} - Blueprint`,
+        text: shareText,
+        url: shareableData.shareUrl
+      });
+    } else {
+      handleCopy(shareText, "Share link");
+    }
+  };
+
   const handleExport = (format: string) => {
     if (!mvpStudioData) return;
     
@@ -151,11 +206,11 @@ const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
     switch (format) {
       case 'markdown':
         content = generateMarkdownExport();
-        filename = `${idea.title}-blueprint.md`;
+        filename = `${idea.title.replace(/[^a-zA-Z0-9]/g, '_')}-blueprint.md`;
         break;
       case 'json':
         content = JSON.stringify(mvpStudioData, null, 2);
-        filename = `${idea.title}-blueprint.json`;
+        filename = `${idea.title.replace(/[^a-zA-Z0-9]/g, '_')}-blueprint.json`;
         break;
       case 'pdf':
         // In real app, this would generate PDF
@@ -222,39 +277,53 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
     <div className="space-y-6">
       {/* Header & Context */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Layers className="h-6 w-6 text-green-400" />
-            {idea.title} - Blueprint
-          </h2>
-          <div className="flex items-center gap-3 mt-2">
-            <Badge className={mvpStudioCompleted ? "bg-green-600/20 text-green-400 border-green-500/30" : "bg-yellow-600/20 text-yellow-400 border-yellow-500/30"}>
-              {mvpStudioCompleted ? "Blueprint Ready" : "Incomplete"}
-            </Badge>
-            {mvpStudioData?.completedAt && (
-              <span className="text-sm text-gray-400">
-                Completed {new Date(mvpStudioData.completedAt).toLocaleDateString()}
-              </span>
-            )}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="text-gray-400 hover:text-white hover:bg-white/10"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Layers className="h-6 w-6 text-green-400" />
+              {idea.title} - Blueprint
+            </h2>
+            <div className="flex items-center gap-3 mt-2">
+              <Badge className={mvpStudioCompleted ? "bg-green-600/20 text-green-400 border-green-500/30" : "bg-yellow-600/20 text-yellow-400 border-yellow-500/30"}>
+                {mvpStudioCompleted ? "Blueprint Ready" : "Incomplete"}
+              </Badge>
+              {mvpStudioData?.completedAt && (
+                <span className="text-sm text-gray-400">
+                  Completed {new Date(mvpStudioData.completedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleExport('markdown')}
-            className="border-white/20 text-white hover:bg-white/10"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {/* Share functionality */}}
-            className="border-white/20 text-white hover:bg-white/10"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+          {mvpStudioCompleted && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleExport('markdown')}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleShareBlueprint}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -269,15 +338,20 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Your Blueprint is not ready yet</h3>
               <p className="text-gray-400 mb-6">
-                Please complete the 6-Stage MVP Studio to auto-generate prompts and create your comprehensive blueprint.
+                Please complete the 6-Stage MVP Studio to auto-generate prompts and create your comprehensive blueprint. The MVP Studio will generate all the prompts, page-by-page descriptions, and tool-specific optimizations that will be stored here.
               </p>
-              <Button
-                onClick={() => {/* Navigate to MVP Studio */}}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Go to MVP Studio
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  onClick={handleNavigateToMvpStudio}
+                  className="bg-green-600 hover:bg-green-700 w-full"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Go to MVP Studio
+                </Button>
+                <p className="text-xs text-gray-500">
+                  The MVP Studio will guide you through 6 stages to create a complete app blueprint
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -289,35 +363,61 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
             <Card className="bg-black/40 backdrop-blur-sm border-white/10">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  <BarChart3 className="h-5 w-5 text-green-400" />
                   Analytics & Insights
                 </CardTitle>
+                <p className="text-sm text-gray-400">Project statistics and development insights</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center p-4 bg-white/5 rounded-lg">
                     <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.screensCount}</div>
                     <div className="text-sm text-gray-400">Screens</div>
+                    <div className="text-xs text-gray-500 mt-1">UI Pages</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center p-4 bg-white/5 rounded-lg">
                     <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.userRolesCount}</div>
                     <div className="text-sm text-gray-400">User Roles</div>
+                    <div className="text-xs text-gray-500 mt-1">Access Levels</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center p-4 bg-white/5 rounded-lg">
                     <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.totalPrompts}</div>
                     <div className="text-sm text-gray-400">Total Prompts</div>
+                    <div className="text-xs text-gray-500 mt-1">Generated</div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center p-4 bg-white/5 rounded-lg">
                     <div className="text-2xl font-bold text-white">{mvpStudioData.analytics.completionPercentage}%</div>
                     <div className="text-sm text-gray-400">Complete</div>
+                    <div className="text-xs text-gray-500 mt-1">MVP Studio</div>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Chosen Tool:</span>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Settings className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm font-medium text-white">Development Tool</span>
+                    </div>
                     <Badge className="bg-blue-600/20 text-blue-400 border-blue-500/30">
                       {mvpStudioData.analytics.chosenTool}
                     </Badge>
+                  </div>
+                  
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-green-400" />
+                      <span className="text-sm font-medium text-white">Last Updated</span>
+                    </div>
+                    <span className="text-sm text-gray-400">
+                      {new Date(mvpStudioData.analytics.lastUpdated).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-green-300">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Blueprint is ready for development with {mvpStudioData.analytics.chosenTool}</span>
                   </div>
                 </div>
               </CardContent>
@@ -509,6 +609,11 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
                           <span className="text-sm text-gray-400">
                             v{item.version} • {new Date(item.timestamp).toLocaleString()}
                           </span>
+                          {index === 0 && (
+                            <Badge className="bg-green-600/20 text-green-400 border-green-500/30 text-xs">
+                              Current
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {item.confidence && (
@@ -524,6 +629,21 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
+                          {index > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "Rollback Feature",
+                                  description: "Rollback functionality will restore this version as the current prompt.",
+                                });
+                              }}
+                              className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                       <div className="bg-black/40 p-3 rounded border border-white/10">
@@ -533,6 +653,12 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
                       </div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-blue-300">
+                    <History className="h-4 w-4" />
+                    <span>Rollback any version to restore it as the current prompt</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -578,7 +704,7 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => {/* Navigate back to MVP Studio */}}
+                  onClick={handleNavigateToMvpStudio}
                   className="border-white/20 text-white hover:bg-white/10 h-auto p-4"
                 >
                   <div className="text-center">
@@ -597,3 +723,4 @@ ${mvpStudioData.generatedFramework.recommendedTools.map(tool =>
 };
 
 export default BlueprintView;
+

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +39,7 @@ import {
   GraduationCap,
   Building,
   Briefcase,
+  Zap,
   Instagram,
   Linkedin,
   Globe
@@ -229,10 +230,38 @@ Please provide a structured summary with clear sections and actionable insights.
 
     } catch (error) {
       console.error('Error generating AI summary:', error);
+      
+      // Provide fallback summary
+      const fallbackSummary = `## AI Summary for "${idea.title}"
+
+Based on the feedback collected, here are the key insights:
+
+### Overall Sentiment
+The feedback shows mixed responses with both positive and constructive criticism.
+
+### Key Themes
+- **User Experience**: Focus on improving usability and interface design
+- **Feature Requests**: Consider implementing suggested features based on user demand
+- **Market Validation**: Continue gathering feedback to validate product-market fit
+
+### Recommendations
+1. Address the most common pain points mentioned in feedback
+2. Prioritize features that multiple users have requested
+3. Consider user suggestions for improving the core functionality
+
+### Next Steps
+- Implement high-priority feedback items
+- Conduct follow-up interviews with key users
+- Monitor user engagement and satisfaction metrics
+
+*Note: This is a fallback summary as AI generation was unavailable.*`;
+      
+      setAiSummary(fallbackSummary);
+      
       toast({
-        title: "Generation Failed",
-        description: "Failed to generate AI summary. Please try again.",
-        variant: "destructive",
+        title: "⚠️ Using Fallback Summary",
+        description: "AI service unavailable. Showing enhanced fallback analysis.",
+        duration: 3000,
       });
     } finally {
       setIsGeneratingSummary(false);
@@ -336,10 +365,39 @@ Respond ONLY in this JSON format:
 
     } catch (error) {
       console.error('Error generating reality check:', error);
+      
+      // Provide fallback reality check
+      const fallbackRealityCheck: AIRealityCheck = {
+        feasibilityIssues: [
+          `"${idea.title}" faces typical startup challenges including user acquisition costs and market competition`,
+          `Technical implementation complexity may require significant development resources`,
+          `Monetization strategy needs validation with target users`
+        ],
+        marketRisks: [
+          `Competitive landscape in this space may be crowded with established players`,
+          `Market demand for "${idea.title}" needs validation through user research`,
+          `Economic conditions may affect user willingness to pay for this solution`
+        ],
+        userRisks: [
+          `Users may have existing habits and preferences that make adoption challenging`,
+          `Learning curve and onboarding process could impact user retention`,
+          `Privacy and data concerns may affect user trust and adoption`
+        ],
+        techConstraints: [
+          `Scalability requirements may need significant infrastructure investment`,
+          `Integration with existing systems and platforms could be complex`,
+          `Performance and reliability standards need to meet user expectations`
+        ],
+        overallScore: 6,
+        lastGenerated: new Date()
+      };
+      
+      setAiRealityCheck(fallbackRealityCheck);
+      
       toast({
-        title: "Reality Check Failed",
-        description: "Failed to generate reality check. Please try again.",
-        variant: "destructive",
+        title: "⚠️ Using Fallback Reality Check",
+        description: "AI service unavailable. Showing enhanced fallback analysis.",
+        duration: 3000,
       });
     } finally {
       setIsGeneratingRealityCheck(false);
@@ -351,7 +409,9 @@ Respond ONLY in this JSON format:
     setIsGeneratingAudiences(true);
     
     try {
-      const prompt = `You are a marketing expert. Based on this specific idea, suggest realistic target audiences:
+      console.log('Starting target audience generation for:', idea.title);
+      
+      const prompt = `You are a marketing expert and startup advisor. Based on this specific idea, suggest realistic target audiences:
 
 IDEA: "${idea.title}"
 DESCRIPTION: "${idea.description}"
@@ -366,7 +426,7 @@ For "${idea.title}", identify specific target audiences with:
 
 IMPORTANT: Base your analysis on the specific idea provided. For example, if this is a fitness app, consider fitness enthusiasts, not generic "users".
 
-Respond ONLY in this JSON format:
+Respond ONLY in this JSON format (no additional text, no markdown, just pure JSON):
 [
   {
     "name": "Specific Audience Name",
@@ -376,28 +436,58 @@ Respond ONLY in this JSON format:
   }
 ]`;
 
-      const response = await aiEngine.generateText(prompt, {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('AI request timeout')), 10000)
+      );
+      
+      const aiPromise = aiEngine.generateText(prompt, {
         maxTokens: 1500,
         temperature: 0.7
       });
+      
+      const response = await Promise.race([aiPromise, timeoutPromise]) as any;
 
       console.log('Target Audiences AI Response:', response.text); // Debug log
 
       try {
-        const parsed = JSON.parse(response.text);
+        // Clean the response text to extract JSON
+        let cleanResponse = response.text.trim();
+        
+        // Remove any markdown code blocks
+        if (cleanResponse.includes('```json')) {
+          cleanResponse = cleanResponse.split('```json')[1].split('```')[0].trim();
+        } else if (cleanResponse.includes('```')) {
+          cleanResponse = cleanResponse.split('```')[1].split('```')[0].trim();
+        }
+        
+        // Remove any leading/trailing text that's not JSON
+        const jsonStart = cleanResponse.indexOf('[');
+        const jsonEnd = cleanResponse.lastIndexOf(']') + 1;
+        if (jsonStart !== -1 && jsonEnd > jsonStart) {
+          cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+        }
+
+        const parsed = JSON.parse(cleanResponse);
+        
+        // Validate the parsed data
+        if (!Array.isArray(parsed)) {
+          throw new Error('Response is not an array');
+        }
+        
         const audiences: TargetAudience[] = parsed.map((audience: any, index: number) => ({
           id: `audience-${index}`,
-          name: audience.name,
-          description: audience.description,
+          name: audience.name || `Audience ${index + 1}`,
+          description: audience.description || `Target audience for ${idea.title}`,
           priority: audience.priority || 'secondary',
-          channels: audience.channels || [],
-          icon: getAudienceIcon(audience.name)
+          channels: Array.isArray(audience.channels) ? audience.channels : ['Social media', 'Direct outreach'],
+          icon: getAudienceIcon(audience.name || `audience-${index}`)
         }));
         
         setTargetAudiences(audiences);
         
         toast({
-          title: "Target Audiences Generated",
+          title: "✅ Target Audiences Generated",
           description: `Found ${audiences.length} potential audiences`,
           duration: 3000,
         });
@@ -405,43 +495,83 @@ Respond ONLY in this JSON format:
         console.error('Target Audiences JSON Parse Error:', parseError);
         console.log('Raw target audiences response:', response.text);
         
-        // Better fallback with idea-specific content
+        // Enhanced fallback with idea-specific content
         const fallbackAudiences: TargetAudience[] = [
           {
             id: 'primary-users',
             name: 'Primary Users',
-            description: `Users who would directly benefit from "${idea.title}" based on the core functionality described`,
+            description: `Users who would directly benefit from "${idea.title}" based on the core functionality described. These are the main target users who have the most to gain from this solution.`,
             priority: 'primary',
-            channels: ['Social media', 'Industry forums', 'Direct outreach'],
+            channels: ['Social media', 'Industry forums', 'Direct outreach', 'Content marketing'],
             icon: Users
           },
           {
             id: 'early-adopters',
             name: 'Early Adopters',
-            description: `Tech-savvy users who are likely to try new solutions like "${idea.title}"`,
+            description: `Tech-savvy users who are likely to try new solutions like "${idea.title}". They are willing to test new products and provide feedback.`,
             priority: 'secondary',
-            channels: ['Tech communities', 'Beta testing groups', 'Product Hunt'],
+            channels: ['Tech communities', 'Beta testing groups', 'Product Hunt', 'Developer forums'],
             icon: Zap
+          },
+          {
+            id: 'influencers',
+            name: 'Industry Influencers',
+            description: `Key opinion leaders and influencers in the relevant industry who could help promote "${idea.title}" to their followers.`,
+            priority: 'tertiary',
+            channels: ['LinkedIn', 'Industry publications', 'Conferences', 'Partnership outreach'],
+            icon: Star
           }
         ];
         
         setTargetAudiences(fallbackAudiences);
         
         toast({
-          title: "⚠️ Partial Audience Analysis",
-          description: "AI generated content but formatting was incomplete. Showing enhanced analysis.",
+          title: "⚠️ Enhanced Fallback Analysis",
+          description: "AI generated content but formatting was incomplete. Showing enhanced analysis with specific audiences.",
           duration: 3000,
         });
       }
 
     } catch (error) {
       console.error('Error generating audiences:', error);
+      
+      // Always provide fallback audiences to prevent hanging
+      const fallbackAudiences: TargetAudience[] = [
+        {
+          id: 'primary-users',
+          name: 'Primary Users',
+          description: `Users who would directly benefit from "${idea.title}" based on the core functionality described. These are the main target users who have the most to gain from this solution.`,
+          priority: 'primary',
+          channels: ['Social media', 'Industry forums', 'Direct outreach', 'Content marketing'],
+          icon: Users
+        },
+        {
+          id: 'early-adopters',
+          name: 'Early Adopters',
+          description: `Tech-savvy users who are likely to try new solutions like "${idea.title}". They are willing to test new products and provide feedback.`,
+          priority: 'secondary',
+          channels: ['Tech communities', 'Beta testing groups', 'Product Hunt', 'Developer forums'],
+          icon: Zap
+        },
+        {
+          id: 'influencers',
+          name: 'Industry Influencers',
+          description: `Key opinion leaders and influencers in the relevant industry who could help promote "${idea.title}" to their followers.`,
+          priority: 'tertiary',
+          channels: ['LinkedIn', 'Industry publications', 'Conferences', 'Partnership outreach'],
+          icon: Star
+        }
+      ];
+      
+      setTargetAudiences(fallbackAudiences);
+      
       toast({
-        title: "Audience Generation Failed",
-        description: "Failed to generate target audiences. Please try again.",
-        variant: "destructive",
+        title: "⚠️ Using Enhanced Fallback Analysis",
+        description: "AI service unavailable. Showing comprehensive fallback target audiences.",
+        duration: 3000,
       });
     } finally {
+      // Always ensure loading state is cleared
       setIsGeneratingAudiences(false);
     }
   };
@@ -461,35 +591,6 @@ Respond ONLY in this JSON format:
     toast({
       title: "Link Copied!",
       description: "Public feedback link copied to clipboard",
-      duration: 2000,
-    });
-  };
-
-  const copyAIInsights = () => {
-    if (!aiRealityCheck) return;
-    
-    const insights = `AI Reality Check for "${idea.title}"
-
-Overall Viability Score: ${aiRealityCheck.overallScore}/10
-
-Feasibility Issues:
-${aiRealityCheck.feasibilityIssues.map(issue => `• ${issue}`).join('\n')}
-
-Market Risks:
-${aiRealityCheck.marketRisks.map(risk => `• ${risk}`).join('\n')}
-
-User Risks:
-${aiRealityCheck.userRisks.map(risk => `• ${risk}`).join('\n')}
-
-Tech Constraints:
-${aiRealityCheck.techConstraints.map(constraint => `• ${constraint}`).join('\n')}
-
-Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
-
-    navigator.clipboard.writeText(insights);
-    toast({
-      title: "Insights Copied!",
-      description: "AI insights copied to clipboard for pitch decks",
       duration: 2000,
     });
   };
@@ -533,6 +634,22 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
 
   const stats = getFeedbackStats();
 
+  // Auto-generate reality check and target audiences on component mount
+  useEffect(() => {
+    console.log('useEffect triggered for idea:', idea.id);
+    console.log('aiRealityCheck exists:', !!aiRealityCheck);
+    console.log('targetAudiences length:', targetAudiences.length);
+    
+    if (!aiRealityCheck) {
+      console.log('Generating reality check...');
+      generateAIRealityCheck();
+    }
+    if (targetAudiences.length === 0) {
+      console.log('Generating target audiences...');
+      generateTargetAudiences();
+    }
+  }, [idea.id]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -571,16 +688,6 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
-        <Button
-          onClick={copyAIInsights}
-          disabled={!aiRealityCheck}
-          variant="outline"
-          size="sm"
-          className="border-green-500/30 text-green-400 hover:bg-green-600/10"
-        >
-          <Copy className="h-4 w-4 mr-2" />
-          Copy AI Insights
-        </Button>
         <Button
           onClick={generatePublicLink}
           variant="outline"
@@ -639,29 +746,10 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
         <TabsContent value="reality-check" className="mt-6">
           <Card className="bg-black/40 backdrop-blur-sm border-white/10">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-white flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-400" />
-                  AI Reality Check
-                </CardTitle>
-                <Button
-                  onClick={generateAIRealityCheck}
-                  disabled={isGeneratingRealityCheck}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  {isGeneratingRealityCheck ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="h-4 w-4 mr-2" />
-                      Generate Reality Check
-                    </>
-                  )}
-                </Button>
-              </div>
+              <CardTitle className="text-white flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+                AI Reality Check
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {aiRealityCheck ? (
@@ -786,21 +874,19 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
                     Generated: {aiRealityCheck.lastGenerated.toLocaleString()}
                   </div>
                 </div>
+              ) : isGeneratingRealityCheck ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="h-12 w-12 mx-auto text-red-400 animate-spin mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">Generating Reality Check</h3>
+                  <p className="text-gray-400">AI is conducting a brutally honest analysis of your idea...</p>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">No Reality Check Yet</h3>
-                  <p className="text-gray-400 mb-4">
-                    Get a brutally honest AI analysis of your idea's viability, risks, and challenges.
+                  <h3 className="text-lg font-semibold text-white mb-2">Generating Reality Check</h3>
+                  <p className="text-gray-400">
+                    AI is analyzing your idea's viability, risks, and challenges...
                   </p>
-                  <Button
-                    onClick={generateAIRealityCheck}
-                    disabled={isGeneratingRealityCheck}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    Generate Reality Check
-                  </Button>
                 </div>
               )}
             </CardContent>
@@ -963,19 +1049,16 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
                 <Button
                   onClick={generateTargetAudiences}
                   disabled={isGeneratingAudiences}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-500/30 text-purple-400 hover:bg-purple-600/10"
                 >
                   {isGeneratingAudiences ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate Audiences
-                    </>
+                    <RefreshCw className="h-4 w-4 mr-2" />
                   )}
+                  {isGeneratingAudiences ? 'Generating...' : 'Regenerate'}
                 </Button>
               </div>
             </CardHeader>
@@ -1032,21 +1115,19 @@ Generated: ${aiRealityCheck.lastGenerated.toLocaleString()}`;
                     );
                   })}
                 </div>
+              ) : isGeneratingAudiences ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="h-12 w-12 mx-auto text-purple-400 animate-spin mb-4" />
+                  <h3 className="text-lg font-medium text-white mb-2">Generating Target Audiences</h3>
+                  <p className="text-gray-400">AI is analyzing your idea to identify potential target audiences...</p>
+                </div>
               ) : (
                 <div className="text-center py-8">
                   <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-white mb-2">No Target Audiences Yet</h3>
-                  <p className="text-gray-400 mb-4">
-                    Get AI-powered recommendations for your target audiences and how to reach them.
+                  <h3 className="text-lg font-semibold text-white mb-2">Generating Target Audiences</h3>
+                  <p className="text-gray-400">
+                    AI is analyzing your idea to identify potential target audiences and how to reach them...
                   </p>
-                  <Button
-                    onClick={generateTargetAudiences}
-                    disabled={isGeneratingAudiences}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate Target Audiences
-                  </Button>
                 </div>
               )}
             </CardContent>
