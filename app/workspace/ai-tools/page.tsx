@@ -248,7 +248,6 @@ export default function AIToolsPage() {
           <div className="bg-black/60 backdrop-blur-sm rounded-2xl border border-white/10 p-8">
             <AIToolRecommender
               onToolSelect={handleToolSelect}
-              showRecommendationFlow={true}
             />
           </div>
 

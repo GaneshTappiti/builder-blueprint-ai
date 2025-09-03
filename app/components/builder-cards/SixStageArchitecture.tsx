@@ -297,10 +297,22 @@ export function SixStageArchitecture({ className = "", showOverview = true, forc
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => setViewMode('overview')}
-            className="text-gray-400 hover:text-white"
+            onClick={() => {
+              if (state.currentCard > 1) {
+                dispatch(builderActions.setCurrentCard(state.currentCard - 1));
+              } else {
+                // If on first stage, go back to overview
+                if (forceBuilderMode) {
+                  router.push('/workspace/mvp-studio');
+                } else {
+                  setViewMode('overview');
+                }
+              }
+            }}
+            disabled={state.currentCard <= 1 && !forceBuilderMode}
+            className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ← Back to Overview
+            ← Previous Stage
           </Button>
           
           <div className="flex items-center gap-4">
@@ -330,6 +342,26 @@ export function SixStageArchitecture({ className = "", showOverview = true, forc
             <StageComponent />
           </CardContent>
         </Card>
+
+        {/* Navigation Controls */}
+        <div className="flex justify-center items-center">
+          <div className="flex items-center gap-2">
+            {stageConfigs.map((stage, index) => (
+              <button
+                key={stage.id}
+                onClick={() => dispatch(builderActions.setCurrentCard(stage.id))}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  stage.id === state.currentCard
+                    ? 'bg-green-400'
+                    : stage.id < state.currentCard
+                    ? 'bg-green-600'
+                    : 'bg-gray-600'
+                }`}
+                title={`Stage ${stage.id}: ${stage.title}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   };

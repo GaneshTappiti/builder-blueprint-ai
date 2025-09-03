@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { supabaseHelpers } from "@/lib/supabase";
-import { useIdeaStore, useActiveIdea } from "@/stores/ideaStore";
+import { useIdeaStore } from "@/stores/ideaStore";
 import EnhancedUpgradePrompt from "@/components/EnhancedUpgradePrompt";
 
 interface IdeaValidation {
@@ -53,12 +53,18 @@ export default function WorkshopPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Use Zustand store
-  const { setActiveIdea } = useActiveIdea();
-  const hasActiveIdea = useIdeaStore((state) => state.hasActiveIdea);
-  const setHasActiveIdea = useIdeaStore((state) => state.setHasActiveIdea);
-  const setCurrentStep = useIdeaStore((state) => state.setCurrentStep);
-  const canCreateNewIdea = useIdeaStore((state) => state.canCreateNewIdea);
+  // Use Idea Context
+  const ideaContext = useIdeaStore();
+  const { 
+    setActiveIdea, 
+    hasActiveIdea, 
+    setHasActiveIdea, 
+    setCurrentStep, 
+    canCreateNewIdea 
+  } = ideaContext;
+
+  // Fallback function in case canCreateNewIdea is not available
+  const canCreateNewIdeaSafe = canCreateNewIdea || (() => !hasActiveIdea);
   
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
@@ -324,7 +330,7 @@ export default function WorkshopPage() {
           </div>
 
           {/* Free Tier Restriction Alert */}
-          {!canCreateNewIdea() && (
+          {!canCreateNewIdeaSafe() && (
             <div className="mb-6">
               <EnhancedUpgradePrompt
                 feature="Multiple Active Ideas"
@@ -351,7 +357,7 @@ export default function WorkshopPage() {
                 />
                 <Button
                   onClick={validateIdea}
-                  disabled={isValidating || !ideaInput.trim() || !canCreateNewIdea()}
+                  disabled={isValidating || !ideaInput.trim() || !canCreateNewIdeaSafe()}
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
                 >
                   {isValidating ? (
