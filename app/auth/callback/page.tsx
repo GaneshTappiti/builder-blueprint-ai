@@ -19,7 +19,7 @@ export default function AuthCallbackPage() {
         if (error) {
           console.error('Auth callback error:', error);
           setStatus('error');
-          setMessage('Authentication failed. Please try again.');
+          setMessage(`Authentication failed: ${error.message}`);
           setTimeout(() => router.push('/auth'), 3000);
           return;
         }
@@ -28,10 +28,12 @@ export default function AuthCallbackPage() {
           setStatus('success');
           setMessage('Authentication successful! Redirecting...');
           
-          // Check if user has AI provider configured (you can implement this logic)
-          // For now, redirect to workspace
+          // Get redirect URL from search params or default to workspace
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirectTo = urlParams.get('redirectTo') || '/workspace';
+          
           setTimeout(() => {
-            router.push('/workspace');
+            router.push(redirectTo);
           }, 1500);
         } else {
           setStatus('error');

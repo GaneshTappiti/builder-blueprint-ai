@@ -547,3 +547,4 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
     </div>
   );
 }
+

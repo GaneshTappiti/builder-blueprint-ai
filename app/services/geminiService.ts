@@ -17,6 +17,9 @@ let model: any = null;
 function initializeGemini() {
   if (!genAI) {
     const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      throw new Error('Google Gemini API key is not configured. Please set GOOGLE_GEMINI_API_KEY environment variable.');
+    }
     genAI = new GoogleGenerativeAI(apiKey);
     model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   }

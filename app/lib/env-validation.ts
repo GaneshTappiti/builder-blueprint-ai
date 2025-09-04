@@ -1,69 +1,84 @@
-/**
- * Environment variable validation utility
- */
+// Environment variable validation for authentication setup
 
-export function validateEnvironment() {
-  // Support legacy GEMINI_API_KEY while preferring GOOGLE_GEMINI_API_KEY
-  const effectiveKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  const requiredEnvVars = {
-    GOOGLE_GEMINI_API_KEY: effectiveKey,
-  };
-
-  const missingVars: string[] = [];
-
-  for (const [key, value] of Object.entries(requiredEnvVars)) {
-    if (!value || value.trim() === '' || value === 'your_gemini_api_key_here') {
-      missingVars.push(key);
-    }
-  }
-
-  if (missingVars.length > 0) {
-    throw new Error(
-      `Missing or invalid environment variables: ${missingVars.join(', ')}. ` +
-      'Please check your option .env.local file and ensure all required API keys are set.'
-    );
-  }
-
-  return true;
+interface EnvConfig {
+  supabaseUrl: string | undefined;
+  supabaseAnonKey: string | undefined;
+  isSupabaseConfigured: boolean;
+  missingVars: string[];
 }
 
-export function validateSupabaseEnvironment() {
+export function validateEnvironment(): EnvConfig {
+  // Only run on client side to avoid SSR issues
+  if (typeof window === 'undefined') {
+    return {
+      supabaseUrl: undefined,
+      supabaseAnonKey: undefined,
+      isSupabaseConfigured: false,
+      missingVars: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY']
+    };
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   const missingVars: string[] = [];
   
-  if (!supabaseUrl || supabaseUrl.trim() === '' || supabaseUrl === 'your_supabase_project_url_here') {
+  if (!supabaseUrl) {
     missingVars.push('NEXT_PUBLIC_SUPABASE_URL');
   }
   
-  if (!supabaseAnonKey || supabaseAnonKey.trim() === '' || supabaseAnonKey === 'your_supabase_anon_key_here') {
+  if (!supabaseAnonKey) {
     missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
   }
-
-  if (missingVars.length > 0) {
-    console.warn(
-      `Supabase environment variables missing: ${missingVars.join(', ')}. ` +
-      'Database features will not work. Get these values from: https://supabase.com/dashboard/project/_/settings/api'
-    );
-    return false;
-  }
-
-  return true;
+  
+  const isSupabaseConfigured = missingVars.length === 0 && 
+    supabaseUrl !== 'https://placeholder.supabase.co' && 
+    supabaseAnonKey !== 'placeholder-key';
+  
+  return {
+    supabaseUrl,
+    supabaseAnonKey,
+    isSupabaseConfigured,
+    missingVars
+  };
 }
 
-export function getGeminiApiKey(): string {
-  const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+export function getSetupInstructions(): string {
+  return `
+To enable authentication, please create a .env.local file in your project root with the following variables:
 
-  if (!apiKey || apiKey.trim() === '' || apiKey === 'your_gemini_api_key_here') {
-    throw new Error(
-      'Gemini API key not configured. Set GOOGLE_GEMINI_API_KEY (preferred) or GEMINI_API_KEY in your .env.local file.'
-    );
+# Supabase Configuration
+# Get these values from your Supabase project dashboard:
+# https://supabase.com/dashboard/project/_/settings/api
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Google Gemini AI Configuration (optional)
+# Get your API key from: https://aistudio.google.com/app/apikey
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
+
+After adding these variables, restart your development server.
+  `.trim();
+}
+
+export function logEnvironmentStatus(): void {
+  // Only log on client side to avoid SSR issues
+  if (typeof window === 'undefined') {
+    return;
   }
 
-  if (process.env.NEXT_PUBLIC_GEMINI_API_KEY && !process.env.GOOGLE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
-    console.warn('[env-validation] Using NEXT_PUBLIC_GEMINI_API_KEY on the server. Consider moving it to a non-public var (GOOGLE_GEMINI_API_KEY).');
+  const config = validateEnvironment();
+  
+  if (config.isSupabaseConfigured) {
+    console.log('✅ Supabase authentication is properly configured');
+  } else {
+    console.warn('⚠️ Supabase authentication is not configured');
+    console.warn('Missing environment variables:', config.missingVars.join(', '));
+    console.warn('Setup instructions:');
+    console.warn(getSetupInstructions());
   }
+}
 
-  return apiKey;
+export function getGeminiApiKey(): string | undefined {
+  return process.env.GOOGLE_GEMINI_API_KEY;
 }

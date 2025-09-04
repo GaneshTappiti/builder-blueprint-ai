@@ -9,12 +9,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
 
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'busy';
+  joinedAt: string;
+  skills: string[];
+  currentTask?: string;
+  tasksCompleted: number;
+  totalTasks: number;
+  lastActive: string;
+}
+
 interface AddTeamMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onAddMember: (memberData: Partial<TeamMember>) => void;
 }
 
-const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({ isOpen, onClose }) => {
+const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({ isOpen, onClose, onAddMember }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -50,12 +66,12 @@ const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({ isOpen, onClose
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, this would submit to the backend
-    console.log('Adding team member:', formData);
-    
-    toast({
-      title: "Team Member Added!",
-      description: `${formData.name} has been invited to join the team.`,
+    // Call the parent component's add member function
+    onAddMember({
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      skills: [] // Default empty skills array
     });
     
     onClose();

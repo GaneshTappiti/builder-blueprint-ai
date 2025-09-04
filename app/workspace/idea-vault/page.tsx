@@ -19,6 +19,7 @@ import {
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define IdeaProps interface for export
 export interface IdeaProps {
@@ -62,6 +63,7 @@ export default function IdeaVaultPage() {
 
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
   const { activeIdea, fetchUserIdeas } = useActiveIdea();
   const { setHasActiveIdea, setActiveIdea, setCurrentStep } = useIdeaContext();
 

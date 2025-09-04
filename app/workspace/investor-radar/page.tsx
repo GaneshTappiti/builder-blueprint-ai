@@ -11,7 +11,7 @@ import InvestorDashboard from "@/components/investor/InvestorDashboard";
 import { useToast } from "@/hooks/use-toast";
 import FilterDrawer from "@/components/investor/FilterDrawer";
 import { Investor, FundingRound, FundingRoundInput, InvestorStatus } from "@/types/investor";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import TabNavigation from "@/components/investor/TabNavigation";
 import { Button } from "@/components/ui/button";
@@ -312,28 +312,30 @@ export default function InvestorRadarPage() {
               onTabChange={setActiveTab}
             />
 
-            <TabsContent value="investors" className="mt-4 md:mt-6 animate-fade-in">
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading investors...</p>
-                </div>
-              ) : (
-                <InvestorsList
-                  investors={investors}
-                  onLogContact={handleLogContact}
-                  onStatusChange={handleUpdateInvestorStatus}
-                />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="funding" className="mt-4 md:mt-6 animate-fade-in">
-              <FundingRoundsList />
-            </TabsContent>
-            
-            <TabsContent value="pitchdeck" className="mt-4 md:mt-6 animate-fade-in">
-              <PitchDeckView />
-            </TabsContent>
+            <Tabs value={activeTab} className="mt-4 md:mt-6">
+              <TabsContent value="investors" className="animate-fade-in">
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading investors...</p>
+                  </div>
+                ) : (
+                  <InvestorsList
+                    investors={investors}
+                    onLogContact={handleLogContact}
+                    onStatusChange={handleUpdateInvestorStatus}
+                  />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="funding" className="animate-fade-in">
+                <FundingRoundsList />
+              </TabsContent>
+              
+              <TabsContent value="pitchdeck" className="animate-fade-in">
+                <PitchDeckView />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>

@@ -7,36 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare, Send } from "lucide-react";
 
-const MessagesPanel: React.FC = () => {
+interface Message {
+  id: number;
+  sender: string;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'file' | 'system';
+}
+
+interface MessagesPanelProps {
+  messages: Message[];
+  onSendMessage: (messages: Message[]) => void;
+}
+
+const MessagesPanel: React.FC<MessagesPanelProps> = ({ messages, onSendMessage }) => {
   const [newMessage, setNewMessage] = useState('');
-  
-  const messages = [
-    {
-      id: '1',
-      sender: 'John Doe',
-      message: 'Hey team, the new feature is ready for testing!',
-      timestamp: '10:30 AM',
-      avatar: 'JD'
-    },
-    {
-      id: '2',
-      sender: 'Jane Smith',
-      message: 'Great work! I\'ll start testing it now.',
-      timestamp: '10:32 AM',
-      avatar: 'JS'
-    },
-    {
-      id: '3',
-      sender: 'Mike Johnson',
-      message: 'Can we schedule a quick review meeting?',
-      timestamp: '10:35 AM',
-      avatar: 'MJ'
-    }
-  ];
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      console.log('Sending message:', newMessage);
+      const newMsg: Message = {
+        id: messages.length + 1,
+        sender: 'You',
+        content: newMessage,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: 'text'
+      };
+      onSendMessage([...messages, newMsg]);
       setNewMessage('');
     }
   };
@@ -55,7 +51,7 @@ const MessagesPanel: React.FC = () => {
             <div key={message.id} className="flex items-start gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-green-600 text-white text-xs">
-                  {message.avatar}
+                  {message.sender.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -63,7 +59,7 @@ const MessagesPanel: React.FC = () => {
                   <span className="text-sm font-medium text-white">{message.sender}</span>
                   <span className="text-xs text-gray-400">{message.timestamp}</span>
                 </div>
-                <p className="text-sm text-gray-300">{message.message}</p>
+                <p className="text-sm text-gray-300">{message.content}</p>
               </div>
             </div>
           ))}

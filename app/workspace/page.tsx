@@ -231,24 +231,8 @@ export default function WorkspacePage() {
   const searchRef = useRef<HTMLDivElement>(null);
 
   const router = useRouter();
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading } = useAuth();
   const { isAdmin } = useAdmin();
-
-  // User display helpers
-  const getUserDisplayName = () => {
-    if ((user as any)?.displayName) return (user as any).displayName;
-    if (user?.email) return user.email.split('@')[0];
-    return 'User';
-  };
-
-  const getUserInitials = () => {
-    const name = getUserDisplayName();
-    return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getUserEmail = () => {
-    return user?.email || 'user@example.com';
-  };
 
   // Click outside handlers for dropdowns
   useEffect(() => {
@@ -939,6 +923,34 @@ Format the response as JSON with this structure:
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
+
+  // Show loading state while the app initializes
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-green-glass">
+        <div className="text-center workspace-card p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // User display helpers
+  const getUserDisplayName = () => {
+    if ((user as any)?.displayName) return (user as any).displayName;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
+
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const getUserEmail = () => {
+    return user?.email || 'user@example.com';
+  };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchQuery.trim()) {

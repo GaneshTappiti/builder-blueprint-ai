@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
+import { validateEnvironment, logEnvironmentStatus } from './env-validation';
 
 // Database interfaces
 interface Project {
@@ -35,35 +36,40 @@ interface Idea {
   user_id: string;
 }
 
-// Supabase client configuration
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables are not configured. Some features may not work properly.');
-  console.warn('Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file');
-  console.warn('You can get these values from: https://supabase.com/dashboard/project/_/settings/api');
+// Validate environment variables (only on client side to avoid SSR issues)
+let envConfig: any = { isSupabaseConfigured: false };
+if (typeof window !== 'undefined') {
+  envConfig = validateEnvironment();
+  logEnvironmentStatus();
+} else {
+  // Server-side fallback
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  envConfig = {
+    supabaseUrl,
+    supabaseAnonKey,
+    isSupabaseConfigured: !!(supabaseUrl && supabaseAnonKey && 
+      supabaseUrl !== 'https://placeholder.supabase.co' && 
+      supabaseAnonKey !== 'placeholder-key')
+  };
 }
 
 // Create Supabase client for client-side operations
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+export const supabase = envConfig.isSupabaseConfigured
+  ? createBrowserClient(envConfig.supabaseUrl!, envConfig.supabaseAnonKey!)
   : createBrowserClient('https://placeholder.supabase.co', 'placeholder-key');
 
 // Create Supabase client for server-side operations
 export const createServerClient = () => {
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!envConfig.isSupabaseConfigured) {
     throw new Error('Supabase environment variables are not configured');
   }
-  return createClient(supabaseUrl, supabaseAnonKey);
+  return createClient(envConfig.supabaseUrl!, envConfig.supabaseAnonKey!);
 };
 
 // Helper to check if Supabase is properly configured
 const isSupabaseConfigured = () => {
-  return supabaseUrl && supabaseAnonKey && 
-         supabaseUrl !== 'https://placeholder.supabase.co' && 
-         supabaseAnonKey !== 'placeholder-key';
+  return envConfig.isSupabaseConfigured;
 };
 
 // Database helpers

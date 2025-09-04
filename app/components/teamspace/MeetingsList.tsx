@@ -6,42 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Video, Users, Plus } from "lucide-react";
 
-const MeetingsList: React.FC = () => {
-  const meetings = [
-    {
-      id: '1',
-      title: 'Daily Standup',
-      time: '9:00 AM',
-      date: 'Today',
-      attendees: 8,
-      type: 'recurring',
-      status: 'upcoming'
-    },
-    {
-      id: '2',
-      title: 'Sprint Planning',
-      time: '2:00 PM',
-      date: 'Tomorrow',
-      attendees: 6,
-      type: 'meeting',
-      status: 'scheduled'
-    },
-    {
-      id: '3',
-      title: 'Design Review',
-      time: '11:00 AM',
-      date: 'Jan 22',
-      attendees: 4,
-      type: 'review',
-      status: 'scheduled'
-    }
-  ];
+interface Meeting {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  duration: string;
+  attendees: string[];
+  type: 'video' | 'audio' | 'screen-share';
+  status: 'upcoming' | 'ongoing' | 'completed';
+}
+
+interface MeetingsListProps {
+  meetings: Meeting[];
+  onScheduleMeeting: (meetings: Meeting[]) => void;
+}
+
+const MeetingsList: React.FC<MeetingsListProps> = ({ meetings, onScheduleMeeting }) => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'recurring': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'meeting': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'review': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'video': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'audio': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'screen-share': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
@@ -75,7 +62,7 @@ const MeetingsList: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
-                    {meeting.attendees}
+                    {meeting.attendees.length} attendees
                   </div>
                 </div>
               </div>

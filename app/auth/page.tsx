@@ -28,7 +28,7 @@ export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { signIn, signUp, signInWithProvider, resetPassword, loading } = useAuth();
+  const { user, signIn, signUp, signInWithProvider, resetPassword, updatePassword, loading } = useAuth();
 
   // Check if we're on the reset password page
   const isResetPassword = searchParams.get('mode') === 'reset-password';
@@ -38,6 +38,14 @@ export default function AuthPage() {
     setError(null);
     setSuccess(null);
   }, [isLogin, isForgotPassword]);
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user && !loading) {
+      const redirectTo = searchParams.get('redirectTo') || '/workspace';
+      router.push(redirectTo);
+    }
+  }, [user, loading, router, searchParams]);
 
   // Validation functions
   const isValidEmail = (email: string) => {
@@ -55,6 +63,7 @@ export default function AuthPage() {
     try {
       await signInWithProvider(provider);
       // The redirect will happen automatically via Supabase OAuth
+      // The AuthContext will handle the redirect after successful authentication
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -83,8 +92,8 @@ export default function AuthPage() {
           return;
         }
 
-        // Note: Password update would need to be handled via Supabase auth
-        // This is a simplified version - in production you'd use the auth callback
+        // Update password using Supabase auth
+        await updatePassword(newPassword);
         setSuccess('Password updated successfully!');
         toast({
           title: "Success",
@@ -135,7 +144,7 @@ export default function AuthPage() {
             title: "Success",
             description: "Signed in successfully!"
           });
-          router.push('/workspace');
+          // The AuthContext will handle the redirect automatically
         } else {
           if (!name) {
             setError('Please enter your name');
@@ -178,6 +187,7 @@ export default function AuthPage() {
     try {
       await signInWithProvider(provider);
       // The redirect will happen automatically via Supabase OAuth
+      // The AuthContext will handle the redirect after successful authentication
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -188,6 +198,18 @@ export default function AuthPage() {
       });
     }
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-green-glass">
+        <div className="text-center workspace-card p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isResetPassword) {
     return (

@@ -6,39 +6,29 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle, Plus } from "lucide-react";
 
-const TaskList: React.FC = () => {
-  const tasks = [
-    {
-      id: '1',
-      title: 'Update user authentication',
-      assignee: 'John Doe',
-      status: 'in-progress',
-      priority: 'high',
-      dueDate: '2024-01-20'
-    },
-    {
-      id: '2',
-      title: 'Design new landing page',
-      assignee: 'Jane Smith',
-      status: 'completed',
-      priority: 'medium',
-      dueDate: '2024-01-18'
-    },
-    {
-      id: '3',
-      title: 'Fix mobile responsiveness',
-      assignee: 'Mike Johnson',
-      status: 'pending',
-      priority: 'low',
-      dueDate: '2024-01-25'
-    }
-  ];
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  assignee: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'in-progress' | 'completed';
+  dueDate: string;
+  tags: string[];
+}
+
+interface TaskListProps {
+  tasks: Task[];
+  onTaskUpdate: (tasks: Task[]) => void;
+}
+
+const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate }) => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed': return <CheckCircle className="h-4 w-4 text-green-400" />;
       case 'in-progress': return <Clock className="h-4 w-4 text-blue-400" />;
-      case 'pending': return <AlertCircle className="h-4 w-4 text-yellow-400" />;
+      case 'todo': return <AlertCircle className="h-4 w-4 text-yellow-400" />;
       default: return <Clock className="h-4 w-4 text-gray-400" />;
     }
   };
@@ -47,7 +37,7 @@ const TaskList: React.FC = () => {
     switch (status) {
       case 'completed': return 'bg-green-500/20 text-green-400 border-green-500/30';
       case 'in-progress': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'todo': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
@@ -87,10 +77,22 @@ const TaskList: React.FC = () => {
                 </Badge>
               </div>
             </div>
+            {task.description && (
+              <p className="text-sm text-gray-300 mb-2">{task.description}</p>
+            )}
             <div className="flex items-center justify-between text-sm text-gray-400">
               <span>Assigned to: {task.assignee}</span>
               <span>Due: {task.dueDate}</span>
             </div>
+            {task.tags && task.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {task.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-600 text-gray-300">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </CardContent>

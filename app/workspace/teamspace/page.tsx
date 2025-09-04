@@ -225,7 +225,7 @@ export default function TeamSpacePage() {
 
   const handleAddMember = (memberData: Partial<TeamMember>) => {
     const newMember: TeamMember = {
-      id: teamMembers.length + 1,
+      id: (teamMembers.length + 1).toString(),
       name: memberData.name || '',
       email: memberData.email || '',
       role: memberData.role || '',
@@ -233,7 +233,10 @@ export default function TeamSpacePage() {
       status: 'offline',
       joinedAt: new Date().toISOString().split('T')[0],
       skills: memberData.skills || [],
-      currentTask: undefined
+      currentTask: undefined,
+      tasksCompleted: 0,
+      totalTasks: 0,
+      lastActive: new Date().toISOString()
     };
 
     setTeamMembers([...teamMembers, newMember]);
