@@ -40,7 +40,7 @@ class SearchService {
       title: "IdeaForge",
       description: "Turn ideas into actionable product frameworks",
       type: "module" as const,
-      path: "/workspace/ideaforge",
+      path: "/workspace/idea-forge",
       icon: "⚙️",
       keywords: ["ideaforge", "ideas", "product", "framework", "actionable"]
     },

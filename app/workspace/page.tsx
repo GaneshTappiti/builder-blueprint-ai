@@ -220,6 +220,10 @@ export default function WorkspacePage() {
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
   const [savedIdeas, setSavedIdeas] = useState<BrainstormIdea[]>([]);
   const [savedIdeaIds, setSavedIdeaIds] = useState<Set<string>>(new Set());
+  
+  // Detailed Idea View State
+  const [showIdeaDetail, setShowIdeaDetail] = useState(false);
+  const [selectedIdeaDetail, setSelectedIdeaDetail] = useState<BrainstormIdea | null>(null);
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -599,7 +603,7 @@ export default function WorkspacePage() {
       id: "ideaforge",
       name: "IdeaForge",
       description: "Turn ideas into actionable product frameworks",
-      path: "/workspace/ideaforge",
+      path: "/workspace/idea-forge",
       icon: "⚙️"
     },
     {
@@ -844,7 +848,7 @@ Format the response as JSON with this structure:
         throw new Error(error.message || 'Failed to save idea');
       }
 
-      // Also add to local saved ideas for UI
+      // Add to local saved ideas for UI
       setSavedIdeas(prev => [...prev, idea]);
       setSavedIdeaIds(prev => {
         const newSet = new Set(prev);
@@ -857,6 +861,7 @@ Format the response as JSON with this structure:
         description: `"${idea.title}" has been saved to your Idea Vault`,
       });
     } catch (error) {
+      console.error('Failed to save idea to Supabase:', error);
       // Fallback to local storage if supabase fails
       setSavedIdeas(prev => [...prev, idea]);
       setSavedIdeaIds(prev => {
@@ -872,21 +877,9 @@ Format the response as JSON with this structure:
   }, "Failed to save idea");
 
   const expandIdea = (idea: BrainstormIdea) => {
-    // Navigate to IdeaForge with the idea details
-    const ideaData = {
-      title: idea.title,
-      description: idea.problem,
-      category: idea.category,
-      targetAudience: idea.audience,
-      whyNow: idea.whyNow,
-      trendConnection: idea.trendConnection
-    };
-    
-    // Store in idea context and navigate
-    setActiveIdea(ideaData as any);
-    setHasActiveIdea(true);
-    setCurrentStep('overview');
-    router.push('/workspace/ideaforge');
+    // Show detailed idea view modal instead of navigating to IdeaForge
+    setSelectedIdeaDetail(idea);
+    setShowIdeaDetail(true);
   };
 
   const regenerateIdeas = () => {
@@ -905,7 +898,16 @@ Format the response as JSON with this structure:
     if (brainstormIdeas.length === 0) return;
     
     let savedCount = 0;
+    const newSavedIdeas: BrainstormIdea[] = [];
+    const newSavedIds = new Set(savedIdeaIds);
+    
     for (const idea of brainstormIdeas) {
+      // Skip if already saved
+      if (savedIdeaIds.has(idea.id)) {
+        savedCount++;
+        continue;
+      }
+      
       try {
         const { error } = await supabaseHelpers.createIdea({
           title: idea.title,
@@ -916,23 +918,25 @@ Format the response as JSON with this structure:
         
         if (!error) {
           savedCount++;
-          setSavedIdeas(prev => [...prev, idea]);
-          setSavedIdeaIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(idea.id);
-        return newSet;
-      });
+          newSavedIdeas.push(idea);
+          newSavedIds.add(idea.id);
         }
       } catch (error) {
         console.error('Failed to save idea:', idea.title, error);
       }
     }
     
+    // Update state with all new saved ideas
+    if (newSavedIdeas.length > 0) {
+      setSavedIdeas(prev => [...prev, ...newSavedIdeas]);
+      setSavedIdeaIds(newSavedIds);
+    }
+    
     toast({
       title: "Ideas Saved!",
       description: `${savedCount} out of ${brainstormIdeas.length} ideas saved to your Idea Vault`,
     });
-  }, "Failed to save some ideas");
+  }, "Failed to save all ideas");
 
   // Debounced search
   useEffect(() => {
@@ -1233,13 +1237,9 @@ Format the response as JSON with this structure:
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Link href="/profile" className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-300">View Profile</span>
-                        </Link>
                         <Link href="/account" className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
-                          <CreditCard className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-300">Billing & Plans</span>
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-300">Account Settings</span>
                         </Link>
                         {isAdmin && (
                           <>
@@ -1779,10 +1779,10 @@ Format the response as JSON with this structure:
 
       {/* Brainstorm Ideas Modal */}
       <Dialog open={showBrainstorm} onOpenChange={setShowBrainstorm}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden p-0">
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10">
               <div>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                   <Sparkles className="h-6 w-6 text-yellow-400" />
@@ -1790,20 +1790,12 @@ Format the response as JSON with this structure:
                 </h2>
                 <p className="text-gray-400 mt-1">Generate fresh startup ideas based on current trends</p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowBrainstorm(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
 
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden p-6">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
                 {/* Left Sidebar - Category Selection & Controls */}
-                <div className="space-y-6 overflow-y-auto">
+                <div className="space-y-6 overflow-y-auto pr-2">
                   {/* Category Filter Chips */}
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Choose Category</h3>
@@ -1875,7 +1867,7 @@ Format the response as JSON with this structure:
                 </div>
 
                 {/* Main Area - Generated Ideas Grid */}
-                <div className="lg:col-span-3 overflow-y-auto">
+                <div className="lg:col-span-3 overflow-y-auto pl-2">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-xl font-semibold text-white">
@@ -2033,6 +2025,112 @@ Format the response as JSON with this structure:
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detailed Idea View Modal */}
+      <Dialog open={showIdeaDetail} onOpenChange={setShowIdeaDetail}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedIdeaDetail && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <Lightbulb className="h-6 w-6 text-yellow-400" />
+                    {selectedIdeaDetail.title}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-500/30">
+                      {selectedIdeaDetail.category}
+                    </Badge>
+                    <span className="text-gray-400 text-sm">
+                      Generated {new Date(selectedIdeaDetail.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Content */}
+              <div className="space-y-6">
+                {/* Problem Statement */}
+                <div className="bg-red-900/10 border border-red-500/20 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Problem Statement</h3>
+                  </div>
+                  <p className="text-gray-300 leading-relaxed">{selectedIdeaDetail.problem}</p>
+                </div>
+
+                {/* Why Now */}
+                <div className="bg-yellow-900/10 border border-yellow-500/20 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Why Now?</h3>
+                  </div>
+                  <p className="text-gray-300 leading-relaxed">{selectedIdeaDetail.whyNow}</p>
+                </div>
+
+                {/* Target Audience */}
+                <div className="bg-blue-900/10 border border-blue-500/20 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Target Audience</h3>
+                  </div>
+                  <p className="text-gray-300 leading-relaxed">{selectedIdeaDetail.audience}</p>
+                </div>
+
+                {/* Trend Connection */}
+                <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">Trend Connection</h3>
+                  </div>
+                  <p className="text-gray-300 leading-relaxed">{selectedIdeaDetail.trendConnection}</p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 pt-6 border-t border-white/10">
+                  <Button
+                    onClick={() => saveIdea(selectedIdeaDetail)}
+                    disabled={savedIdeaIds.has(selectedIdeaDetail.id)}
+                    className={`flex-1 ${
+                      savedIdeaIds.has(selectedIdeaDetail.id)
+                        ? 'bg-green-600/20 text-green-400 border border-green-500/30 cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
+                    }`}
+                  >
+                    {savedIdeaIds.has(selectedIdeaDetail.id) ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Already Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save to Idea Vault
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => setShowIdeaDetail(false)}
+                    variant="outline"
+                    className="flex-1 border-white/20 text-gray-300 hover:bg-white/10"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       </div>

@@ -71,7 +71,10 @@ class TaskService {
   private async saveToSupabase(task: Task) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user authenticated');
+      if (!user) {
+        console.warn('No user authenticated, skipping database save');
+        return;
+      }
 
       const { error } = await supabase
         .from('tasks')
@@ -141,7 +144,10 @@ class TaskService {
   // Create new task
   async createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>): Promise<Task> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No user authenticated');
+    if (!user) {
+      console.warn('No user authenticated, cannot create task');
+      throw new Error('Authentication required to create tasks');
+    }
 
     const newTask: Task = {
       ...taskData,

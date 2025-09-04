@@ -99,7 +99,11 @@ export const IdeaProvider: React.FC<{children: React.ReactNode}> = ({ children }
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user authenticated');
+      if (!user) {
+        console.warn('No user authenticated, skipping database save');
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
 
       const ideaWithUser = { ...idea, user_id: user.id, updated_at: new Date().toISOString() };
 

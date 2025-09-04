@@ -127,7 +127,7 @@ export default function IdeaVaultPage() {
       return;
     }
 
-    router.push('/workspace/ideaforge');
+    router.push('/workspace/idea-forge');
     
     toast({
       title: "Moving to IdeaForge",
@@ -261,34 +261,17 @@ export default function IdeaVaultPage() {
                         </div>
                       )}
 
-                      {/* Action Buttons */}
+                      {/* Action Button */}
                       <div className="flex gap-2 mt-4">
                         <Button 
                           size="sm" 
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
                           onClick={() => {
-                            // Set as active idea and continue to next step
-                            setActiveIdea({
-                              ...idea,
-                              user_id: 'mock-user-id' // Add missing user_id field
-                            });
-                            setHasActiveIdea(true);
-                            setCurrentStep('vault');
-                            router.push('/workspace/idea-forge');
-                          }}
-                        >
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          Continue
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                          onClick={() => {
                             // View idea details
                             router.push(`/workspace/idea-vault/${idea.id}`);
                           }}
                         >
+                          <ArrowRight className="h-4 w-4 mr-2" />
                           View
                         </Button>
                       </div>

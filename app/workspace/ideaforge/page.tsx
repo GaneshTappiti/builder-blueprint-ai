@@ -109,7 +109,7 @@ export default function IdeaForgePage() {
         setCurrentIdea(idea);
       } else {
         // Idea not found, redirect to main page
-        router.push('/workspace/ideaforge');
+        router.push('/workspace/idea-forge');
       }
     } else if (ideas.length > 0 && !ideaId) {
       // No specific idea selected, show ideas list
@@ -160,7 +160,7 @@ export default function IdeaForgePage() {
       setShowNewIdeaModal(false);
 
       // Update URL to show the new idea
-      router.push(`/workspace/ideaforge?id=${newIdea.id}`);
+      router.push(`/workspace/idea-forge?id=${newIdea.id}`);
 
       toast({
         title: "Idea Created!",
@@ -211,7 +211,7 @@ export default function IdeaForgePage() {
             className="bg-black/40 backdrop-blur-sm border-white/10 cursor-pointer hover:border-green-500/30 hover:bg-black/60 transition-all duration-300"
             onClick={() => {
               setCurrentIdea(idea);
-              router.push(`/workspace/ideaforge?id=${idea.id}`);
+              router.push(`/workspace/idea-forge?id=${idea.id}`);
             }}
           >
             <CardContent className="p-6">
@@ -272,7 +272,7 @@ export default function IdeaForgePage() {
             {/* Minimal Header */}
             <MinimalHeader 
               onToggleSidebar={() => setSidebarOpen(true)}
-              backToPath="/workspace/ideaforge"
+              backToPath="/workspace/idea-forge"
               backToLabel="Back to Ideas"
             />
             
@@ -283,7 +283,7 @@ export default function IdeaForgePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push('/workspace/ideaforge')}
+                    onClick={() => router.push('/workspace/idea-forge')}
                     className="text-gray-400 hover:text-white hover:bg-black/60"
                   >
                     <ChevronLeft className="h-4 w-4 mr-2" />

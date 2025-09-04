@@ -71,7 +71,10 @@ class ProjectService {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const user = authData.user;
-      if (!user) throw new Error('No user authenticated');
+      if (!user) {
+        console.warn('No user authenticated, skipping database save');
+        return;
+      }
 
       const { error } = await supabase
         .from('projects')
@@ -126,7 +129,10 @@ class ProjectService {
   async createProject(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'user_id'>): Promise<Project> {
     const { data: authData } = await supabase.auth.getUser();
     const user = authData.user;
-    if (!user) throw new Error('No user authenticated');
+    if (!user) {
+      console.warn('No user authenticated, cannot create project');
+      throw new Error('Authentication required to create projects');
+    }
 
     const newProject: Project = {
       ...projectData,

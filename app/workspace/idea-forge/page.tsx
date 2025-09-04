@@ -82,7 +82,10 @@ const IdeaForgePage = () => {
 
   // Load ideas from database
   const loadIdeas = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -309,7 +312,23 @@ const IdeaForgePage = () => {
 
           {/* Main Content Container */}
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-            {ideas.length === 0 ? (
+            {!user ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-4 bg-yellow-600/20 rounded-full mb-4">
+                  <Settings className="h-8 w-8 text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">Authentication Required</h3>
+                <p className="text-gray-400 mb-6 max-w-md">
+                  Please sign in to access Idea Forge and manage your ideas.
+                </p>
+                <Button 
+                  onClick={() => router.push('/auth')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Sign In
+                </Button>
+              </div>
+            ) : ideas.length === 0 ? (
               <IdeaEmptyState onCreateClick={() => setIsNewIdeaModalOpen(true)} />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
