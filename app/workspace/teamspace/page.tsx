@@ -58,15 +58,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
 interface TeamMember {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: string;
-  avatar: string;
-  status: 'online' | 'offline' | 'away';
+  avatar?: string;
+  status: 'online' | 'offline' | 'busy';
   joinedAt: string;
   skills: string[];
   currentTask?: string;
+  tasksCompleted: number;
+  totalTasks: number;
+  lastActive: string;
 }
 
 interface Meeting {
@@ -114,7 +117,7 @@ export default function TeamSpacePage() {
   // Mock data - in production, this would come from your database
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
-      id: 1,
+      id: "1",
       name: "Alex Johnson",
       email: "alex@startup.com",
       role: "Product Manager",
@@ -122,10 +125,13 @@ export default function TeamSpacePage() {
       status: 'online',
       joinedAt: "2024-01-15",
       skills: ["Product Strategy", "User Research", "Agile"],
-      currentTask: "Define MVP features"
+      currentTask: "Define MVP features",
+      tasksCompleted: 12,
+      totalTasks: 15,
+      lastActive: "2024-01-20T10:30:00Z"
     },
     {
-      id: 2,
+      id: "2",
       name: "Sarah Chen",
       email: "sarah@startup.com",
       role: "Lead Developer",
@@ -133,18 +139,24 @@ export default function TeamSpacePage() {
       status: 'online',
       joinedAt: "2024-01-10",
       skills: ["React", "Node.js", "AWS"],
-      currentTask: "Backend API development"
+      currentTask: "Backend API development",
+      tasksCompleted: 8,
+      totalTasks: 12,
+      lastActive: "2024-01-20T11:15:00Z"
     },
     {
-      id: 3,
+      id: "3",
       name: "Mike Rodriguez",
       email: "mike@startup.com",
       role: "UI/UX Designer",
       avatar: "/api/placeholder/40/40",
-      status: 'away',
+      status: 'busy',
       joinedAt: "2024-01-20",
       skills: ["Figma", "User Testing", "Prototyping"],
-      currentTask: "Mobile app wireframes"
+      currentTask: "Mobile app wireframes",
+      tasksCompleted: 5,
+      totalTasks: 8,
+      lastActive: "2024-01-20T09:45:00Z"
     }
   ]);
 

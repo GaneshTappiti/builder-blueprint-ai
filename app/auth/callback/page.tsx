@@ -1,34 +1,48 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('Completing authentication...');
 
   useEffect(() => {
-    // Mock auth callback logic
     const handleAuthCallback = async () => {
       try {
-        // Simulate processing auth callback
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Get the session from the URL hash
+        const { data, error } = await supabase.auth.getSession();
         
-        // Mock check for AI provider configuration
-        const hasAIProvider = Math.random() > 0.5; // Random for demo
-        
-        // Mock check for new user (simulate 50% chance of being new user)
-        const isNewUser = Math.random() > 0.5;
-        
-        // Redirect new users without AI provider to onboarding
-        if (isNewUser && !hasAIProvider) {
-          router.push('/onboarding');
+        if (error) {
+          console.error('Auth callback error:', error);
+          setStatus('error');
+          setMessage('Authentication failed. Please try again.');
+          setTimeout(() => router.push('/auth'), 3000);
+          return;
+        }
+
+        if (data.session) {
+          setStatus('success');
+          setMessage('Authentication successful! Redirecting...');
+          
+          // Check if user has AI provider configured (you can implement this logic)
+          // For now, redirect to workspace
+          setTimeout(() => {
+            router.push('/workspace');
+          }, 1500);
         } else {
-          router.push('/workspace');
+          setStatus('error');
+          setMessage('No session found. Please try again.');
+          setTimeout(() => router.push('/auth'), 3000);
         }
       } catch (error) {
         console.error('Auth callback error:', error);
-        router.push('/auth');
+        setStatus('error');
+        setMessage('An unexpected error occurred. Please try again.');
+        setTimeout(() => router.push('/auth'), 3000);
       }
     };
 
@@ -38,8 +52,26 @@ export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-glass">
       <div className="text-center workspace-card p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-green-400 mx-auto mb-4" />
-        <p className="text-gray-400">Completing authentication...</p>
+        {status === 'loading' && (
+          <>
+            <Loader2 className="h-8 w-8 animate-spin text-green-400 mx-auto mb-4" />
+            <p className="text-gray-400">{message}</p>
+          </>
+        )}
+        
+        {status === 'success' && (
+          <>
+            <CheckCircle className="h-8 w-8 text-green-400 mx-auto mb-4" />
+            <p className="text-green-400">{message}</p>
+          </>
+        )}
+        
+        {status === 'error' && (
+          <>
+            <XCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+            <p className="text-red-400">{message}</p>
+          </>
+        )}
       </div>
     </div>
   );

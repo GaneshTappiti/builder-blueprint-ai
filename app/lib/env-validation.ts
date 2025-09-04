@@ -27,6 +27,31 @@ export function validateEnvironment() {
   return true;
 }
 
+export function validateSupabaseEnvironment() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  const missingVars: string[] = [];
+  
+  if (!supabaseUrl || supabaseUrl.trim() === '' || supabaseUrl === 'your_supabase_project_url_here') {
+    missingVars.push('NEXT_PUBLIC_SUPABASE_URL');
+  }
+  
+  if (!supabaseAnonKey || supabaseAnonKey.trim() === '' || supabaseAnonKey === 'your_supabase_anon_key_here') {
+    missingVars.push('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  if (missingVars.length > 0) {
+    console.warn(
+      `Supabase environment variables missing: ${missingVars.join(', ')}. ` +
+      'Database features will not work. Get these values from: https://supabase.com/dashboard/project/_/settings/api'
+    );
+    return false;
+  }
+
+  return true;
+}
+
 export function getGeminiApiKey(): string {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 

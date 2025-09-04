@@ -99,6 +99,24 @@ export const pitchPerfectHelpers = {
       data: { id },
       error: null
     };
+  },
+  async getPitchScripts(userId: string) {
+    return { data: [], error: null };
+  },
+  async getPitchDecks(userId: string) {
+    return { data: [], error: null };
+  },
+  async getPitchVideos(userId: string) {
+    return { data: [], error: null };
+  },
+  async createPitchScript(script: any, userId: string) {
+    return { data: { id: Date.now(), ...script }, error: null };
+  },
+  async createPitchDeck(deck: any, userId: string) {
+    return { data: { id: Date.now(), ...deck }, error: null };
+  },
+  async createPitchVideo(video: any, userId: string) {
+    return { data: { id: Date.now(), ...video }, error: null };
   }
 };
 
@@ -301,6 +319,38 @@ export const blueprintZoneHelpers = {
   },
   async createBlueprint(blueprint: any) {
     return { data: { id: Date.now(), ...blueprint }, error: null };
+  },
+  async getProjectPhases(userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { data: [], error: null };
+  },
+  async createPhase(phaseData: any, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { data: { id: Date.now(), ...phaseData }, error: null };
+  },
+  async updatePhase(phaseId: string, updates: any, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { data: { id: phaseId, ...updates }, error: null };
+  },
+  async deletePhase(phaseId: string, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { error: null };
+  },
+  async createTask(taskData: any, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { data: { id: Date.now(), ...taskData }, error: null };
+  },
+  async updateTask(taskId: number, updates: any, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { data: { id: taskId, ...updates }, error: null };
+  },
+  async deleteTask(taskId: number, userId: string) {
+    // Mock implementation - replace with real Supabase calls
+    return { error: null };
+  },
+  async updateTaskStatus(userId: string, taskId: number, completed: boolean) {
+    // Mock implementation - replace with real Supabase calls
+    return { error: null };
   }
 };
 
@@ -311,6 +361,24 @@ export const investorRadarHelpers = {
   },
   async createInvestor(investor: any) {
     return { data: { id: Date.now(), ...investor }, error: null };
+  },
+  async getFundingRounds(userId: string) {
+    return { data: [], error: null };
+  },
+  async createFundingRound(fundingRound: any, userId: string) {
+    return { data: { id: Date.now(), ...fundingRound }, error: null };
+  },
+  async updateFundingRound(id: string, updates: any, userId: string) {
+    return { data: { id, ...updates }, error: null };
+  },
+  async deleteFundingRound(id: string, userId: string) {
+    return { error: null };
+  },
+  async logContact(contactData: any, userId: string) {
+    return { data: { id: Date.now(), ...contactData }, error: null };
+  },
+  async updateInvestorStatus(investorId: string, status: string, userId: string) {
+    return { data: { id: investorId, status }, error: null };
   }
 };
 

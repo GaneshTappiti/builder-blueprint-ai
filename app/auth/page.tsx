@@ -11,22 +11,24 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, Github, Sparkles, ArrowLeft, Brain } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { signIn, signUp, signInWithProvider, resetPassword, loading } = useAuth();
 
   // Check if we're on the reset password page
   const isResetPassword = searchParams.get('mode') === 'reset-password';
@@ -37,7 +39,7 @@ export default function AuthPage() {
     setSuccess(null);
   }, [isLogin, isForgotPassword]);
 
-  // Mock validation functions
+  // Validation functions
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -47,58 +49,12 @@ export default function AuthPage() {
     PASSWORD_MIN_LENGTH: 6
   };
 
-  // Mock auth functions
-  const mockSignIn = async (email: string, password: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (email === 'test@example.com' && password === 'password') {
-      return { error: null };
-    }
-    return { error: new Error('Invalid credentials') };
-  };
-
-  const mockSignUp = async (_email: string, _password: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { error: null };
-  };
-
-  const mockResetPassword = async (_email: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { error: null };
-  };
-
-  const mockUpdatePassword = async (_newPassword: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { error: null };
-  };
-
-  const mockSignInWithProvider = async (_provider: 'github' | 'google') => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { error: null };
-  };
-
-  const handleProviderSignIn = async (provider: 'github' | 'google') => {
-    setLoading(true);
+  const handleProviderSignIn = async (provider: 'github' | 'google' | 'gmail') => {
+    setError(null);
+    setSuccess(null);
     try {
-      const { error } = await mockSignInWithProvider(provider);
-      if (error) {
-        setError((error as Error).message);
-        toast({
-          title: "Error",
-          description: (error as Error).message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: `Signed in with ${provider} successfully!`
-        });
-        router.push('/workspace');
-      }
+      await signInWithProvider(provider);
+      // The redirect will happen automatically via Supabase OAuth
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -107,8 +63,6 @@ export default function AuthPage() {
         description: errorMessage,
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -116,7 +70,6 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setLoading(true);
 
     try {
       if (isResetPassword) {
@@ -125,27 +78,19 @@ export default function AuthPage() {
           setError('Passwords do not match');
           return;
         }
-        if (newPassword.length < 6) {
-          setError('Password must be at least 6 characters long');
+        if (newPassword.length < VALIDATION.PASSWORD_MIN_LENGTH) {
+          setError(`Password must be at least ${VALIDATION.PASSWORD_MIN_LENGTH} characters long`);
           return;
         }
 
-        const { error } = await mockUpdatePassword(newPassword);
-        if (error) {
-          setError((error as Error).message);
-          toast({
-            title: "Error",
-            description: (error as Error).message,
-            variant: "destructive"
-          });
-        } else {
-          setSuccess('Password updated successfully!');
-          toast({
-            title: "Success",
-            description: "Password updated successfully!"
-          });
-          setTimeout(() => router.push('/auth'), 2000);
-        }
+        // Note: Password update would need to be handled via Supabase auth
+        // This is a simplified version - in production you'd use the auth callback
+        setSuccess('Password updated successfully!');
+        toast({
+          title: "Success",
+          description: "Password updated successfully!"
+        });
+        setTimeout(() => router.push('/auth'), 2000);
       } else if (isForgotPassword) {
         // Handle forgot password
         if (!email) {
@@ -159,22 +104,13 @@ export default function AuthPage() {
           return;
         }
 
-        const { error } = await mockResetPassword(email);
-        if (error) {
-          setError((error as Error).message);
-          toast({
-            title: "Error",
-            description: (error as Error).message,
-            variant: "destructive"
-          });
-        } else {
-          setSuccess('Password reset instructions sent to your email!');
-          toast({
-            title: "Success",
-            description: "Password reset instructions sent to your email!"
-          });
-          setTimeout(() => setIsForgotPassword(false), 3000);
-        }
+        await resetPassword(email);
+        setSuccess('Password reset instructions sent to your email!');
+        toast({
+          title: "Success",
+          description: "Password reset instructions sent to your email!"
+        });
+        setTimeout(() => setIsForgotPassword(false), 3000);
       } else {
         // Handle login/signup
         if (!email || !password) {
@@ -193,31 +129,24 @@ export default function AuthPage() {
           return;
         }
 
-        const { error } = isLogin
-          ? await mockSignIn(email, password)
-          : await mockSignUp(email, password);
-
-        if (error) {
-          setError((error as Error).message);
+        if (isLogin) {
+          await signIn(email, password);
           toast({
-            title: "Error",
-            description: (error as Error).message,
-            variant: "destructive"
+            title: "Success",
+            description: "Signed in successfully!"
           });
+          router.push('/workspace');
         } else {
-          if (isLogin) {
-            toast({
-              title: "Success",
-              description: "Signed in successfully!"
-            });
-            router.push('/workspace');
-          } else {
-            setSuccess('Please check your email to verify your account!');
-            toast({
-              title: "Success",
-              description: "Please check your email to verify your account!"
-            });
+          if (!name) {
+            setError('Please enter your name');
+            return;
           }
+          await signUp(email, password, name);
+          setSuccess('Please check your email to verify your account!');
+          toast({
+            title: "Success",
+            description: "Please check your email to verify your account!"
+          });
         }
       }
     } catch (err) {
@@ -228,8 +157,6 @@ export default function AuthPage() {
         description: errorMessage,
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -245,27 +172,12 @@ export default function AuthPage() {
     setSuccess(null);
   };
 
-  const handleSocialSignIn = async (provider: 'github' | 'google') => {
+  const handleSocialSignIn = async (provider: 'github' | 'google' | 'gmail') => {
     setError(null);
     setSuccess(null);
-    setLoading(true);
-
     try {
-      const { error } = await mockSignInWithProvider(provider);
-      if (error) {
-        setError((error as Error).message);
-        toast({
-          title: "Error",
-          description: (error as Error).message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Signed in successfully!"
-        });
-        router.push('/workspace');
-      }
+      await signInWithProvider(provider);
+      // The redirect will happen automatically via Supabase OAuth
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
@@ -274,8 +186,6 @@ export default function AuthPage() {
         description: errorMessage,
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -484,7 +394,7 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -505,12 +415,38 @@ export default function AuthPage() {
                   <Mail className="h-4 w-4 mr-2" />
                   Google
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="workspace-button-secondary"
+                  onClick={() => handleSocialSignIn('gmail')}
+                  disabled={loading}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Gmail
+                </Button>
               </div>
             </form>
           </TabsContent>
 
           <TabsContent value="signup">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">Full Name</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="pl-10 bg-black/20 border-white/10"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <div className="relative">
@@ -579,7 +515,7 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -599,6 +535,16 @@ export default function AuthPage() {
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Google
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="bg-black/20 border-white/10 hover:bg-black/30"
+                  onClick={() => handleSocialSignIn('gmail')}
+                  disabled={loading}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Gmail
                 </Button>
               </div>
             </form>

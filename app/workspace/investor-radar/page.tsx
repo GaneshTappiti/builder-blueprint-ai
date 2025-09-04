@@ -57,7 +57,7 @@ export default function InvestorRadarPage() {
       // Fallback to database if user is authenticated
       if (user) {
         try {
-          const { data: dbData, error } = await investorRadarHelpers.getInvestors(user.id);
+          const { data: dbData, error } = await investorRadarHelpers.getInvestors();
           if (error) {
             console.warn('Database error:', error);
           } else {
@@ -174,7 +174,7 @@ export default function InvestorRadarPage() {
       const { data, error } = await investorRadarHelpers.createFundingRound({
         ...fundingData,
         user_id: user.id
-      });
+      }, user.id);
 
       if (error) throw error;
 
@@ -201,7 +201,7 @@ export default function InvestorRadarPage() {
         investor_id: investorId,
         user_id: user?.id || '',
         ...contactData
-      });
+      }, user?.id || '');
 
       if (error) throw error;
 
@@ -221,7 +221,7 @@ export default function InvestorRadarPage() {
 
   const handleUpdateInvestorStatus = async (investorId: string, status: InvestorStatus) => {
     try {
-      const { error } = await investorRadarHelpers.updateInvestorStatus(investorId, status);
+      const { error } = await investorRadarHelpers.updateInvestorStatus(investorId, status, user?.id || '');
 
       if (error) {
         console.warn('Database update failed, updating locally only:', error);
@@ -307,35 +307,33 @@ export default function InvestorRadarPage() {
 
           {/* Main Content Container */}
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-
             <TabNavigation 
               activeTab={activeTab}
               onTabChange={setActiveTab}
-            >
-              <TabsContent value="investors" className="mt-4 md:mt-6 animate-fade-in">
-                {loading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-                    <p className="text-gray-400">Loading investors...</p>
-                  </div>
-                ) : (
-                  <InvestorsList
-                    investors={investors}
-                    onLogContact={handleLogContact}
-                    onStatusChange={handleUpdateInvestorStatus}
-                  />
-                )}
-              </TabsContent>
-              <TabsContent value="funding" className="mt-4 md:mt-6 animate-fade-in">
-                <FundingRoundsList 
-                  fundingRounds={fundingRounds} 
-                  onAddFundingRound={handleAddFundingRound}
+            />
+
+            <TabsContent value="investors" className="mt-4 md:mt-6 animate-fade-in">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading investors...</p>
+                </div>
+              ) : (
+                <InvestorsList
+                  investors={investors}
+                  onLogContact={handleLogContact}
+                  onStatusChange={handleUpdateInvestorStatus}
                 />
-              </TabsContent>
-              <TabsContent value="pitchdeck" className="mt-4 md:mt-6 animate-fade-in">
-                <PitchDeckView />
-              </TabsContent>
-            </TabNavigation>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="funding" className="mt-4 md:mt-6 animate-fade-in">
+              <FundingRoundsList />
+            </TabsContent>
+            
+            <TabsContent value="pitchdeck" className="mt-4 md:mt-6 animate-fade-in">
+              <PitchDeckView />
+            </TabsContent>
           </div>
         </div>
       </main>

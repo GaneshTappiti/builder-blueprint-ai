@@ -94,6 +94,20 @@ interface Module {
   badge?: string;
 }
 
+// Brainstorm Ideas Types
+interface BrainstormIdea {
+  id: string;
+  title: string;
+  problem: string;
+  whyNow: string;
+  audience: string;
+  category: string;
+  trendConnection: string;
+  createdAt: string;
+}
+
+type BrainstormCategory = 'WebTech' | 'EduTech' | 'AgriTech' | 'FinTech' | 'HealthTech' | 'ClimateTech' | 'Other';
+
 interface GPTFeature {
   icon: React.ReactNode;
   title: string;
@@ -199,6 +213,14 @@ export default function WorkspacePage() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
+  // Brainstorm Ideas State
+  const [showBrainstorm, setShowBrainstorm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<BrainstormCategory>('WebTech');
+  const [brainstormIdeas, setBrainstormIdeas] = useState<BrainstormIdea[]>([]);
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [savedIdeas, setSavedIdeas] = useState<BrainstormIdea[]>([]);
+  const [savedIdeaIds, setSavedIdeaIds] = useState<Set<string>>(new Set());
+
   const notificationRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -210,14 +232,14 @@ export default function WorkspacePage() {
 
   // User display helpers
   const getUserDisplayName = () => {
-    if (user?.displayName) return user.displayName;
+    if ((user as any)?.displayName) return (user as any).displayName;
     if (user?.email) return user.email.split('@')[0];
     return 'User';
   };
 
   const getUserInitials = () => {
     const name = getUserDisplayName();
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const getUserEmail = () => {
@@ -339,7 +361,7 @@ export default function WorkspacePage() {
 
       // Use real AI service for validation
       const validationResponse = await ai.validateIdea(prompt);
-      const mockValidationText = validationResponse.text;
+      const mockValidationText = (validationResponse as any).text || validationResponse;
 
       // Parse the response to extract structured data
       const validationScore = extractValidationScore(mockValidationText);
@@ -633,9 +655,7 @@ export default function WorkspacePage() {
       icon: <Sparkles className="h-5 w-5 text-yellow-400" />,
       category: 'ideation',
       onClick: () => {
-        // Use AI to brainstorm ideas and show in chat
-        setGptInput("Help me brainstorm 5 innovative startup ideas in trending industries. For each idea, provide: 1) Brief description 2) Target market 3) Key value proposition 4) Potential challenges");
-        setShowResponse(true);
+        setShowBrainstorm(true);
       }
     },
     {
@@ -743,6 +763,176 @@ export default function WorkspacePage() {
       stopLoading('search');
     }
   }, "Failed to perform search");
+
+  // Brainstorm Ideas Functions
+  const generateBrainstormIdeas = withErrorHandling(async (category: BrainstormCategory) => {
+    setIsGeneratingIdeas(true);
+    
+    try {
+      const prompt = `Generate 5 innovative startup ideas in the ${category} category. For each idea, provide:
+1. A catchy title (one-liner)
+2. The specific problem it solves
+3. Why this is the right time (trend connection)
+4. Target audience
+5. Key trend connection
+
+Format the response as JSON with this structure:
+{
+  "ideas": [
+    {
+      "title": "Idea Title",
+      "problem": "Problem description",
+      "whyNow": "Why now explanation",
+      "audience": "Target audience",
+      "trendConnection": "Trend connection"
+    }
+  ]
+}`;
+
+      const response = await ai.generateText(prompt);
+      
+      try {
+        const parsed = JSON.parse(response);
+        const ideas: BrainstormIdea[] = parsed.ideas.map((idea: any, index: number) => ({
+          id: `brainstorm-${Date.now()}-${index}`,
+          title: idea.title,
+          problem: idea.problem,
+          whyNow: idea.whyNow,
+          audience: idea.audience,
+          category: category,
+          trendConnection: idea.trendConnection,
+          createdAt: new Date().toISOString()
+        }));
+        
+        setBrainstormIdeas(ideas);
+        toast({
+          title: "Ideas Generated!",
+          description: `Generated ${ideas.length} fresh ${category} startup ideas`,
+        });
+      } catch (parseError) {
+        // Fallback if JSON parsing fails
+        const fallbackIdeas: BrainstormIdea[] = [
+          {
+            id: `brainstorm-${Date.now()}-1`,
+            title: `AI-Powered ${category} Solution`,
+            problem: "Current solutions lack intelligence and automation",
+            whyNow: "AI adoption is accelerating across industries",
+            audience: `${category} professionals and businesses`,
+            category: category,
+            trendConnection: "AI and automation trends",
+            createdAt: new Date().toISOString()
+          }
+        ];
+        setBrainstormIdeas(fallbackIdeas);
+      }
+    } finally {
+      setIsGeneratingIdeas(false);
+    }
+  }, "Failed to generate brainstorm ideas");
+
+  const saveIdea = withErrorHandling(async (idea: BrainstormIdea) => {
+    try {
+      // Save to idea vault using supabaseHelpers
+      const { data, error } = await supabaseHelpers.createIdea({
+        title: idea.title,
+        description: `**Problem:** ${idea.problem}\n\n**Why Now:** ${idea.whyNow}\n\n**Target Audience:** ${idea.audience}\n\n**Trend Connection:** ${idea.trendConnection}`,
+        category: idea.category.toLowerCase(),
+        tags: ['brainstorm', 'ai-generated', idea.category.toLowerCase()]
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to save idea');
+      }
+
+      // Also add to local saved ideas for UI
+      setSavedIdeas(prev => [...prev, idea]);
+      setSavedIdeaIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(idea.id);
+        return newSet;
+      });
+      
+      toast({
+        title: "Idea Saved to Vault!",
+        description: `"${idea.title}" has been saved to your Idea Vault`,
+      });
+    } catch (error) {
+      // Fallback to local storage if supabase fails
+      setSavedIdeas(prev => [...prev, idea]);
+      setSavedIdeaIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(idea.id);
+        return newSet;
+      });
+      toast({
+        title: "Idea Saved Locally!",
+        description: `"${idea.title}" has been saved locally`,
+      });
+    }
+  }, "Failed to save idea");
+
+  const expandIdea = (idea: BrainstormIdea) => {
+    // Navigate to IdeaForge with the idea details
+    const ideaData = {
+      title: idea.title,
+      description: idea.problem,
+      category: idea.category,
+      targetAudience: idea.audience,
+      whyNow: idea.whyNow,
+      trendConnection: idea.trendConnection
+    };
+    
+    // Store in idea context and navigate
+    setActiveIdea(ideaData as any);
+    setHasActiveIdea(true);
+    setCurrentStep('overview');
+    router.push('/workspace/ideaforge');
+  };
+
+  const regenerateIdeas = () => {
+    // Clear current ideas before regenerating
+    setBrainstormIdeas([]);
+    generateBrainstormIdeas(selectedCategory);
+  };
+
+  const regenerateSpecificIdea = (ideaId: string) => {
+    // Remove the specific idea and generate a new one
+    setBrainstormIdeas(prev => prev.filter(idea => idea.id !== ideaId));
+    generateBrainstormIdeas(selectedCategory);
+  };
+
+  const saveAllIdeas = withErrorHandling(async () => {
+    if (brainstormIdeas.length === 0) return;
+    
+    let savedCount = 0;
+    for (const idea of brainstormIdeas) {
+      try {
+        const { error } = await supabaseHelpers.createIdea({
+          title: idea.title,
+          description: `**Problem:** ${idea.problem}\n\n**Why Now:** ${idea.whyNow}\n\n**Target Audience:** ${idea.audience}\n\n**Trend Connection:** ${idea.trendConnection}`,
+          category: idea.category.toLowerCase(),
+          tags: ['brainstorm', 'ai-generated', idea.category.toLowerCase()]
+        });
+        
+        if (!error) {
+          savedCount++;
+          setSavedIdeas(prev => [...prev, idea]);
+          setSavedIdeaIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(idea.id);
+        return newSet;
+      });
+        }
+      } catch (error) {
+        console.error('Failed to save idea:', idea.title, error);
+      }
+    }
+    
+    toast({
+      title: "Ideas Saved!",
+      description: `${savedCount} out of ${brainstormIdeas.length} ideas saved to your Idea Vault`,
+    });
+  }, "Failed to save some ideas");
 
   // Debounced search
   useEffect(() => {
@@ -1096,7 +1286,7 @@ export default function WorkspacePage() {
                       <Button
                         variant="outline"
                         className="bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/30 hover:border-green-500/50"
-                        onClick={() => setShowQuickStart(true)}
+                        onClick={() => router.push('/workspace/workshop')}
                       >
                         <Sparkles className="h-4 w-4 mr-2" />
                         Quick Start
@@ -1583,6 +1773,265 @@ export default function WorkspacePage() {
                 }
               }}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Brainstorm Ideas Modal */}
+      <Dialog open={showBrainstorm} onOpenChange={setShowBrainstorm}>
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-yellow-400" />
+                  Brainstorm Ideas
+                </h2>
+                <p className="text-gray-400 mt-1">Generate fresh startup ideas based on current trends</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBrainstorm(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+                {/* Left Sidebar - Category Selection & Controls */}
+                <div className="space-y-6 overflow-y-auto">
+                  {/* Category Filter Chips */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Choose Category</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {(['WebTech', 'EduTech', 'AgriTech', 'FinTech', 'HealthTech', 'ClimateTech', 'Other'] as BrainstormCategory[]).map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                            selectedCategory === category
+                              ? 'bg-green-600 text-white shadow-lg shadow-green-600/25'
+                              : 'bg-black/30 border border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Generate Button */}
+                  <div>
+                    <Button
+                      onClick={() => generateBrainstormIdeas(selectedCategory)}
+                      disabled={isGeneratingIdeas}
+                      className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg shadow-green-600/25 h-12 text-base font-semibold"
+                    >
+                      {isGeneratingIdeas ? (
+                        <div className="flex items-center gap-3">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>Generating Ideas...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <Sparkles className="h-5 w-5" />
+                          <span>Generate Ideas</span>
+                        </div>
+                      )}
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      AI will generate 5 fresh {selectedCategory} ideas
+                    </p>
+                  </div>
+
+                  {/* Saved Ideas Panel */}
+                  {savedIdeas.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-3">Saved Ideas ({savedIdeas.length})</h3>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {savedIdeas.map((idea) => (
+                          <div key={idea.id} className="p-3 bg-black/20 rounded-lg border border-white/10 hover:bg-black/30 transition-colors">
+                            <div className="text-sm font-medium text-white truncate mb-1">{idea.title}</div>
+                            <div className="flex items-center justify-between">
+                              <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-500/30 text-xs">
+                                {idea.category}
+                              </Badge>
+                              <button
+                                onClick={() => expandIdea(idea)}
+                                className="text-xs text-green-400 hover:text-green-300"
+                              >
+                                Expand →
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Main Area - Generated Ideas Grid */}
+                <div className="lg:col-span-3 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">
+                        Generated Ideas
+                        {brainstormIdeas.length > 0 && (
+                          <span className="ml-2 text-green-400">({brainstormIdeas.length})</span>
+                        )}
+                      </h3>
+                      <p className="text-gray-400 text-sm mt-1">
+                        {selectedCategory} startup ideas powered by AI and trend analysis
+                      </p>
+                    </div>
+                    {brainstormIdeas.length > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={saveAllIdeas}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          Save All
+                        </Button>
+                        <Button
+                          onClick={regenerateIdeas}
+                          variant="outline"
+                          disabled={isGeneratingIdeas}
+                          className="border-white/20 text-gray-300 hover:bg-white/10"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Regenerate All
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {brainstormIdeas.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                        <Sparkles className="h-12 w-12 text-green-400" />
+                      </div>
+                      <h3 className="text-xl font-medium text-gray-300 mb-2">Ready to brainstorm?</h3>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        Select a category and click "Generate Ideas" to discover fresh startup opportunities
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      {brainstormIdeas.map((idea, index) => (
+                        <Card key={idea.id} className={`bg-gradient-to-br from-black/30 to-black/20 border-white/10 hover:border-white/20 transition-all duration-300 group ${
+                          savedIdeaIds.has(idea.id) ? 'ring-2 ring-green-500/30 bg-green-900/10' : ''
+                        }`}>
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                    {index + 1}
+                                  </div>
+                                  <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-500/30">
+                                    {idea.category}
+                                  </Badge>
+                                  {savedIdeaIds.has(idea.id) && (
+                                    <Badge variant="secondary" className="bg-green-600/30 text-green-300 border-green-500/50">
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      Saved
+                                    </Badge>
+                                  )}
+                                </div>
+                                <CardTitle className="text-white text-lg leading-tight group-hover:text-green-400 transition-colors">
+                                  {idea.title}
+                                </CardTitle>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 bg-red-400 rounded-full"></div>
+                                  Problem
+                                </h4>
+                                <p className="text-gray-400 text-sm leading-relaxed">{idea.problem}</p>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                                  Why Now
+                                </h4>
+                                <p className="text-gray-400 text-sm leading-relaxed">{idea.whyNow}</p>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                                  Target Audience
+                                </h4>
+                                <p className="text-gray-400 text-sm leading-relaxed">{idea.audience}</p>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                                  Trend Connection
+                                </h4>
+                                <p className="text-gray-400 text-sm leading-relaxed">{idea.trendConnection}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 pt-4 border-t border-white/10">
+                              <Button
+                                onClick={() => saveIdea(idea)}
+                                size="sm"
+                                variant="outline"
+                                disabled={savedIdeaIds.has(idea.id)}
+                                className={`flex-1 ${
+                                  savedIdeaIds.has(idea.id)
+                                    ? 'border-green-500/50 text-green-400 bg-green-900/20 cursor-not-allowed'
+                                    : 'border-white/20 text-gray-300 hover:bg-white/10 hover:text-white'
+                                }`}
+                              >
+                                {savedIdeaIds.has(idea.id) ? (
+                                  <>
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Saved
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save to Vault
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                onClick={() => expandIdea(idea)}
+                                size="sm"
+                                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                              >
+                                <ChevronRight className="h-4 w-4 mr-2" />
+                                Expand
+                              </Button>
+                              <Button
+                                onClick={() => regenerateSpecificIdea(idea.id)}
+                                size="sm"
+                                variant="outline"
+                                disabled={isGeneratingIdeas}
+                                className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50"
+                                title="Generate a new idea to replace this one"
+                              >
+                                <Sparkles className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -30,7 +30,8 @@ import WikiView from "@/components/ideaforge/WikiView";
 import BlueprintView from "@/components/ideaforge/BlueprintView";
 import JourneyView from "@/components/ideaforge/JourneyView";
 import FeedbackView from "@/components/ideaforge/FeedbackView";
-import IdeaForgeStorage, { StoredIdea } from "@/utils/ideaforge-storage";
+import IdeaForgeStorage from "@/utils/ideaforge-storage";
+import { StoredIdea } from "@/types/ideaforge";
 import { ideaForgeHelpers } from "@/lib/supabase-connection-helpers";
 import { useAuth } from "@/contexts/AuthContext";
 import ShareIdeaModal from "@/components/ideaforge/ShareIdeaModal";
@@ -85,22 +86,26 @@ const IdeaForgePage = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await ideaForgeHelpers.getIdeas(user.id);
+      const { data, error } = await ideaForgeHelpers.getIdeas();
 
       if (error) throw error;
 
-      const formattedIdeas = data?.map(idea => ({
+      const formattedIdeas = data?.map((idea: any) => ({
         id: idea.id,
         title: idea.title,
         description: idea.description,
+        content: idea.description,
         status: idea.status as IdeaStatus,
         tags: idea.tags || [],
+        favorited: false,
         createdAt: idea.created_at,
         updatedAt: idea.updated_at,
-        wikiContent: idea.wiki_content || '',
-        blueprintData: idea.blueprint_data || {},
-        journeyData: idea.journey_data || {},
-        feedbackData: idea.feedback_data || {}
+        progress: {
+          wiki: 0,
+          blueprint: 0,
+          journey: 0,
+          feedback: 0
+        }
       })) || [];
 
       setIdeas(formattedIdeas);
@@ -144,14 +149,18 @@ const IdeaForgePage = () => {
           id: data.id,
           title: data.title,
           description: data.description,
+          content: data.description, // Use description as content
           status: data.status as IdeaStatus,
           tags: data.tags || [],
+          favorited: false,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
-          wikiContent: '',
-          blueprintData: {},
-          journeyData: {},
-          feedbackData: {}
+          progress: {
+            wiki: 0,
+            blueprint: 0,
+            journey: 0,
+            feedback: 0
+          }
         };
 
         setIdeas(prev => [newIdea, ...prev]);
@@ -502,7 +511,10 @@ const IdeaForgePage = () => {
                           {activeTab === 'wiki' && (
                             <WikiView
                               idea={selectedIdea}
-                              onUpdate={(updates) => handleUpdateIdea(selectedIdea.id, updates)}
+                              onContentUpdate={(sectionId, content) => {
+                                // Handle content update if needed
+                                console.log('Content updated:', sectionId, content);
+                              }}
                             />
                           )}
 
@@ -515,8 +527,17 @@ const IdeaForgePage = () => {
 
                           {activeTab === 'journey' && (
                             <JourneyView
-                              idea={selectedIdea}
-                              onUpdate={(updates) => handleUpdateIdea(selectedIdea.id, updates)}
+                              ideaContext={{
+                                title: selectedIdea.title,
+                                description: selectedIdea.description,
+                                category: selectedIdea.tags[0] || 'General'
+                              }}
+                              onContentUpdate={(sectionId, content) => {
+                                console.log('Journey content updated:', sectionId, content);
+                              }}
+                              onMilestoneUpdate={(milestone) => {
+                                console.log('Milestone updated:', milestone);
+                              }}
                             />
                           )}
 
