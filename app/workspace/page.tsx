@@ -602,16 +602,9 @@ export default function WorkspacePage() {
     {
       id: "ideaforge",
       name: "IdeaForge",
-      description: "Turn ideas into actionable product frameworks",
+      description: "🆕 Turn ideas into actionable product frameworks with AI-powered Business Model Canvas, blueprints, and strategic planning tools.",
       path: "/workspace/idea-forge",
-      icon: "⚙️"
-    },
-    {
-      id: "business-model-canvas",
-      name: "AI Business Model Canvas",
-      description: "🆕 Generate professional Business Model Canvas with AI. Transform your idea into a complete strategic framework across all 9 essential blocks. Export-ready for investors and stakeholders.",
-      path: "/workspace/business-model-canvas",
-      icon: "🎯",
+      icon: "⚙️",
       isNew: true
     },
     {
@@ -668,8 +661,8 @@ export default function WorkspacePage() {
       icon: <FileSpreadsheet className="h-5 w-5 text-blue-400" />,
       category: 'planning',
       onClick: () => {
-        // Navigate to Business Model Canvas
-        router.push('/workspace/business-model-canvas');
+        // Navigate to Idea Forge with BMC tab
+        router.push('/workspace/idea-forge?tab=bmc');
       }
     },
     {

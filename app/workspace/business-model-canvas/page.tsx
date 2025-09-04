@@ -152,9 +152,9 @@ export default function BusinessModelCanvasPage() {
             description: "Redirecting to your canvas...",
           });
 
-          // Redirect to the new page
+          // Redirect to Idea Forge with BMC tab
           setTimeout(() => {
-            router.push(`/bmc/${canvasId}`);
+            router.push('/workspace/idea-forge?tab=bmc');
           }, 1000);
         } else {
           throw new Error(data.error || 'Failed to generate Business Model Canvas');
@@ -172,9 +172,9 @@ export default function BusinessModelCanvasPage() {
           description: "Redirecting to your canvas...",
         });
 
-        // Redirect to the new page
+        // Redirect to Idea Forge with BMC tab
         setTimeout(() => {
-          router.push(`/bmc/${canvasId}`);
+          router.push('/workspace/idea-forge?tab=bmc');
         }, 1000);
       }
     } catch (error) {

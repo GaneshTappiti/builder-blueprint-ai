@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +21,8 @@ import {
   FileText,
   Share2,
   Settings,
-  Menu
+  Menu,
+  Target
 } from "lucide-react";
 import { IdeaInput } from "@/types/ideaforge";
 import NewIdeaModal from "@/components/ideaforge/NewIdeaModal";
@@ -30,6 +31,7 @@ import WikiView from "@/components/ideaforge/WikiView";
 import BlueprintView from "@/components/ideaforge/BlueprintView";
 import JourneyView from "@/components/ideaforge/JourneyView";
 import FeedbackView from "@/components/ideaforge/FeedbackView";
+import BMCView from "@/components/ideaforge/BMCView";
 import IdeaForgeStorage from "@/utils/ideaforge-storage";
 import { StoredIdea } from "@/types/ideaforge";
 import { ideaForgeHelpers } from "@/lib/supabase-connection-helpers";
@@ -39,7 +41,7 @@ import IdeaSummaryModal from "@/components/ideaforge/IdeaSummaryModal";
 
 // IdeaForge Types
 type IdeaStatus = 'draft' | 'researching' | 'validated' | 'building';
-type IdeaForgeTab = 'overview' | 'wiki' | 'blueprint' | 'journey' | 'feedback';
+type IdeaForgeTab = 'overview' | 'wiki' | 'blueprint' | 'journey' | 'feedback' | 'bmc';
 
 interface ExportData {
   idea?: {
@@ -69,6 +71,7 @@ interface ExportData {
 
 const IdeaForgePage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -134,6 +137,14 @@ const IdeaForgePage = () => {
       loadIdeas();
     }
   }, [user]);
+
+  // Handle URL parameters for tab navigation
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['overview', 'wiki', 'blueprint', 'journey', 'feedback', 'bmc'].includes(tab)) {
+      setActiveTab(tab as IdeaForgeTab);
+    }
+  }, [searchParams]);
 
   const handleCreateIdea = async (ideaData: IdeaInput) => {
     if (!user) return;
@@ -257,6 +268,7 @@ const IdeaForgePage = () => {
       case 'blueprint': return <Layers className="h-4 w-4" />;
       case 'journey': return <GitBranch className="h-4 w-4" />;
       case 'feedback': return <MessageSquare className="h-4 w-4" />;
+      case 'bmc': return <Target className="h-4 w-4" />;
       default: return <Lightbulb className="h-4 w-4" />;
     }
   };
@@ -437,7 +449,7 @@ const IdeaForgePage = () => {
                         {/* Tab Navigation */}
                         <div className="border-b border-white/10 mb-6">
                           <div className="flex space-x-8">
-                            {(['overview', 'wiki', 'blueprint', 'journey', 'feedback'] as IdeaForgeTab[]).map((tab) => (
+                            {(['overview', 'wiki', 'blueprint', 'journey', 'feedback', 'bmc'] as IdeaForgeTab[]).map((tab) => (
                               <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -448,7 +460,7 @@ const IdeaForgePage = () => {
                                 }`}
                               >
                                 {getTabIcon(tab)}
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                {tab === 'bmc' ? 'BMC' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                               </button>
                             ))}
                           </div>
@@ -562,6 +574,13 @@ const IdeaForgePage = () => {
 
                           {activeTab === 'feedback' && (
                             <FeedbackView
+                              idea={selectedIdea}
+                              onUpdate={(updates) => handleUpdateIdea(selectedIdea.id, updates)}
+                            />
+                          )}
+
+                          {activeTab === 'bmc' && (
+                            <BMCView
                               idea={selectedIdea}
                               onUpdate={(updates) => handleUpdateIdea(selectedIdea.id, updates)}
                             />
