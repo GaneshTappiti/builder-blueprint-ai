@@ -22,7 +22,12 @@ import {
   Share2,
   Settings,
   Menu,
-  Target
+  Target,
+  TrendingUp,
+  CheckCircle,
+  Calendar,
+  RefreshCw,
+  Tag
 } from "lucide-react";
 import { IdeaInput } from "@/types/ideaforge";
 import NewIdeaModal from "@/components/ideaforge/NewIdeaModal";
@@ -473,29 +478,58 @@ const IdeaForgePage = () => {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <Card className="bg-black/40 backdrop-blur-sm border-white/10">
                                   <CardContent className="p-4">
-                                    <h4 className="font-semibold text-white mb-2">Quick Stats</h4>
-                                    <div className="space-y-2 text-sm">
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-400">Status:</span>
-                                        <Badge className={getStatusColor(selectedIdea.status)}>
-                                          {selectedIdea.status}
+                                    <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                                      <TrendingUp className="h-4 w-4 text-green-400" />
+                                      Quick Stats
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <CheckCircle className="h-3 w-3 text-green-400" />
+                                          <span className="text-gray-400 text-xs">Status</span>
+                                        </div>
+                                        <Badge className={`${getStatusColor(selectedIdea.status)} text-xs`}>
+                                          {selectedIdea.status || 'Draft'}
                                         </Badge>
                                       </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-400">Created:</span>
-                                        <span className="text-white">
-                                          {new Date(selectedIdea.createdAt).toLocaleDateString()}
+                                      
+                                      <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <Calendar className="h-3 w-3 text-blue-400" />
+                                          <span className="text-gray-400 text-xs">Created</span>
+                                        </div>
+                                        <span className="text-white text-sm font-mono">
+                                          {new Date(selectedIdea.createdAt).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                          })}
                                         </span>
                                       </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-400">Last Updated:</span>
-                                        <span className="text-white">
-                                          {new Date(selectedIdea.updatedAt).toLocaleDateString()}
+                                      
+                                      <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <RefreshCw className="h-3 w-3 text-purple-400" />
+                                          <span className="text-gray-400 text-xs">Last Updated</span>
+                                        </div>
+                                        <span className="text-white text-sm font-mono">
+                                          {new Date(selectedIdea.updatedAt).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric'
+                                          })}
                                         </span>
                                       </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-400">Tags:</span>
-                                        <span className="text-white">{selectedIdea.tags.length}</span>
+                                      
+                                      <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <Tag className="h-3 w-3 text-yellow-400" />
+                                          <span className="text-gray-400 text-xs">Tags</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-2xl font-bold text-yellow-400">{selectedIdea.tags.length}</span>
+                                          <span className="text-gray-300 text-xs">categories</span>
+                                        </div>
                                       </div>
                                     </div>
                                   </CardContent>
@@ -503,34 +537,37 @@ const IdeaForgePage = () => {
 
                                 <Card className="bg-black/40 backdrop-blur-sm border-white/10">
                                   <CardContent className="p-4">
-                                    <h4 className="font-semibold text-white mb-2">Quick Actions</h4>
-                                    <div className="space-y-2">
+                                    <h4 className="font-semibold text-white mb-4 flex items-center gap-2">
+                                      <Rocket className="h-4 w-4 text-green-400" />
+                                      Quick Actions
+                                    </h4>
+                                    <div className="space-y-3">
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full justify-start border-white/20 bg-white/5 hover:bg-white/10 text-white hover:text-white"
+                                        className="w-full justify-start border-blue-500/30 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300"
                                         onClick={() => setActiveTab('wiki')}
                                       >
                                         <BookOpen className="h-4 w-4 mr-2" />
-                                        Edit Wiki
+                                        📊 Edit Wiki
                                       </Button>
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full justify-start border-white/20 bg-white/5 hover:bg-white/10 text-white hover:text-white"
+                                        className="w-full justify-start border-green-500/30 bg-green-600/10 hover:bg-green-600/20 text-green-400 hover:text-green-300"
                                         onClick={() => setActiveTab('blueprint')}
                                       >
                                         <Layers className="h-4 w-4 mr-2" />
-                                        View Blueprint
+                                        🛠️ View Blueprint
                                       </Button>
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full justify-start border-white/20 bg-white/5 hover:bg-white/10 text-white hover:text-white"
+                                        className="w-full justify-start border-purple-500/30 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 hover:text-purple-300"
                                         onClick={() => setActiveTab('journey')}
                                       >
                                         <GitBranch className="h-4 w-4 mr-2" />
-                                        Track Progress
+                                        📈 Track Progress
                                       </Button>
                                     </div>
                                   </CardContent>

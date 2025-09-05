@@ -6,7 +6,7 @@ The Business Model Canvas feature has been restructured to provide a cleaner UX 
 
 ## New Flow
 
-### 1. Generation Page (`/workspace/business-model-canvas`)
+### 1. Generation Page (`/workspace/idea-forge?tab=bmc`)
 - **Purpose**: Input form and generation process
 - **Features**:
   - Mobile-first responsive design
@@ -27,7 +27,7 @@ The Business Model Canvas feature has been restructured to provide a cleaner UX 
 ## User Journey
 
 ```
-1. User visits /workspace/business-model-canvas
+1. User visits /workspace/idea-forge?tab=bmc
 2. Fills out business idea form
 3. Clicks "Generate Business Model Canvas"
 4. Sees enhanced progress with deduplication steps

@@ -76,7 +76,7 @@ export default function LandingPage() {
               </div>
               <div className="flex-shrink-0">
                 <Button asChild className="bg-green-600 hover:bg-green-700 text-white px-6 py-3">
-                  <Link href="/workspace/business-model-canvas">
+                  <Link href="/workspace/idea-forge?tab=bmc">
                     <Target className="mr-2 h-4 w-4" />
                     Try BMC Generator
                     <ArrowRight className="ml-2 h-4 w-4" />

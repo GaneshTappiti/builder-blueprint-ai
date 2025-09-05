@@ -30,7 +30,6 @@ import WikiView from "@/components/ideaforge/WikiView";
 import BlueprintView from "@/components/ideaforge/BlueprintView";
 
 import FeedbackView from "@/components/ideaforge/FeedbackView";
-import IdeaOverview from "@/components/ideaforge/IdeaOverview";
 import IdeaSummaryModal from "@/components/ideaforge/IdeaSummaryModal";
 import ShareIdeaModal from "@/components/ideaforge/ShareIdeaModal";
 
@@ -42,7 +41,10 @@ export default function IdeaForgePage() {
   // State management
   const [ideas, setIdeas] = useState<StoredIdea[]>([]);
   const [currentIdea, setCurrentIdea] = useState<StoredIdea | null>(null);
-  const [activeTab, setActiveTab] = useState<IdeaForgeTab>('overview');
+  
+  // Get tab from URL parameters, default to 'overview'
+  const tabParam = searchParams?.get('tab') as IdeaForgeTab;
+  const [activeTab, setActiveTab] = useState<IdeaForgeTab>(tabParam || 'overview');
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showNewIdeaModal, setShowNewIdeaModal] = useState(false);
@@ -100,6 +102,23 @@ export default function IdeaForgePage() {
       setLoading(false);
     }, 1000);
   }, []);
+
+  // Handle tab changes from URL parameters
+  useEffect(() => {
+    const tabParam = searchParams?.get('tab') as IdeaForgeTab;
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, activeTab]);
+
+  // Wrapper function to handle tab changes with URL updates
+  const handleTabChange = (tab: IdeaForgeTab) => {
+    setActiveTab(tab);
+    // Update URL to maintain consistency
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('tab', tab);
+    window.history.replaceState({}, '', currentUrl.toString());
+  };
 
   // Handle URL params and set current idea
   useEffect(() => {
@@ -335,7 +354,7 @@ export default function IdeaForgePage() {
                   {sidebarItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => handleTabChange(item.id)}
                       className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all relative whitespace-nowrap ${
                         activeTab === item.id
                           ? 'bg-green-600 text-white shadow-lg'
@@ -369,7 +388,7 @@ export default function IdeaForgePage() {
                       ));
                       setCurrentIdea(prev => prev ? { ...prev, ...updates } : null);
                     }}
-                    onNavigateToTab={(tab) => setActiveTab(tab as IdeaForgeTab)}
+                    onNavigateToTab={(tab) => handleTabChange(tab as IdeaForgeTab)}
                     onAddNote={() => {
                       toast({
                         title: "Add Note",

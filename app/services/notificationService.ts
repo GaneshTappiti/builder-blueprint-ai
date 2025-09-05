@@ -82,7 +82,7 @@ class NotificationService {
         type: 'info',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        actionUrl: '/workspace/business-model-canvas',
+        actionUrl: '/workspace/idea-forge?tab=bmc',
         actionText: 'Try Now'
       },
       {

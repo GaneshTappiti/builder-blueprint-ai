@@ -207,7 +207,7 @@ Generate an improved version of [BLOCK_NAME] that:
 ## 🔧 How to Use
 
 ### Step 1: Access the Feature
-Navigate to `/workspace/business-model-canvas` from your workspace dashboard.
+Navigate to `/workspace/idea-forge?tab=bmc` from your workspace dashboard.
 
 ### Step 2: Provide Input
 - **App Idea**: Describe your business concept (minimum 50 characters)

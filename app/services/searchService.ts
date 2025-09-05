@@ -49,7 +49,7 @@ class SearchService {
       title: "AI Business Model Canvas",
       description: "Generate professional Business Model Canvas with AI",
       type: "module" as const,
-      path: "/workspace/business-model-canvas",
+      path: "/workspace/idea-forge?tab=bmc",
       icon: "🎯",
       keywords: ["business", "model", "canvas", "ai", "generate", "professional", "framework"]
     },
@@ -183,7 +183,7 @@ class SearchService {
         title: "Create Business Model Canvas",
         description: "Generate a business model canvas with AI",
         type: "action" as const,
-        path: "/workspace/business-model-canvas",
+        path: "/workspace/idea-forge?tab=bmc",
         icon: "🎯"
       },
       {
