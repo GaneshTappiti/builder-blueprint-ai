@@ -26,6 +26,7 @@ import {
 import { IdeaInput, StoredIdea, IdeaStatus, IdeaForgeTab, IdeaForgeSidebarItem } from "@/types/ideaforge";
 import NewIdeaModal from "@/components/ideaforge/NewIdeaModal";
 import IdeaEmptyState from "@/components/ideaforge/IdeaEmptyState";
+import IdeaOverview from "@/components/ideaforge/IdeaOverview";
 import WikiView from "@/components/ideaforge/WikiView";
 import BlueprintView from "@/components/ideaforge/BlueprintView";
 

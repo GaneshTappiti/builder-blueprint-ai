@@ -45,16 +45,16 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
   const [generationStep, setGenerationStep] = useState('');
   const [showForm, setShowForm] = useState(false);
   
-  // Form state
+  // Form state - initialize with idea data
   const [appIdea, setAppIdea] = useState(idea.title || '');
   const [industry, setIndustry] = useState('');
   const [targetMarket, setTargetMarket] = useState('');
   const [businessType, setBusinessType] = useState<'b2b' | 'b2c' | 'b2b2c'>('b2c');
-  const [additionalContext, setAdditionalContext] = useState('');
+  const [additionalContext, setAdditionalContext] = useState(idea.description || '');
 
-  // Load existing BMC if available
+  // Load existing BMC if available, or auto-generate if needed
   useEffect(() => {
-    const loadExistingBMC = () => {
+    const loadExistingBMC = async () => {
       try {
         // Check if there's an existing BMC for this idea
         const bmcKey = `bmc-${idea.id}`;
@@ -72,7 +72,8 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
             setCanvas(loadedCanvas);
             setShowForm(false);
           } else {
-            setShowForm(true);
+            // Auto-generate BMC based on the idea
+            await autoGenerateBMC();
           }
         }
       } catch (error) {
@@ -83,6 +84,160 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
 
     loadExistingBMC();
   }, [idea.id]);
+
+  // Auto-generate BMC based on the idea description
+  const autoGenerateBMC = async () => {
+    if (!idea.title || !idea.description) {
+      setShowForm(true);
+      return;
+    }
+
+    // Set initial form values from the idea
+    setAppIdea(idea.title);
+    
+    // Auto-detect industry and business type from description if possible
+    const description = idea.description.toLowerCase();
+    
+    // Simple industry detection
+    if (description.includes('fintech') || description.includes('finance') || description.includes('payment')) {
+      setIndustry('FinTech');
+    } else if (description.includes('health') || description.includes('medical') || description.includes('wellness')) {
+      setIndustry('HealthTech');
+    } else if (description.includes('education') || description.includes('learning') || description.includes('edtech')) {
+      setIndustry('EdTech');
+    } else if (description.includes('ecommerce') || description.includes('retail') || description.includes('shopping')) {
+      setIndustry('E-commerce');
+    } else if (description.includes('saas') || description.includes('software') || description.includes('platform')) {
+      setIndustry('SaaS');
+    }
+
+    // Auto-detect business type
+    if (description.includes('business') || description.includes('enterprise') || description.includes('b2b')) {
+      setBusinessType('b2b');
+    } else if (description.includes('marketplace') || description.includes('platform connecting')) {
+      setBusinessType('b2b2c');
+    } else {
+      setBusinessType('b2c');
+    }
+
+    setAdditionalContext(idea.description);
+
+    // Automatically trigger generation
+    setIsGenerating(true);
+    setGenerationProgress(0);
+    setGenerationStep('Auto-generating Business Model Canvas...');
+
+    // Enhanced progress simulation with steps
+    const progressSteps = [
+      { progress: 10, step: 'Analyzing business idea...' },
+      { progress: 25, step: 'Generating customer segments...' },
+      { progress: 40, step: 'Creating value proposition...' },
+      { progress: 55, step: 'Defining channels and relationships...' },
+      { progress: 70, step: 'Structuring revenue and costs...' },
+      { progress: 85, step: 'Checking for content duplication...' },
+      { progress: 95, step: 'Finalizing business model canvas...' }
+    ];
+
+    let stepIndex = 0;
+    const progressInterval = setInterval(() => {
+      if (stepIndex < progressSteps.length) {
+        const currentStep = progressSteps[stepIndex];
+        setGenerationProgress(currentStep.progress);
+        setGenerationStep(currentStep.step);
+        stepIndex++;
+      }
+    }, 800);
+
+    try {
+      const request: BMCGenerationRequest = {
+        appIdea: idea.title,
+        industry: industry || undefined,
+        targetMarket: targetMarket || undefined,
+        businessType,
+        additionalContext: idea.description
+      };
+
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'business-model-canvas',
+          prompt: JSON.stringify(request)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      clearInterval(progressInterval);
+      setGenerationProgress(100);
+
+      if (!data.success) {
+        // Even if AI failed, we might have fallback content
+        if (data.data?.canvas) {
+          const canvas = data.data.canvas;
+          const canvasId = canvas.id || `bmc_${Date.now()}`;
+
+          // Save canvas to localStorage
+          localStorage.setItem(`bmc-${idea.id}`, JSON.stringify(canvas));
+          localStorage.setItem('bmc-canvas', JSON.stringify(canvas));
+
+          setCanvas(canvas);
+          setShowForm(false);
+
+          toast({
+            title: "Business Model Canvas Auto-Generated",
+            description: "Your canvas has been generated based on your idea.",
+          });
+        } else {
+          throw new Error(data.error || 'Failed to auto-generate Business Model Canvas');
+        }
+      } else {
+        const canvas = data.data.canvas;
+        const canvasId = canvas.id || `bmc_${Date.now()}`;
+
+        // Save canvas to localStorage
+        localStorage.setItem(`bmc-${idea.id}`, JSON.stringify(canvas));
+        localStorage.setItem('bmc-canvas', JSON.stringify(canvas));
+
+        setCanvas(canvas);
+        setShowForm(false);
+
+        toast({
+          title: "Business Model Canvas Auto-Generated!",
+          description: "Your canvas has been automatically generated based on your idea.",
+        });
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Error auto-generating BMC:', error);
+      
+      // Don't show error toast immediately, just fall back to manual form
+      setShowForm(true);
+      
+      // Only show error if this was a manual retry
+      if (idea.title && idea.description) {
+        console.log('Auto-generation failed, falling back to manual form');
+      } else {
+        toast({
+          title: "Auto-Generation Failed",
+          description: "Failed to auto-generate canvas. You can create one manually.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsGenerating(false);
+      setTimeout(() => {
+        setGenerationProgress(0);
+        setGenerationStep('');
+      }, 1000);
+    }
+  };
 
   const handleGenerate = async () => {
     const trimmedIdea = appIdea.trim();
@@ -310,11 +465,24 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
             <div className="p-4 rounded-full bg-green-600/20 border border-green-500/30">
               <Target className="h-10 w-10 text-green-400" />
             </div>
-            <h2 className="text-2xl font-bold text-white">Generate Business Model Canvas</h2>
+            <h2 className="text-2xl font-bold text-white">Customize Business Model Canvas</h2>
           </div>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            Transform your idea into a complete, professional Business Model Canvas with AI-powered insights.
+            Provide additional details to customize your Business Model Canvas generation.
           </p>
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowForm(false);
+                autoGenerateBMC();
+              }}
+              className="border-green-400/30 text-green-400 hover:bg-green-400/10"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Auto-Generate Instead
+            </Button>
+          </div>
         </div>
 
         {/* Input Form */}
@@ -458,6 +626,35 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
   }
 
   if (!canvas) {
+    // Show loading state if we're generating
+    if (isGenerating) {
+      return (
+        <div className="text-center py-16 space-y-6">
+          <div className="bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+            <Target className="h-12 w-12 text-green-400" />
+          </div>
+          <h3 className="text-xl font-medium text-white mb-2">Auto-Generating Business Model Canvas</h3>
+          <p className="text-gray-400 max-w-md mx-auto mb-6">
+            Creating a comprehensive Business Model Canvas based on your idea...
+          </p>
+          <div className="space-y-3 max-w-md mx-auto">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-white font-medium">
+                {generationStep || 'Generating your Business Model Canvas...'}
+              </span>
+              <span className="text-gray-400 font-mono">{Math.round(generationProgress)}%</span>
+            </div>
+            <Progress value={generationProgress} className="h-3" />
+            {generationProgress >= 85 && generationProgress < 100 && (
+              <div className="text-center text-xs text-green-400 animate-pulse">
+                ✨ Applying deduplication for professional quality
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="text-center py-16">
         <div className="bg-gradient-to-br from-green-600/20 to-blue-600/20 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
@@ -467,13 +664,23 @@ export default function BMCView({ idea, onUpdate }: BMCViewProps) {
         <p className="text-gray-500 max-w-md mx-auto mb-6">
           Generate a comprehensive Business Model Canvas for your idea to visualize your business strategy.
         </p>
-        <Button
-          onClick={() => setShowForm(true)}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Generate Canvas
-        </Button>
+        <div className="flex gap-3 justify-center">
+          <Button
+            onClick={() => autoGenerateBMC()}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Auto-Generate from Idea
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowForm(true)}
+            className="border-white/20 text-gray-300 hover:bg-white/10"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Manual Setup
+          </Button>
+        </div>
       </div>
     );
   }

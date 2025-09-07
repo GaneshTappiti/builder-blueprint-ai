@@ -29,10 +29,20 @@ export default function AuthGuard({
   const searchParams = useSearchParams();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  // Check if we're in development mode and should bypass auth
+  const isDevelopmentMode = process.env.NODE_ENV === 'development' || 
+                           process.env.NEXT_PUBLIC_DEVELOPMENT_MODE === 'true' ||
+                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+
   // Get redirect URL from search params
   const redirectUrl = searchParams.get('redirectTo') || redirectTo;
 
   useEffect(() => {
+    // Skip auth checks in development mode
+    if (isDevelopmentMode) {
+      return;
+    }
+    
     if (!loading && requireAuth && !user) {
       setIsRedirecting(true);
       // Small delay to show loading state
@@ -40,10 +50,10 @@ export default function AuthGuard({
         router.push(redirectUrl);
       }, 1000);
     }
-  }, [user, loading, requireAuth, redirectUrl, router]);
+  }, [user, loading, requireAuth, redirectUrl, router, isDevelopmentMode]);
 
-  // Show loading while checking auth
-  if (loading) {
+  // Show loading while checking auth (skip in development mode)
+  if (loading && !isDevelopmentMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
         <LoadingSpinner size="lg" text="Checking authentication..." />
@@ -51,8 +61,8 @@ export default function AuthGuard({
     );
   }
 
-  // Show redirecting state
-  if (isRedirecting) {
+  // Show redirecting state (skip in development mode)
+  if (isRedirecting && !isDevelopmentMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
         <div className="text-center space-y-4">
@@ -63,8 +73,8 @@ export default function AuthGuard({
     );
   }
 
-  // If auth is required and user is not logged in, show fallback or redirect
-  if (requireAuth && !user) {
+  // If auth is required and user is not logged in, show fallback or redirect (skip in development mode)
+  if (requireAuth && !user && !isDevelopmentMode) {
     if (fallback) {
       return <>{fallback}</>;
     }
@@ -111,8 +121,8 @@ export default function AuthGuard({
     );
   }
 
-  // Check role-based access if specified
-  if (requireAuth && user && allowedRoles.length > 0) {
+  // Check role-based access if specified (skip in development mode)
+  if (requireAuth && user && allowedRoles.length > 0 && !isDevelopmentMode) {
     const userRole = user.role || 'user'; // Assuming role is stored in user object
     if (!allowedRoles.includes(userRole)) {
       return (

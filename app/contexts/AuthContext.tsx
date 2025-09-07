@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -36,8 +36,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Check if we're in development mode and should bypass auth
+  const isDevelopmentMode = process.env.NODE_ENV === 'development' || 
+                           process.env.NEXT_PUBLIC_DEVELOPMENT_MODE === 'true' ||
+                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+
   // Initialize auth state and listen for changes
   useEffect(() => {
+    // If in development mode, set a mock user and skip auth
+    if (isDevelopmentMode) {
+      console.log('🔧 Development mode: Bypassing authentication');
+      setUser({
+        id: 'dev-user-123',
+        email: 'dev@example.com',
+        name: 'Development User',
+        avatar_url: undefined,
+        role: 'user',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -66,38 +87,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
-            avatar_url: session.user.user_metadata?.avatar_url,
-            role: session.user.user_metadata?.role || 'user',
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at
-          });
-          
-          // Redirect to workspace after successful authentication
-          if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirectTo = urlParams.get('redirectTo') || '/workspace';
-            router.push(redirectTo);
+    // Listen for auth changes (only if not in development mode)
+    if (!isDevelopmentMode) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (session?.user) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'User',
+              avatar_url: session.user.user_metadata?.avatar_url,
+              role: session.user.user_metadata?.role || 'user',
+              created_at: session.user.created_at,
+              updated_at: session.user.updated_at
+            });
+            
+            // Redirect to workspace after successful authentication
+            if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
+              const urlParams = new URLSearchParams(window.location.search);
+              const redirectTo = urlParams.get('redirectTo') || '/workspace';
+              router.push(redirectTo);
+            }
+          } else {
+            setUser(null);
           }
-        } else {
-          setUser(null);
+          setLoading(false);
+          setError(null); // Clear any previous errors on successful auth change
         }
-        setLoading(false);
-        setError(null); // Clear any previous errors on successful auth change
-      }
-    );
+      );
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (isDevelopmentMode) {
+      console.log('🔧 Development mode: Sign in bypassed');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -119,6 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (isDevelopmentMode) {
+      console.log('🔧 Development mode: Sign out bypassed');
+      setUser(null);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
