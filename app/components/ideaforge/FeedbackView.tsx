@@ -8,9 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIdeaForgePersistence } from "@/hooks/useIdeaForgePersistence";
-import { FeedbackItem } from "@/utils/ideaforge-persistence";
+import { FeedbackItem, FeedbackReply } from "@/utils/ideaforge-persistence";
 import { aiEngine } from "@/services/aiEngine";
 import { useToast } from "@/hooks/use-toast";
+import { FeedbackRating } from "./RatingSystem";
+import { FeedbackCard } from "./ThreadedReplies";
 import {
   MessageSquare,
   ThumbsUp,
@@ -98,6 +100,8 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ idea, onUpdate }) => {
   const [newFeedback, setNewFeedback] = useState('');
   const [feedbackType, setFeedbackType] = useState<'positive' | 'negative' | 'suggestion'>('positive');
   const [newAuthor, setNewAuthor] = useState('');
+  const [newRating, setNewRating] = useState<number>(0);
+  const [newEmojiReaction, setNewEmojiReaction] = useState<'❤️' | '😊' | '😐' | '👎' | '😡' | undefined>(undefined);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   
@@ -125,12 +129,17 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ idea, onUpdate }) => {
       content: newFeedback.trim(),
       type: feedbackType,
       timestamp: new Date().toISOString(),
-      likes: 0
+      likes: 0,
+      rating: newRating > 0 ? newRating : undefined,
+      emojiReaction: newEmojiReaction,
+      replies: []
     });
 
     setNewFeedback('');
     setNewAuthor('');
     setFeedbackType('positive');
+    setNewRating(0);
+    setNewEmojiReaction(undefined);
   };
 
   const handleLikeFeedback = (feedbackId: string) => {
@@ -144,6 +153,48 @@ const FeedbackView: React.FC<FeedbackViewProps> = ({ idea, onUpdate }) => {
     if (confirm('Are you sure you want to delete this feedback?')) {
       deleteFeedback(feedbackId);
     }
+  };
+
+  const handleAddReply = (parentId: string, content: string, author: string) => {
+    const parentFeedback = feedback.find(f => f.id === parentId);
+    if (!parentFeedback) return;
+
+    const newReply: FeedbackReply = {
+      id: Date.now().toString(),
+      author: author,
+      content: content,
+      timestamp: new Date().toISOString(),
+      likes: 0,
+      parentId: parentId
+    };
+
+    const updatedReplies = [...(parentFeedback.replies || []), newReply];
+    updateFeedback(parentId, { replies: updatedReplies });
+  };
+
+  const handleLikeReply = (replyId: string) => {
+    // Find the parent feedback item
+    const parentFeedback = feedback.find(f => f.replies?.some(r => r.id === replyId));
+    if (!parentFeedback) return;
+
+    const updatedReplies = parentFeedback.replies?.map(reply => 
+      reply.id === replyId 
+        ? { ...reply, likes: reply.likes + 1 }
+        : reply
+    ) || [];
+
+    updateFeedback(parentFeedback.id, { replies: updatedReplies });
+  };
+
+  const handleDeleteReply = (replyId: string) => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+
+    // Find the parent feedback item
+    const parentFeedback = feedback.find(f => f.replies?.some(r => r.id === replyId));
+    if (!parentFeedback) return;
+
+    const updatedReplies = parentFeedback.replies?.filter(reply => reply.id !== replyId) || [];
+    updateFeedback(parentFeedback.id, { replies: updatedReplies });
   };
 
   const getFeedbackIcon = (type: string) => {
@@ -1196,6 +1247,17 @@ Respond ONLY in this JSON format (no additional text, no markdown, just pure JSO
                   />
                 </div>
 
+                {/* Rating System */}
+                <div className="bg-black/20 border border-white/10 rounded-lg p-4">
+                  <FeedbackRating
+                    rating={newRating}
+                    emojiReaction={newEmojiReaction}
+                    onRatingChange={setNewRating}
+                    onEmojiChange={setNewEmojiReaction}
+                    showBoth={true}
+                  />
+                </div>
+
                 <Button
                   onClick={handleSubmitFeedback}
                   disabled={!newFeedback.trim() || !newAuthor.trim()}
@@ -1228,51 +1290,16 @@ Respond ONLY in this JSON format (no additional text, no markdown, just pure JSO
                 feedback
                   .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                   .map((item) => (
-                    <Card key={item.id} className="bg-black/40 backdrop-blur-sm border-white/10 hover:bg-black/50 transition-all">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-green-600 text-white text-sm">
-                              {item.author.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-white">{item.author}</span>
-                              <Badge className={getFeedbackBadgeColor(item.type)}>
-                                {getFeedbackIcon(item.type)}
-                                <span className="ml-1 capitalize">{item.type}</span>
-                              </Badge>
-                              <span className="text-sm text-gray-400">{formatDate(item.timestamp)}</span>
-                            </div>
-
-                            <p className="text-gray-300">{item.content}</p>
-
-                            <div className="flex items-center gap-4">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleLikeFeedback(item.id)}
-                                className="text-gray-400 hover:text-green-400 hover:bg-green-600/10"
-                              >
-                                <ThumbsUp className="h-4 w-4 mr-1" />
-                                {item.likes}
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleDeleteFeedback(item.id)}
-                                className="text-gray-400 hover:text-red-400 hover:bg-red-600/10"
-                              >
-                                <Reply className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <FeedbackCard
+                      key={item.id}
+                      feedback={item}
+                      onLike={handleLikeFeedback}
+                      onDelete={handleDeleteFeedback}
+                      onAddReply={handleAddReply}
+                      onLikeReply={handleLikeReply}
+                      onDeleteReply={handleDeleteReply}
+                      showReplies={true}
+                    />
                   ))
               )}
             </div>

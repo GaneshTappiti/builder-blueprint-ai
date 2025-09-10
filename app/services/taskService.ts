@@ -64,7 +64,19 @@ class TaskService {
       }));
     } catch (error) {
       console.error('Failed to load tasks from Supabase:', error);
-      this.tasks = [];
+      // Add some sample data for testing when database is not available
+      this.tasks = [
+        {
+          id: 'sample-task-1',
+          title: 'Sample Task 1',
+          description: 'A sample task to demonstrate the interface',
+          status: 'todo' as const,
+          priority: 'high' as const,
+          user_id: 'sample-user',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
     }
   }
 

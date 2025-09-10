@@ -44,6 +44,18 @@ export interface FeedbackItem {
   type: 'positive' | 'negative' | 'suggestion';
   timestamp: string;
   likes: number;
+  rating?: number; // 1-5 star rating
+  emojiReaction?: '❤️' | '😊' | '😐' | '👎' | '😡'; // emoji reaction
+  replies?: FeedbackReply[];
+}
+
+export interface FeedbackReply {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  parentId: string; // ID of the parent feedback item
 }
 
 export interface IdeaForgeData {

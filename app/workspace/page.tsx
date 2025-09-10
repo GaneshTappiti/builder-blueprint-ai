@@ -165,6 +165,7 @@ export default function WorkspacePage() {
     markAsRead,
     markAllAsRead,
     removeNotification,
+    addNotification,
     formatTimeAgo
   } = useNotifications();
 
@@ -237,23 +238,26 @@ export default function WorkspacePage() {
   // Click outside handlers for dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
         setShowNotifications(false);
       }
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+      if (settingsRef.current && !settingsRef.current.contains(target)) {
         setShowSettings(false);
       }
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      if (profileRef.current && !profileRef.current.contains(target)) {
         setShowProfile(false);
       }
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (searchRef.current && !searchRef.current.contains(target)) {
         setShowSearchResults(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Use capture phase to ensure we catch the event before it bubbles
+    document.addEventListener('mousedown', handleClickOutside, true);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, []);
 
@@ -568,6 +572,10 @@ export default function WorkspacePage() {
     isOverdue: task.dueDate ? formatDueDate(task.dueDate).isOverdue : false
   }));
 
+  // Debug logging
+  console.log('🔥 Recent Projects:', recentProjects);
+  console.log('🔥 Recent Tasks:', recentTaskItems);
+
   const modules: Module[] = [
     {
       id: "workshop",
@@ -713,10 +721,12 @@ export default function WorkspacePage() {
 
 
   const handleViewAllProjects = () => {
+    console.log('🔥 handleViewAllProjects called - navigating to idea-vault');
     router.push('/workspace/idea-vault');
   };
 
   const handleViewAllTasks = () => {
+    console.log('🔥 handleViewAllTasks called - navigating to task-planner');
     router.push('/workspace/task-planner');
   };
 
@@ -980,9 +990,11 @@ Format the response as JSON with this structure:
   };
 
   const handleNotificationClick = (notificationId: string) => {
+    console.log('🔥 Notification clicked:', notificationId);
     markAsRead(notificationId);
     const notification = notifications.find(n => n.id === notificationId);
     if (notification?.actionUrl) {
+      console.log('🔥 Navigating to:', notification.actionUrl);
       router.push(notification.actionUrl);
     }
     setShowNotifications(false);
@@ -993,6 +1005,20 @@ Format the response as JSON with this structure:
     toast({
       title: "Notifications",
       description: "All notifications marked as read",
+    });
+  };
+
+  const handleTestNotification = () => {
+    addNotification({
+      title: 'Test Notification',
+      message: 'This is a test notification to verify the system is working.',
+      type: 'info',
+      actionUrl: '/workspace/idea-vault',
+      actionText: 'View Ideas'
+    });
+    toast({
+      title: "Test Notification",
+      description: "A test notification has been added",
     });
   };
 
@@ -1076,7 +1102,10 @@ Format the response as JSON with this structure:
                     variant="ghost"
                     size="icon"
                     className="text-gray-400 hover:text-white hover:bg-black/30 relative"
-                    onClick={() => setShowNotifications((v) => !v)}
+                    onClick={() => {
+                      console.log('🔥 Notification button clicked, current state:', showNotifications);
+                      setShowNotifications((v) => !v);
+                    }}
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
@@ -1093,16 +1122,26 @@ Format the response as JSON with this structure:
                           {unreadCount > 0 && (
                             <span className="text-xs text-green-400 font-medium">{unreadCount} new</span>
                           )}
-                          {notifications.length > 0 && (
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={handleMarkAllRead}
-                              className="text-xs text-gray-400 hover:text-white h-6 px-2"
+                              onClick={handleTestNotification}
+                              className="text-xs text-blue-400 hover:text-blue-300 h-6 px-2"
                             >
-                              Mark all read
+                              Test
                             </Button>
-                          )}
+                            {notifications.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleMarkAllRead}
+                                className="text-xs text-gray-400 hover:text-white h-6 px-2"
+                              >
+                                Mark all read
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="overflow-y-auto max-h-64">
@@ -1553,7 +1592,10 @@ Format the response as JSON with this structure:
                             variant="ghost"
                             size="sm"
                             className="text-green-400 hover:text-green-300 mt-2"
-                            onClick={handleViewAllProjects}
+                            onClick={() => {
+                              console.log('🔥 Create first project button clicked');
+                              handleViewAllProjects();
+                            }}
                           >
                             Create your first project
                           </Button>
@@ -1625,7 +1667,10 @@ Format the response as JSON with this structure:
                             variant="ghost"
                             size="sm"
                             className="text-blue-400 hover:text-blue-300 mt-2"
-                            onClick={handleViewAllTasks}
+                            onClick={() => {
+                              console.log('🔥 Create first task button clicked');
+                              handleViewAllTasks();
+                            }}
                           >
                             Create your first task
                           </Button>
