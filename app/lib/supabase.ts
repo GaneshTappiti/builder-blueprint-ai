@@ -34,6 +34,32 @@ interface Idea {
   created_at: string;
   updated_at: string;
   user_id: string;
+  // Privacy and team settings
+  isPrivate: boolean;
+  teamId?: string;
+  visibility: 'private' | 'team';
+  // Team collaboration features
+  teamComments?: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+  }>;
+  teamSuggestions?: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    field: string;
+    originalValue: string;
+    suggestedValue: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    created_at: string;
+    updated_at: string;
+  }>;
+  teamStatus?: 'under_review' | 'in_progress' | 'approved' | 'rejected';
+  lastModifiedBy?: string;
 }
 
 // Validate environment variables (only on client side to avoid SSR issues)
@@ -197,33 +223,169 @@ export const supabaseHelpers = {
     return { error };
   },
 
-  // Ideas
-  async getIdeas(userId: string) {
+  // Ideas - Get both private and team ideas
+  async getIdeas(userId?: string) {
     if (!isSupabaseConfigured()) {
       return { data: null, error: new Error('Supabase not configured') };
     }
     
-    const { data, error } = await supabase
-      .from('ideas')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      // Get private ideas for the user and all team ideas
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .or(`user_id.eq.${userId},is_private.eq.false`)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching ideas:', error);
+        return { data: null, error };
+      }
+      
+      // Transform database fields to match frontend interface
+      const transformedData = data?.map(idea => ({
+        ...idea,
+        isPrivate: idea.is_private,
+        teamId: idea.team_id,
+        teamComments: idea.team_comments || [],
+        teamSuggestions: idea.team_suggestions || [],
+        teamStatus: idea.team_status,
+        lastModifiedBy: idea.last_modified_by
+      })) || [];
+      
+      return { data: transformedData, error: null };
+    } catch (error) {
+      console.error('Unexpected error fetching ideas:', error);
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Get only private ideas for a user
+  async getPrivateIdeas(userId: string) {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
     
-    return { data, error };
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_private', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        return { data: null, error };
+      }
+      
+      const transformedData = data?.map(idea => ({
+        ...idea,
+        isPrivate: idea.is_private,
+        teamId: idea.team_id,
+        teamComments: idea.team_comments || [],
+        teamSuggestions: idea.team_suggestions || [],
+        teamStatus: idea.team_status,
+        lastModifiedBy: idea.last_modified_by
+      })) || [];
+      
+      return { data: transformedData, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Get only team ideas
+  async getTeamIdeas() {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .eq('is_private', false)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        return { data: null, error };
+      }
+      
+      const transformedData = data?.map(idea => ({
+        ...idea,
+        isPrivate: idea.is_private,
+        teamId: idea.team_id,
+        teamComments: idea.team_comments || [],
+        teamSuggestions: idea.team_suggestions || [],
+        teamStatus: idea.team_status,
+        lastModifiedBy: idea.last_modified_by
+      })) || [];
+      
+      return { data: transformedData, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
   },
 
   async createIdea(idea: Omit<Idea, 'id' | 'created_at' | 'updated_at' | 'user_id'>, userId: string) {
     if (!isSupabaseConfigured()) {
       return { data: null, error: new Error('Supabase not configured') };
     }
-    
-    const { data, error } = await supabase
-      .from('ideas')
-      .insert([{ ...idea, user_id: userId }])
-      .select()
-      .single();
-    
-    return { data, error };
+
+    try {
+      // Transform frontend interface to database fields
+      const dbIdea = {
+        title: idea.title,
+        description: idea.description,
+        category: idea.category,
+        status: idea.status,
+        tags: idea.tags,
+        votes: idea.votes || 0,
+        comments: idea.comments || 0,
+        validation_score: idea.validation_score,
+        market_opportunity: idea.market_opportunity,
+        risk_assessment: idea.risk_assessment,
+        monetization_strategy: idea.monetization_strategy,
+        key_features: idea.key_features || [],
+        next_steps: idea.next_steps || [],
+        competitor_analysis: idea.competitor_analysis,
+        target_market: idea.target_market,
+        problem_statement: idea.problem_statement,
+        is_private: idea.isPrivate,
+        team_id: idea.teamId,
+        visibility: idea.visibility,
+        team_comments: idea.teamComments || [],
+        team_suggestions: idea.teamSuggestions || [],
+        team_status: idea.teamStatus,
+        last_modified_by: idea.lastModifiedBy,
+        user_id: userId
+      };
+
+      const { data, error } = await supabase
+        .from('ideas')
+        .insert([dbIdea])
+        .select()
+        .single();
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      // Transform back to frontend interface
+      const transformedData = {
+        ...data,
+        isPrivate: data.is_private,
+        teamId: data.team_id,
+        teamComments: data.team_comments || [],
+        teamSuggestions: data.team_suggestions || [],
+        teamStatus: data.team_status,
+        lastModifiedBy: data.last_modified_by
+      };
+
+      return { data: transformedData, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
   },
 
   async updateIdea(id: string, updates: Partial<Idea>, userId: string) {
@@ -254,6 +416,102 @@ export const supabaseHelpers = {
       .eq('user_id', userId);
     
     return { error };
+  },
+
+  // Team collaboration methods
+  async toggleIdeaPrivacy(ideaId: string, userId: string) {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+
+    // First get the current idea to check ownership
+    const { data: currentIdea, error: fetchError } = await supabase
+      .from('ideas')
+      .select('*')
+      .eq('id', ideaId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !currentIdea) {
+      return { data: null, error: new Error('Idea not found or access denied') };
+    }
+
+    // Toggle privacy
+    const { data, error } = await supabase
+      .from('ideas')
+      .update({ 
+        isPrivate: !currentIdea.isPrivate,
+        visibility: currentIdea.isPrivate ? 'team' : 'private',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ideaId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    return { data, error };
+  },
+
+  async addTeamComment(ideaId: string, userId: string, userName: string, content: string) {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+
+    // Get current idea to add comment
+    const { data: idea, error: fetchError } = await supabase
+      .from('ideas')
+      .select('*')
+      .eq('id', ideaId)
+      .eq('isPrivate', false)
+      .single();
+
+    if (fetchError || !idea) {
+      return { data: null, error: new Error('Team idea not found') };
+    }
+
+    const newComment = {
+      id: Date.now().toString(),
+      userId,
+      userName,
+      content,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const updatedComments = [...(idea.teamComments || []), newComment];
+
+    const { data, error } = await supabase
+      .from('ideas')
+      .update({
+        teamComments: updatedComments,
+        comments: (idea.comments || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ideaId)
+      .select()
+      .single();
+
+    return { data, error };
+  },
+
+  async updateTeamStatus(ideaId: string, status: 'under_review' | 'in_progress' | 'approved' | 'rejected', userId: string) {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+
+    const { data, error } = await supabase
+      .from('ideas')
+      .update({
+        teamStatus: status,
+        lastModifiedBy: userId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ideaId)
+      .eq('isPrivate', false)
+      .select()
+      .single();
+
+    return { data, error };
   },
 
   // Real-time subscriptions

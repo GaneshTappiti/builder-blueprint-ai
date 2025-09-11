@@ -6,20 +6,34 @@ export interface Notification {
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
+  category: 'meeting' | 'task' | 'idea' | 'chat' | 'system' | 'team';
   isRead: boolean;
   createdAt: Date;
   actionUrl?: string;
   actionText?: string;
-  metadata?: any;
+  metadata?: {
+    userId?: string;
+    userName?: string;
+    taskId?: string;
+    ideaId?: string;
+    meetingId?: string;
+    messageId?: string;
+    progress?: number;
+    [key: string]: any;
+  };
 }
 
 export interface NotificationPreferences {
   emailNotifications: boolean;
   pushNotifications: boolean;
+  inAppNotifications: boolean;
   ideaValidationAlerts: boolean;
   taskReminders: boolean;
   teamUpdates: boolean;
   systemUpdates: boolean;
+  meetingNotifications: boolean;
+  chatNotifications: boolean;
+  ideaSharingNotifications: boolean;
 }
 
 class NotificationService {

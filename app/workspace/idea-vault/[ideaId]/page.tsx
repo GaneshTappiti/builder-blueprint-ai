@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ThumbsUp, MessageSquare, Tag, ArrowLeft, Edit, Trash, Menu, Loader2, ArrowRight, Star, TrendingUp, Shield, DollarSign, Users, Target, CheckCircle, Clock } from "lucide-react";
+import { ThumbsUp, MessageSquare, Tag, ArrowLeft, Edit, Trash, Menu, Loader2, ArrowRight, Star, TrendingUp, Shield, DollarSign, Users, Target, CheckCircle, Clock, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
@@ -35,6 +35,32 @@ interface IdeaDetailsData {
   created_at: string;
   updated_at: string;
   user_id?: string;
+  // Privacy and team settings
+  isPrivate?: boolean;
+  teamId?: string;
+  visibility?: 'private' | 'team';
+  // Team collaboration features
+  teamComments?: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+  }>;
+  teamSuggestions?: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    field: string;
+    originalValue: string;
+    suggestedValue: string;
+    status: 'pending' | 'accepted' | 'rejected';
+    created_at: string;
+    updated_at: string;
+  }>;
+  teamStatus?: 'under_review' | 'in_progress' | 'approved' | 'rejected';
+  lastModifiedBy?: string;
 }
 
 export default function IdeaDetailsPage({ params }: { params: { ideaId: string } }) {
@@ -59,17 +85,54 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
           // Fallback to localStorage
           const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
           const foundIdea = storedIdeas.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
-          setIdea(foundIdea || null);
+          if (foundIdea) {
+            const ideaWithDefaults = {
+              ...foundIdea,
+              isPrivate: foundIdea.isPrivate !== undefined ? foundIdea.isPrivate : true,
+              visibility: foundIdea.visibility || 'private',
+              teamComments: foundIdea.teamComments || [],
+              teamSuggestions: foundIdea.teamSuggestions || [],
+              teamStatus: foundIdea.teamStatus || 'under_review'
+            };
+            setIdea(ideaWithDefaults);
+          } else {
+            setIdea(null);
+          }
         } else {
           const foundIdea = ideas?.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
-          setIdea(foundIdea || null);
+          if (foundIdea) {
+            // Ensure all ideas have the new privacy fields with defaults
+            const ideaWithDefaults = {
+              ...foundIdea,
+              isPrivate: foundIdea.isPrivate !== undefined ? foundIdea.isPrivate : true,
+              visibility: foundIdea.visibility || 'private',
+              teamComments: foundIdea.teamComments || [],
+              teamSuggestions: foundIdea.teamSuggestions || [],
+              teamStatus: foundIdea.teamStatus || 'under_review'
+            };
+            setIdea(ideaWithDefaults);
+          } else {
+            setIdea(null);
+          }
         }
       } catch (error) {
         console.error('Error loading idea:', error);
         // Fallback to localStorage
         const storedIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
         const foundIdea = storedIdeas.find((idea: IdeaDetailsData) => idea.id === params.ideaId);
-        setIdea(foundIdea || null);
+        if (foundIdea) {
+          const ideaWithDefaults = {
+            ...foundIdea,
+            isPrivate: foundIdea.isPrivate !== undefined ? foundIdea.isPrivate : true,
+            visibility: foundIdea.visibility || 'private',
+            teamComments: foundIdea.teamComments || [],
+            teamSuggestions: foundIdea.teamSuggestions || [],
+            teamStatus: foundIdea.teamStatus || 'under_review'
+          };
+          setIdea(ideaWithDefaults);
+        } else {
+          setIdea(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -281,7 +344,7 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
                   {tag}
                 </div>
               ))}
-              <span className={`ml-2 px-3 py-1 rounded-full text-xs uppercase font-medium ${
+              <span className={`px-3 py-1 rounded-full text-xs uppercase font-medium ${
                 idea.status === 'validated' 
                   ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                   : idea.status === 'exploring'
@@ -290,6 +353,16 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
               }`}>
                 {idea.status}
               </span>
+              
+              {/* Privacy Badge */}
+              <div className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${
+                idea.isPrivate 
+                  ? 'bg-gray-600/20 text-gray-400 border border-gray-600/30'
+                  : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
+              }`}>
+                {idea.isPrivate ? <Lock className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                {idea.isPrivate ? 'Private' : 'Team'}
+              </div>
             </div>
 
             {/* Validation Score & Progress Section */}
@@ -473,75 +546,122 @@ export default function IdeaDetailsPage({ params }: { params: { ideaId: string }
             </Card>
           )}
           
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Comments & Discussion</h2>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <MessageSquare className="h-4 w-4" />
-                <span>0 comments</span>
+          {/* Comments & Discussion - Only show for team ideas */}
+          {!idea.isPrivate && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Comments & Discussion</h2>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{idea.teamComments?.length || 0} comments</span>
+                </div>
               </div>
-            </div>
-            
-            <Card className="mb-6 bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
-              <CardContent className="pt-6">
-                <form onSubmit={handleCommentSubmit} className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                      U
-                    </div>
-                    <div className="flex-1">
-                      <textarea 
-                        name="comment" 
-                        className="w-full p-4 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 resize-none"
-                        placeholder="Share your thoughts on this idea..."
-                        rows={4}
-                      ></textarea>
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                          <span>Press Ctrl+Enter to submit</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            className="bg-white/5 border-white/10 hover:bg-white/10 text-gray-300"
-                          >
-                            Cancel
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            className="bg-green-600 hover:bg-green-700 text-white font-medium px-6"
-                          >
-                            Post Comment
-                          </Button>
+              
+              <Card className="mb-6 bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl">
+                <CardContent className="pt-6">
+                  <form onSubmit={handleCommentSubmit} className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        U
+                      </div>
+                      <div className="flex-1">
+                        <textarea 
+                          name="comment" 
+                          className="w-full p-4 rounded-lg bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 resize-none"
+                          placeholder="Share your thoughts on this idea..."
+                          rows={4}
+                        ></textarea>
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <span>Press Ctrl+Enter to submit</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm" 
+                              className="bg-white/5 border-white/10 hover:bg-white/10 text-gray-300"
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              className="bg-green-600 hover:bg-green-700 text-white font-medium px-6"
+                            >
+                              Post Comment
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </form>
+                </CardContent>
+              </Card>
+              
+              {/* Display existing comments */}
+              {idea.teamComments && idea.teamComments.length > 0 ? (
+                <div className="space-y-4">
+                  {idea.teamComments.map((comment) => (
+                    <Card key={comment.id} className="bg-white/5 backdrop-blur-sm border border-white/10">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {comment.userName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-medium text-white">{comment.userName}</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-gray-300">{comment.content}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gradient-to-r from-gray-600/20 to-gray-700/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="h-8 w-8 text-gray-500" />
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-            
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-gray-600/20 to-gray-700/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-8 w-8 text-gray-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">No comments yet</h3>
-              <p className="text-gray-400 mb-4">Be the first to share your thoughts on this idea!</p>
-              <Button 
-                variant="outline" 
-                className="bg-white/5 border-white/10 hover:bg-white/10 text-gray-300"
-                onClick={() => {
-                  const textarea = document.querySelector('textarea[name="comment"]') as HTMLTextAreaElement;
-                  textarea?.focus();
-                }}
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Start Discussion
-              </Button>
+                  <h3 className="text-lg font-semibold text-white mb-2">No comments yet</h3>
+                  <p className="text-gray-400 mb-4">Be the first to share your thoughts on this idea!</p>
+                  <Button 
+                    variant="outline" 
+                    className="bg-white/5 border-white/10 hover:bg-white/10 text-gray-300"
+                    onClick={() => {
+                      const textarea = document.querySelector('textarea[name="comment"]') as HTMLTextAreaElement;
+                      textarea?.focus();
+                    }}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Start Discussion
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Private Idea Message */}
+          {idea.isPrivate && (
+            <div className="mb-8">
+              <Card className="bg-gradient-to-r from-gray-500/10 to-gray-600/10 backdrop-blur-sm border border-gray-500/20">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                    <h3 className="text-lg font-semibold text-white">Private Idea</h3>
+                  </div>
+                  <p className="text-gray-400">
+                    This is a private idea. Comments and discussions are only available for team ideas. 
+                    Switch to team mode to enable collaboration features.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
     </div>
