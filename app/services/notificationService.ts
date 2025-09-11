@@ -84,6 +84,7 @@ class NotificationService {
         title: 'Idea Validation Complete',
         message: 'Your startup idea "AI-powered fitness app" has been validated with a score of 85/100.',
         type: 'success',
+        category: 'idea',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
         actionUrl: '/workspace/idea-vault',
@@ -94,6 +95,7 @@ class NotificationService {
         title: 'New AI Feature Available',
         message: 'Business Model Canvas generator is now available in your workspace.',
         type: 'info',
+        category: 'system',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         actionUrl: '/workspace/idea-forge?tab=bmc',
@@ -104,6 +106,7 @@ class NotificationService {
         title: 'Task Reminder',
         message: 'Don\'t forget to complete your market research task due today.',
         type: 'warning',
+        category: 'task',
         isRead: true,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
         actionUrl: '/workspace/task-planner',
@@ -114,6 +117,7 @@ class NotificationService {
         title: 'Welcome to Builder Blueprint AI',
         message: 'Get started by validating your first startup idea in the Workshop.',
         type: 'info',
+        category: 'system',
         isRead: true,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
         actionUrl: '/workspace/workshop',
@@ -217,6 +221,194 @@ class NotificationService {
     }
   }
 
+  // Real-time notification methods
+  notifyMeetingStarted(userName: string, meetingId: string, meetingType: 'video' | 'audio' = 'video'): void {
+    this.addNotification({
+      title: `${userName} started a meeting`,
+      message: `${userName} started a ${meetingType} meeting. Click to join.`,
+      type: 'info',
+      category: 'meeting',
+      actionUrl: `/workspace/teamspace?meeting=${meetingId}`,
+      actionText: 'Join Meeting',
+      metadata: {
+        userName,
+        meetingId,
+        meetingType
+      }
+    });
+  }
+
+  notifyTaskUpdated(userName: string, taskTitle: string, progress: number, taskId: string): void {
+    this.addNotification({
+      title: `${userName} updated Task X → ${progress}% complete`,
+      message: `"${taskTitle}" is now ${progress}% complete.`,
+      type: 'info',
+      category: 'task',
+      actionUrl: `/workspace/teamspace?tab=tasks&task=${taskId}`,
+      actionText: 'View Task',
+      metadata: {
+        userName,
+        taskId,
+        progress
+      }
+    });
+  }
+
+  notifyIdeaShared(userName: string, ideaTitle: string, ideaId: string): void {
+    this.addNotification({
+      title: `New idea shared in Team Vault: ${ideaTitle}`,
+      message: `${userName} shared "${ideaTitle}" in the team idea vault.`,
+      type: 'info',
+      category: 'idea',
+      actionUrl: `/workspace/idea-vault/${ideaId}`,
+      actionText: 'View Idea',
+      metadata: {
+        userName,
+        ideaId
+      }
+    });
+  }
+
+  notifyMessageSent(userName: string, messagePreview: string, messageId: string, isGroup: boolean = true): void {
+    this.addNotification({
+      title: `${userName} sent a message in ${isGroup ? 'Team Chat' : 'Private Chat'}`,
+      message: messagePreview.length > 50 ? `${messagePreview.substring(0, 50)}...` : messagePreview,
+      type: 'info',
+      category: 'chat',
+      actionUrl: `/workspace/teamspace?tab=messages&message=${messageId}`,
+      actionText: 'View Message',
+      metadata: {
+        userName,
+        messageId,
+        isGroup
+      }
+    });
+  }
+
+  // Get notifications by category
+  getNotificationsByCategory(category: Notification['category']): Notification[] {
+    return this.notifications.filter(n => n.category === category);
+  }
+
+  // Get notification preferences
+  getNotificationPreferences(): NotificationPreferences {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('notification_preferences');
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load notification preferences:', error);
+    }
+
+    // Default preferences
+    return {
+      emailNotifications: true,
+      pushNotifications: true,
+      inAppNotifications: true,
+      ideaValidationAlerts: true,
+      taskReminders: true,
+      teamUpdates: true,
+      systemUpdates: true,
+      meetingNotifications: true,
+      chatNotifications: true,
+      ideaSharingNotifications: true
+    };
+  }
+
+  // Save notification preferences
+  saveNotificationPreferences(preferences: NotificationPreferences): void {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('notification_preferences', JSON.stringify(preferences));
+      }
+    } catch (error) {
+      console.error('Failed to save notification preferences:', error);
+    }
+  }
+
+  // Check if notification should be shown based on preferences
+  shouldShowNotification(category: Notification['category']): boolean {
+    const preferences = this.getNotificationPreferences();
+    
+    // First check if in-app notifications are enabled
+    if (!preferences.inAppNotifications) {
+      return false;
+    }
+    
+    // Then check category-specific preferences
+    switch (category) {
+      case 'meeting':
+        return preferences.meetingNotifications;
+      case 'task':
+        return preferences.taskReminders;
+      case 'idea':
+        return preferences.ideaSharingNotifications;
+      case 'chat':
+        return preferences.chatNotifications;
+      case 'team':
+        return preferences.teamUpdates;
+      case 'system':
+        return preferences.systemUpdates;
+      default:
+        return true; // Allow unknown categories if in-app is enabled
+    }
+  }
+
+  // Check if email notifications should be sent
+  shouldSendEmail(category: Notification['category']): boolean {
+    const preferences = this.getNotificationPreferences();
+    
+    if (!preferences.emailNotifications) {
+      return false;
+    }
+    
+    switch (category) {
+      case 'meeting':
+        return preferences.meetingNotifications;
+      case 'task':
+        return preferences.taskReminders;
+      case 'idea':
+        return preferences.ideaSharingNotifications;
+      case 'chat':
+        return preferences.chatNotifications;
+      case 'team':
+        return preferences.teamUpdates;
+      case 'system':
+        return preferences.systemUpdates;
+      default:
+        return true;
+    }
+  }
+
+  // Check if push notifications should be sent
+  shouldSendPush(category: Notification['category']): boolean {
+    const preferences = this.getNotificationPreferences();
+    
+    if (!preferences.pushNotifications) {
+      return false;
+    }
+    
+    switch (category) {
+      case 'meeting':
+        return preferences.meetingNotifications;
+      case 'task':
+        return preferences.taskReminders;
+      case 'idea':
+        return preferences.ideaSharingNotifications;
+      case 'chat':
+        return preferences.chatNotifications;
+      case 'team':
+        return preferences.teamUpdates;
+      case 'system':
+        return preferences.systemUpdates;
+      default:
+        return true;
+    }
+  }
+
   // Simulate real-time notifications (for demo)
   simulateNotification(): void {
     const mockNotifications = [
@@ -224,6 +416,7 @@ class NotificationService {
         title: 'AI Analysis Complete',
         message: 'Your market analysis has been completed successfully.',
         type: 'success' as const,
+        category: 'system' as const,
         actionUrl: '/workspace/ai-tools',
         actionText: 'View Analysis'
       },
@@ -231,6 +424,7 @@ class NotificationService {
         title: 'New Team Member',
         message: 'John Doe has joined your team workspace.',
         type: 'info' as const,
+        category: 'team' as const,
         actionUrl: '/workspace/teamspace',
         actionText: 'View Team'
       },
@@ -238,6 +432,7 @@ class NotificationService {
         title: 'Task Due Soon',
         message: 'Your MVP wireframes task is due in 2 hours.',
         type: 'warning' as const,
+        category: 'task' as const,
         actionUrl: '/workspace/task-planner',
         actionText: 'View Task'
       }

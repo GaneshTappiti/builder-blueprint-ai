@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 interface TaskComment {
   id: string;
@@ -51,6 +52,7 @@ interface TaskListProps {
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = [], currentUserId = '1' }) => {
   const { toast } = useToast();
+  const { triggerTaskUpdated } = useRealtimeNotifications();
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
@@ -174,6 +176,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
   };
 
   const handleStatusChange = (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed') => {
+    const task = tasks.find(t => t.id === taskId);
+    const currentUser = teamMembers.find(member => member.id === currentUserId);
+    const userName = currentUser?.name || 'You';
+    
     onTaskUpdate(tasks.map(task => 
       task.id === taskId ? { 
         ...task, 
@@ -182,7 +188,12 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       } : task
     ));
     
-    const task = tasks.find(t => t.id === taskId);
+    // Calculate progress based on status
+    const progress = newStatus === 'completed' ? 100 : newStatus === 'in-progress' ? 50 : 0;
+    
+    // Trigger notification
+    triggerTaskUpdated(userName, task?.title || 'Task', progress, taskId.toString());
+    
     toast({
       title: "Status updated",
       description: `${task?.title} is now ${newStatus.replace('-', ' ')}.`,

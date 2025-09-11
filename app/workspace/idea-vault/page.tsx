@@ -28,6 +28,7 @@ import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseHelpers } from "@/lib/supabase-connection-helpers";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 // Define IdeaProps interface for export
 export interface IdeaProps {
@@ -101,6 +102,7 @@ export default function IdeaVaultPage() {
   const { user, loading } = useAuth();
   const { activeIdea, fetchUserIdeas } = useActiveIdea();
   const { setHasActiveIdea, setActiveIdea, setCurrentStep } = useIdeaContext();
+  const { triggerIdeaShared } = useRealtimeNotifications();
 
   // Mock subscription data for demonstration
   const isFreeTier = true;
@@ -279,6 +281,12 @@ export default function IdeaVaultPage() {
               : idea
           )
         );
+        
+        // Trigger notification when idea is shared with team
+        if (!updatedIdea.isPrivate && updatedIdea.visibility === 'team') {
+          const userName = user?.email || 'Someone';
+          triggerIdeaShared(userName, updatedIdea.title, updatedIdea.id);
+        }
         
         toast({
           title: updatedIdea.isPrivate ? "Made Private" : "Shared with Team",

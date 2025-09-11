@@ -25,6 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 interface TeamMember {
   id: string;
@@ -77,6 +78,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
   onStartCall 
 }) => {
   const { toast } = useToast();
+  const { triggerMessageSent } = useRealtimeNotifications();
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -107,10 +109,13 @@ const GroupChat: React.FC<GroupChatProps> = ({
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
+      const currentUser = teamMembers.find(member => member.id === currentUserId);
+      const userName = currentUser?.name || 'You';
+      
       const message: GroupMessage = {
         id: Date.now().toString(),
         senderId: currentUserId,
-        senderName: currentUser?.name || 'You',
+        senderName: userName,
         content: newMessage,
         timestamp: new Date().toISOString(),
         type: 'text',
@@ -120,6 +125,10 @@ const GroupChat: React.FC<GroupChatProps> = ({
 
       setMessages(prev => [...prev, message]);
       onSendMessage(message);
+      
+      // Trigger notification for other team members
+      triggerMessageSent(userName, newMessage, message.id, true);
+      
       setNewMessage('');
       setIsTyping(false);
       

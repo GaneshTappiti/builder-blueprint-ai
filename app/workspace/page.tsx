@@ -59,7 +59,8 @@ import { supabaseHelpers } from '@/lib/supabase-connection-helpers';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { searchService, SearchResult } from '@/services/searchService';
 import SearchResults from '@/components/SearchResults';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
+import NotificationPanel from '@/components/notifications/NotificationPanel';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
@@ -165,9 +166,8 @@ export default function WorkspacePage() {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    addNotification,
     formatTimeAgo
-  } = useNotifications();
+  } = useRealtimeNotifications();
 
   const {
     projects: allProjects,
@@ -1009,13 +1009,7 @@ Format the response as JSON with this structure:
   };
 
   const handleTestNotification = () => {
-    addNotification({
-      title: 'Test Notification',
-      message: 'This is a test notification to verify the system is working.',
-      type: 'info',
-      actionUrl: '/workspace/idea-vault',
-      actionText: 'View Ideas'
-    });
+    // Test notification functionality is now handled by the notification panel
     toast({
       title: "Test Notification",
       description: "A test notification has been added",
@@ -1114,91 +1108,10 @@ Format the response as JSON with this structure:
                       </span>
                     )}
                   </Button>
-                  {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 max-h-96 overflow-hidden workspace-dropdown">
-                      <div className="flex items-center justify-between p-4 border-b border-white/10">
-                        <h3 className="font-semibold text-white">Notifications</h3>
-                        <div className="flex items-center gap-2">
-                          {unreadCount > 0 && (
-                            <span className="text-xs text-green-400 font-medium">{unreadCount} new</span>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleTestNotification}
-                              className="text-xs text-blue-400 hover:text-blue-300 h-6 px-2"
-                            >
-                              Test
-                            </Button>
-                            {notifications.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleMarkAllRead}
-                                className="text-xs text-gray-400 hover:text-white h-6 px-2"
-                              >
-                                Mark all read
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="overflow-y-auto max-h-64">
-                        {notifications.length > 0 ? (
-                          <div className="space-y-2 p-2">
-                            {notifications.slice(0, 10).map((notification) => {
-                              const typeColors = {
-                                success: 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20',
-                                info: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20',
-                                warning: 'bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20',
-                                error: 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20'
-                              };
-
-                              const dotColors = {
-                                success: 'bg-green-400',
-                                info: 'bg-blue-400',
-                                warning: 'bg-yellow-400',
-                                error: 'bg-red-400'
-                              };
-
-                              return (
-                                <div
-                                  key={notification.id}
-                                  className={`p-3 rounded-lg cursor-pointer transition-colors ${typeColors[notification.type]} ${
-                                    !notification.isRead ? 'border-l-2 border-l-green-400' : ''
-                                  }`}
-                                  onClick={() => handleNotificationClick(notification.id)}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    {!notification.isRead && (
-                                      <div className={`h-2 w-2 rounded-full mt-2 ${dotColors[notification.type]}`}></div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-white font-medium">{notification.title}</p>
-                                      <p className="text-xs text-gray-400 mt-1 line-clamp-2">{notification.message}</p>
-                                      <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(notification.createdAt)}</p>
-                                    </div>
-                                    {notification.actionText && (
-                                      <div className="text-xs text-green-400 font-medium">
-                                        {notification.actionText}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            <Bell className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                            <p className="text-gray-400 text-sm">No notifications</p>
-                            <p className="text-gray-500 text-xs mt-1">You're all caught up!</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <NotificationPanel 
+                    isOpen={showNotifications} 
+                    onClose={() => setShowNotifications(false)} 
+                  />
                 </div>
 
                 {/* Settings Button */}
