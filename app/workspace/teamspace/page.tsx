@@ -14,7 +14,6 @@ import {
   Phone,
   MessageSquare,
   Calendar,
-  BarChart3,
   Settings,
   Monitor,
   Mic,
@@ -26,15 +25,12 @@ import {
   MoreHorizontal,
   Clock,
   Target,
-  TrendingUp,
-  Award,
   Zap,
   Brain,
   FileText,
   CheckCircle2,
   AlertCircle,
-  Star,
-  Activity
+  Star
 } from "lucide-react";
 import Link from "next/link";
 import TeamMemberCard from "@/components/teamspace/TeamMemberCard";
@@ -522,10 +518,6 @@ export default function TeamSpacePage() {
                   <Calendar className="h-4 w-4 mr-2" />
                   Meetings
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="data-[state=active]:bg-green-600">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-8">
@@ -603,68 +595,100 @@ export default function TeamSpacePage() {
                   tasks={tasks} 
                   onTaskUpdate={setTasks}
                   teamMembers={teamMembers}
+                  currentUserId={currentUserId}
                 />
               </TabsContent>
 
-              <TabsContent value="messages">
-                {chatMode === 'group' ? (
-                  <GroupChat
-                    teamMembers={teamMembers}
-                    currentUserId={currentUserId}
-                    onSendMessage={handleSendGroupMessage}
-                    onStartCall={handleStartCall}
-                  />
-                ) : chatMode === 'individual' && selectedMember ? (
-                  <IndividualChat
-                    member={selectedMember}
-                    currentUserId={currentUserId}
-                    onSendMessage={handleSendPrivateMessage}
-                    onStartCall={handleStartCall}
-                    onBack={handleBackToMessages}
-                    isAdmin={false} // You can determine this based on user role
-                  />
-                ) : (
-                  <div className="space-y-6">
-                    <div className="text-center py-8">
-                      <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                      <h3 className="text-xl font-semibold text-white mb-2">Choose a Chat</h3>
-                      <p className="text-gray-400 mb-6">Start a group conversation or message a team member privately</p>
-                      
-                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button
-                          onClick={handleStartGroupChat}
-                          className="bg-green-600 hover:bg-green-700 px-8 py-3"
-                        >
-                          <MessageSquare className="h-5 w-5 mr-2" />
-                          Start Group Chat
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          onClick={() => setActiveTab('overview')}
-                          className="border-white/10 hover:bg-white/5 px-8 py-3"
-                        >
-                          <Users className="h-5 w-5 mr-2" />
-                          Message Team Members
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {/* Show recent messages if any */}
-                    {messages.length > 0 && (
-                      <div>
-                        <h4 className="text-lg font-semibold text-white mb-4">Recent Messages</h4>
-                        <MessagesPanel 
-                          messages={messages} 
-                          onSendMessage={setMessages}
-                          teamMembers={teamMembers}
-                          onStartCall={handleStartCall}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </TabsContent>
+               <TabsContent value="messages">
+                 <div className="space-y-6">
+                   {/* Messages Header */}
+                   <div className="flex items-center justify-between">
+                     <div>
+                       <h3 className="text-2xl font-bold text-white">Messages</h3>
+                       <p className="text-gray-400">Communicate with your team</p>
+                     </div>
+                   </div>
+
+                   {/* Two Session Tabs */}
+                   <Tabs value={chatMode || 'group'} onValueChange={(value) => {
+                     if (value === 'group') {
+                       setChatMode('group');
+                     } else if (value === 'individual') {
+                       setChatMode('individual');
+                     }
+                   }} className="space-y-4">
+                     <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
+                       <TabsTrigger value="group" className="data-[state=active]:bg-green-600">
+                         <MessageSquare className="h-4 w-4 mr-2" />
+                         Team Chat
+                       </TabsTrigger>
+                       <TabsTrigger value="individual" className="data-[state=active]:bg-green-600">
+                         <Users className="h-4 w-4 mr-2" />
+                         Private Chats
+                       </TabsTrigger>
+                     </TabsList>
+
+                     {/* Team Chat Session */}
+                     <TabsContent value="group" className="space-y-4">
+                       <GroupChat
+                         teamMembers={teamMembers}
+                         currentUserId={currentUserId}
+                         onSendMessage={handleSendGroupMessage}
+                         onStartCall={handleStartCall}
+                       />
+                     </TabsContent>
+
+                     {/* Individual Chats Session */}
+                     <TabsContent value="individual" className="space-y-4">
+                       {selectedMember ? (
+                         <IndividualChat
+                           member={selectedMember}
+                           currentUserId={currentUserId}
+                           onSendMessage={handleSendPrivateMessage}
+                           onStartCall={handleStartCall}
+                           onBack={() => setSelectedMember(null)}
+                           isAdmin={false} // You can determine this based on user role
+                         />
+                       ) : (
+                         <div className="space-y-6">
+                           {/* Team Members List for Private Chat */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                             {teamMembers.map((member) => (
+                               <Card 
+                                 key={member.id} 
+                                 className="bg-black/20 border-white/10 hover:bg-black/30 transition-colors cursor-pointer"
+                                 onClick={() => setSelectedMember(member)}
+                               >
+                                 <CardContent className="p-4">
+                                   <div className="flex items-center gap-3">
+                                     <div className="relative">
+                                       <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                                         <span className="text-white font-medium">
+                                           {member.name.split(' ').map(n => n[0]).join('')}
+                                         </span>
+                                       </div>
+                                       <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${
+                                         member.status === 'online' ? 'bg-green-500' : 
+                                         member.status === 'busy' ? 'bg-yellow-500' : 'bg-gray-500'
+                                       }`} />
+                                     </div>
+                                     <div className="flex-1">
+                                       <h4 className="font-medium text-white">{member.name}</h4>
+                                       <p className="text-sm text-gray-400">{member.role}</p>
+                                       <p className="text-xs text-gray-500 capitalize">{member.status}</p>
+                                     </div>
+                                     <MessageSquare className="h-5 w-5 text-gray-400" />
+                                   </div>
+                                 </CardContent>
+                               </Card>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                     </TabsContent>
+                   </Tabs>
+                 </div>
+               </TabsContent>
 
               <TabsContent value="meetings">
                 <MeetingsList 
@@ -681,66 +705,6 @@ export default function TeamSpacePage() {
                 />
               </TabsContent>
 
-              <TabsContent value="analytics" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-                    <CardHeader>
-                      <CardTitle className="text-white">Team Performance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-400">Tasks Completed</span>
-                            <span className="text-white">85%</span>
-                          </div>
-                          <Progress value={85} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-400">Sprint Progress</span>
-                            <span className="text-white">72%</span>
-                          </div>
-                          <Progress value={72} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-400">Team Velocity</span>
-                            <span className="text-white">94%</span>
-                          </div>
-                          <Progress value={94} className="h-2" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-black/40 backdrop-blur-sm border-white/10">
-                    <CardHeader>
-                      <CardTitle className="text-white">Activity Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-400">Messages sent today</span>
-                          <span className="text-white font-medium">47</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-400">Meetings this week</span>
-                          <span className="text-white font-medium">12</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-400">Tasks created</span>
-                          <span className="text-white font-medium">8</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-400">Average response time</span>
-                          <span className="text-white font-medium">2.3h</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
             </Tabs>
           </div>
         </div>

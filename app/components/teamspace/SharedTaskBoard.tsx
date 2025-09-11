@@ -1,23 +1,49 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Clock, AlertCircle, Plus, Edit, Trash2, MessageSquare, UserPlus, MoreHorizontal, ChevronDown, ChevronUp, Send, Reply, Target, Users, Calendar } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  MessageSquare, 
+  UserPlus, 
+  MoreHorizontal,
+  Calendar,
+  Users,
+  Target,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  Reply
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'busy';
+}
 
 interface TaskComment {
   id: string;
-  taskId: number;
+  taskId: string;
   authorId: string;
   authorName: string;
   content: string;
@@ -25,46 +51,61 @@ interface TaskComment {
   replies?: TaskComment[];
 }
 
-interface Task {
-  id: number;
+interface SharedTask {
+  id: string;
   title: string;
   description: string;
-  assignees?: string[]; // Changed to support multiple assignees
-  assignee?: string; // Keep for backward compatibility
+  assignees: TeamMember[];
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in-progress' | 'completed';
-  dueDate: string;
-  tags?: string[];
-  progress?: number; // 0-100 percentage
-  comments?: TaskComment[];
-  createdAt?: Date;
-  updatedAt?: Date;
-  createdBy?: string;
+  dueDate: Date;
+  progress: number; // 0-100 percentage
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  comments: TaskComment[];
 }
 
-interface TaskListProps {
-  tasks: Task[];
-  onTaskUpdate: (tasks: Task[]) => void;
-  teamMembers?: Array<{ id: string; name: string; role: string }>;
-  currentUserId?: string;
+interface SharedTaskBoardProps {
+  teamMembers: TeamMember[];
+  currentUserId: string;
+  onTaskUpdate?: (tasks: SharedTask[]) => void;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = [], currentUserId = '1' }) => {
+const SharedTaskBoard: React.FC<SharedTaskBoardProps> = ({ 
+  teamMembers, 
+  currentUserId, 
+  onTaskUpdate 
+}) => {
   const { toast } = useToast();
+  const [tasks, setTasks] = useState<SharedTask[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
+  const [editingTask, setEditingTask] = useState<SharedTask | null>(null);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     assignees: [] as string[],
     priority: 'medium' as 'low' | 'medium' | 'high',
     dueDate: '',
-    tags: ''
+    tags: '',
+    progress: 0
   });
-  const [newComment, setNewComment] = useState<{ [taskId: number]: string }>({});
+  const [newComment, setNewComment] = useState<{ [taskId: string]: string }>({});
   const [replyingTo, setReplyingTo] = useState<{ [commentId: string]: boolean }>({});
   const [replyContent, setReplyContent] = useState<{ [commentId: string]: string }>({});
+
+  // Simulate real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // In a real app, this would be WebSocket or Server-Sent Events
+      // For now, we'll just simulate some activity
+      setTasks(prevTasks => [...prevTasks]);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAddTask = () => {
     if (!newTask.title.trim() || newTask.assignees.length === 0) {
@@ -80,22 +121,24 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       newTask.assignees.includes(member.id)
     );
 
-    const task: Task = {
-      id: Date.now(),
+    const task: SharedTask = {
+      id: crypto.randomUUID(),
       title: newTask.title,
       description: newTask.description,
-      assignees: newTask.assignees,
+      assignees: assignedMembers,
       priority: newTask.priority,
       status: 'todo',
-      dueDate: newTask.dueDate || new Date().toISOString().split('T')[0],
+      dueDate: new Date(newTask.dueDate || Date.now() + 7 * 24 * 60 * 60 * 1000),
+      progress: newTask.progress,
       tags: newTask.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      comments: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: currentUserId
+      createdBy: currentUserId,
+      comments: []
     };
 
-    onTaskUpdate([...tasks, task]);
+    setTasks(prev => [task, ...prev]);
+    onTaskUpdate?.([task, ...tasks]);
     setIsAddTaskOpen(false);
     resetNewTask();
 
@@ -103,30 +146,6 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       title: "Task created",
       description: `${task.title} has been assigned to ${assignedMembers.map(m => m.name).join(', ')}.`,
     });
-  };
-
-  const resetNewTask = () => {
-    setNewTask({
-      title: '',
-      description: '',
-      assignees: [],
-      priority: 'medium',
-      dueDate: '',
-      tags: ''
-    });
-  };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setNewTask({
-      title: task.title,
-      description: task.description,
-      assignees: task.assignees || [task.assignee || ''],
-      priority: task.priority,
-      dueDate: task.dueDate,
-      tags: (task.tags || []).join(', ')
-    });
-    setIsAddTaskOpen(true);
   };
 
   const handleUpdateTask = () => {
@@ -143,18 +162,20 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       newTask.assignees.includes(member.id)
     );
 
-    const updatedTask: Task = {
+    const updatedTask: SharedTask = {
       ...editingTask,
       title: newTask.title,
       description: newTask.description,
-      assignees: newTask.assignees,
+      assignees: assignedMembers,
       priority: newTask.priority,
-      dueDate: newTask.dueDate,
+      dueDate: new Date(newTask.dueDate),
+      progress: newTask.progress,
       tags: newTask.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       updatedAt: new Date()
     };
 
-    onTaskUpdate(tasks.map(task => task.id === editingTask.id ? updatedTask : task));
+    setTasks(prev => prev.map(task => task.id === editingTask.id ? updatedTask : task));
+    onTaskUpdate?.(tasks.map(task => task.id === editingTask.id ? updatedTask : task));
     setIsAddTaskOpen(false);
     setEditingTask(null);
     resetNewTask();
@@ -165,19 +186,21 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     });
   };
 
-  const handleDeleteTask = (taskId: number) => {
-    onTaskUpdate(tasks.filter(task => task.id !== taskId));
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+    onTaskUpdate?.(tasks.filter(task => task.id !== taskId));
     toast({
       title: "Task deleted",
       description: "The task has been removed.",
     });
   };
 
-  const handleStatusChange = (taskId: number, newStatus: 'todo' | 'in-progress' | 'completed') => {
-    onTaskUpdate(tasks.map(task => 
+  const handleStatusChange = (taskId: string, newStatus: 'todo' | 'in-progress' | 'completed') => {
+    setTasks(prev => prev.map(task => 
       task.id === taskId ? { 
         ...task, 
         status: newStatus,
+        progress: newStatus === 'completed' ? 100 : task.progress,
         updatedAt: new Date()
       } : task
     ));
@@ -189,16 +212,26 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     });
   };
 
+  const handleProgressChange = (taskId: string, progress: number) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId ? { 
+        ...task, 
+        progress: Math.max(0, Math.min(100, progress)),
+        status: progress === 100 ? 'completed' : progress > 0 ? 'in-progress' : 'todo',
+        updatedAt: new Date()
+      } : task
+    ));
+  };
 
-  const handleReassign = (taskId: number, newAssignees: string[]) => {
+  const handleReassign = (taskId: string, newAssignees: string[]) => {
     const assignedMembers = teamMembers.filter(member => 
       newAssignees.includes(member.id)
     );
 
-    onTaskUpdate(tasks.map(task => 
+    setTasks(prev => prev.map(task => 
       task.id === taskId ? { 
         ...task, 
-        assignees: newAssignees,
+        assignees: assignedMembers,
         updatedAt: new Date()
       } : task
     ));
@@ -210,7 +243,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     });
   };
 
-  const handleAddComment = (taskId: number) => {
+  const handleAddComment = (taskId: string) => {
     const content = newComment[taskId]?.trim();
     if (!content) return;
 
@@ -226,10 +259,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       createdAt: new Date()
     };
 
-    onTaskUpdate(tasks.map(task => 
+    setTasks(prev => prev.map(task => 
       task.id === taskId ? { 
         ...task, 
-        comments: [...(task.comments || []), comment],
+        comments: [...task.comments, comment],
         updatedAt: new Date()
       } : task
     ));
@@ -241,7 +274,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     });
   };
 
-  const handleAddReply = (taskId: number, parentCommentId: string) => {
+  const handleAddReply = (taskId: string, parentCommentId: string) => {
     const content = replyContent[parentCommentId]?.trim();
     if (!content) return;
 
@@ -257,10 +290,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
       createdAt: new Date()
     };
 
-    onTaskUpdate(tasks.map(task => 
+    setTasks(prev => prev.map(task => 
       task.id === taskId ? { 
         ...task, 
-        comments: (task.comments || []).map(comment => 
+        comments: task.comments.map(comment => 
           comment.id === parentCommentId 
             ? { ...comment, replies: [...(comment.replies || []), reply] }
             : comment
@@ -277,7 +310,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     });
   };
 
-  const toggleTaskExpansion = (taskId: number) => {
+  const toggleTaskExpansion = (taskId: string) => {
     setExpandedTasks(prev => {
       const newSet = new Set(prev);
       if (newSet.has(taskId)) {
@@ -286,6 +319,18 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
         newSet.add(taskId);
       }
       return newSet;
+    });
+  };
+
+  const resetNewTask = () => {
+    setNewTask({
+      title: '',
+      description: '',
+      assignees: [],
+      priority: 'medium',
+      dueDate: '',
+      tags: '',
+      progress: 0
     });
   };
 
@@ -316,8 +361,8 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
     }
   };
 
-  const isOverdue = (dueDate: string) => {
-    return new Date(dueDate) < new Date();
+  const isOverdue = (dueDate: Date) => {
+    return dueDate < new Date() && !tasks.find(t => t.dueDate === dueDate)?.status.includes('completed');
   };
 
   const formatTimeAgo = (date: Date) => {
@@ -371,11 +416,11 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
                       <h4 className="font-medium text-white mb-1">{task.title}</h4>
                       <div className="flex items-center gap-2 text-sm text-gray-400">
                         <Users className="h-3 w-3" />
-                        <span>Assigned to: {(task.assignees || [task.assignee || '']).map(id => teamMembers.find(m => m.id === id)?.name || 'Unknown').join(', ')}</span>
+                        <span>Assigned to: {task.assignees.map(a => a.name).join(', ')}</span>
                         <span>•</span>
                         <Calendar className="h-3 w-3" />
                         <span className={isOverdue(task.dueDate) ? 'text-red-400' : ''}>
-                          Due: {new Date(task.dueDate).toLocaleDateString()}
+                          Due: {task.dueDate.toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -395,7 +440,19 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-black/90 border-white/10">
                         <DropdownMenuItem 
-                          onClick={() => handleEditTask(task)}
+                          onClick={() => {
+                            setEditingTask(task);
+                            setNewTask({
+                              title: task.title,
+                              description: task.description,
+                              assignees: task.assignees.map(a => a.id),
+                              priority: task.priority,
+                              dueDate: task.dueDate.toISOString().split('T')[0],
+                              tags: task.tags.join(', '),
+                              progress: task.progress
+                            });
+                            setIsAddTaskOpen(true);
+                          }}
                           className="text-white hover:bg-white/10"
                         >
                           <Edit className="h-4 w-4 mr-2" />
@@ -417,35 +474,13 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
                   <p className="text-sm text-gray-300 mb-3">{task.description}</p>
                 )}
 
-                {/* Done/Not Done Toggle */}
+                {/* Progress Bar */}
                 <div className="mb-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Status</span>
-                    <Button
-                      variant={task.status === 'completed' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleStatusChange(task.id, 
-                        task.status === 'completed' ? 'todo' : 'completed'
-                      )}
-                      className={`${
-                        task.status === 'completed' 
-                          ? 'bg-green-600 hover:bg-green-700 text-white' 
-                          : 'border-gray-600 text-gray-300 hover:bg-gray-800'
-                      }`}
-                    >
-                      {task.status === 'completed' ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Done
-                        </>
-                      ) : (
-                        <>
-                          <Clock className="h-4 w-4 mr-2" />
-                          Mark Done
-                        </>
-                      )}
-                    </Button>
+                  <div className="flex items-center justify-between text-sm text-gray-400 mb-1">
+                    <span>Progress</span>
+                    <span>{task.progress}%</span>
                   </div>
+                  <Progress value={task.progress} className="h-2" />
                 </div>
 
                 {/* Tags */}
@@ -463,7 +498,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
                 <div className="border-t border-white/10 pt-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-gray-400">
-                      {(task.comments || []).length} comment{(task.comments || []).length !== 1 ? 's' : ''}
+                      {task.comments.length} comment{task.comments.length !== 1 ? 's' : ''}
                     </span>
                     <Button
                       variant="ghost"
@@ -482,7 +517,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
                   {expandedTasks.has(task.id) && (
                     <div className="space-y-3">
                       {/* Comments List */}
-                      {(task.comments || []).map((comment) => (
+                      {task.comments.map((comment) => (
                         <div key={comment.id} className="bg-black/30 rounded-lg p-3">
                           <div className="flex items-start gap-2 mb-2">
                             <Avatar className="h-6 w-6">
@@ -576,7 +611,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
 
       {/* Add/Edit Task Modal */}
       <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-black/90 border-white/10 text-white">
+        <DialogContent className="sm:max-w-[700px] bg-black/90 border-white/10 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">
               {editingTask ? 'Edit Task' : 'Add New Shared Task'}
@@ -667,15 +702,30 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dueDate" className="text-white">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={newTask.dueDate}
-                onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                className="bg-black/20 border-white/10 text-white"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dueDate" className="text-white">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
+                  className="bg-black/20 border-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="progress" className="text-white">Initial Progress (%)</Label>
+                <Input
+                  id="progress"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={newTask.progress}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, progress: parseInt(e.target.value) || 0 }))}
+                  className="bg-black/20 border-white/10 text-white"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -711,4 +761,4 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskUpdate, teamMembers = 
   );
 };
 
-export default TaskList;
+export default SharedTaskBoard;
