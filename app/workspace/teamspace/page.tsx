@@ -30,7 +30,9 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
-  Star
+  Star,
+  Building,
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 import TeamMemberCard from "@/components/teamspace/TeamMemberCard";
@@ -42,6 +44,12 @@ import MeetingsList from "@/components/teamspace/MeetingsList";
 import GroupChat from "@/components/teamspace/GroupChat";
 import IndividualChat from "@/components/teamspace/IndividualChat";
 import MeetingNotificationSystem from "@/components/teamspace/MeetingNotificationSystem";
+import TeamMemberManagement from "@/components/teamspace/TeamMemberManagement";
+import DepartmentManagement from "@/components/teamspace/DepartmentManagement";
+import RolePermissionsManagement from "@/components/teamspace/RolePermissionsManagement";
+import TeamSettings from "@/components/teamspace/TeamSettings";
+import TeamManagementErrorBoundary from "@/components/teamspace/TeamManagementErrorBoundary";
+import TeamManagementTest from "@/components/teamspace/TeamManagementTest";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,22 +62,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { TeamManagementProvider } from "@/contexts/TeamManagementContext";
+import { useTeamPermissions } from "@/hooks/useTeamPermissions";
+import { TeamMember, TeamRole, Department, DEFAULT_ROLES, DEFAULT_DEPARTMENTS } from "@/types/teamManagement";
 import { supabase } from "@/lib/supabase";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'busy';
-  joinedAt: string;
-  skills: string[];
-  currentTask?: string;
-  tasksCompleted: number;
-  totalTasks: number;
-  lastActive: string;
-}
 
 interface Meeting {
   id: number;
@@ -168,7 +165,7 @@ interface PrivateMessage {
   isEncrypted?: boolean;
 }
 
-export default function TeamSpacePage() {
+function TeamSpacePageContent() {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -193,43 +190,55 @@ export default function TeamSpacePage() {
       id: "1",
       name: "Alex Johnson",
       email: "alex@startup.com",
-      role: "Product Manager",
+      role: DEFAULT_ROLES.find(r => r.id === 'admin')!,
+      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Product') || DEFAULT_DEPARTMENTS[0],
       avatar: "/api/placeholder/40/40",
       status: 'online',
       joinedAt: "2024-01-15",
+      lastActive: "2024-01-20T10:30:00Z",
       skills: ["Product Strategy", "User Research", "Agile"],
       currentTask: "Define MVP features",
       tasksCompleted: 12,
       totalTasks: 15,
-      lastActive: "2024-01-20T10:30:00Z"
+      permissions: DEFAULT_ROLES.find(r => r.id === 'admin')!.permissions,
+      isActive: true,
+      invitationStatus: 'accepted'
     },
     {
       id: "2",
       name: "Sarah Chen",
       email: "sarah@startup.com",
-      role: "Lead Developer",
+      role: DEFAULT_ROLES.find(r => r.id === 'member')!,
+      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Engineering') || DEFAULT_DEPARTMENTS[0],
       avatar: "/api/placeholder/40/40",
       status: 'online',
       joinedAt: "2024-01-10",
+      lastActive: "2024-01-20T11:15:00Z",
       skills: ["React", "Node.js", "AWS"],
       currentTask: "Backend API development",
       tasksCompleted: 8,
       totalTasks: 12,
-      lastActive: "2024-01-20T11:15:00Z"
+      permissions: DEFAULT_ROLES.find(r => r.id === 'member')!.permissions,
+      isActive: true,
+      invitationStatus: 'accepted'
     },
     {
       id: "3",
       name: "Mike Rodriguez",
       email: "mike@startup.com",
-      role: "UI/UX Designer",
+      role: DEFAULT_ROLES.find(r => r.id === 'member')!,
+      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Design') || DEFAULT_DEPARTMENTS[0],
       avatar: "/api/placeholder/40/40",
       status: 'busy',
       joinedAt: "2024-01-20",
+      lastActive: "2024-01-20T09:45:00Z",
       skills: ["Figma", "User Testing", "Prototyping"],
       currentTask: "Mobile app wireframes",
       tasksCompleted: 5,
       totalTasks: 8,
-      lastActive: "2024-01-20T09:45:00Z"
+      permissions: DEFAULT_ROLES.find(r => r.id === 'member')!.permissions,
+      isActive: true,
+      invitationStatus: 'accepted'
     }
   ]);
 
@@ -301,15 +310,19 @@ export default function TeamSpacePage() {
       id: (teamMembers.length + 1).toString(),
       name: memberData.name || '',
       email: memberData.email || '',
-      role: memberData.role || '',
+      role: memberData.role || DEFAULT_ROLES.find(r => r.id === 'member')!,
+      department: memberData.department || DEFAULT_DEPARTMENTS[0],
       avatar: "/api/placeholder/40/40",
       status: 'offline',
       joinedAt: new Date().toISOString().split('T')[0],
+      lastActive: new Date().toISOString(),
       skills: memberData.skills || [],
       currentTask: undefined,
       tasksCompleted: 0,
       totalTasks: 0,
-      lastActive: new Date().toISOString()
+      permissions: memberData.role?.permissions || DEFAULT_ROLES.find(r => r.id === 'member')!.permissions,
+      isActive: true,
+      invitationStatus: 'accepted'
     };
 
     setTeamMembers([...teamMembers, newMember]);
@@ -506,6 +519,18 @@ export default function TeamSpacePage() {
                   <Users className="h-4 w-4 mr-2" />
                   Overview
                 </TabsTrigger>
+                <TabsTrigger value="members" className="data-[state=active]:bg-green-600">
+                  <Users className="h-4 w-4 mr-2" />
+                  Members
+                </TabsTrigger>
+                <TabsTrigger value="departments" className="data-[state=active]:bg-green-600">
+                  <Building className="h-4 w-4 mr-2" />
+                  Departments
+                </TabsTrigger>
+                <TabsTrigger value="roles" className="data-[state=active]:bg-green-600">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Roles
+                </TabsTrigger>
                 <TabsTrigger value="tasks" className="data-[state=active]:bg-green-600">
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                   Tasks
@@ -518,9 +543,16 @@ export default function TeamSpacePage() {
                   <Calendar className="h-4 w-4 mr-2" />
                   Meetings
                 </TabsTrigger>
+                <TabsTrigger value="settings" className="data-[state=active]:bg-green-600">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-8">
+                {/* System Test */}
+                <TeamManagementTest />
+                
                 {/* Team Members Grid */}
                 <div>
                   <h2 className="text-xl font-semibold text-white mb-6">Team Members</h2>
@@ -588,6 +620,18 @@ export default function TeamSpacePage() {
                     </Button>
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="members">
+                <TeamMemberManagement />
+              </TabsContent>
+
+              <TabsContent value="departments">
+                <DepartmentManagement />
+              </TabsContent>
+
+              <TabsContent value="roles">
+                <RolePermissionsManagement />
               </TabsContent>
 
               <TabsContent value="tasks">
@@ -674,7 +718,7 @@ export default function TeamSpacePage() {
                                      </div>
                                      <div className="flex-1">
                                        <h4 className="font-medium text-white">{member.name}</h4>
-                                       <p className="text-sm text-gray-400">{member.role}</p>
+                                       <p className="text-sm text-gray-400">{member.role.displayName}</p>
                                        <p className="text-xs text-gray-500 capitalize">{member.status}</p>
                                      </div>
                                      <MessageSquare className="h-5 w-5 text-gray-400" />
@@ -703,6 +747,10 @@ export default function TeamSpacePage() {
                   onToggleScreenShare={handleToggleScreenShare}
                   currentUserId={currentUserId}
                 />
+              </TabsContent>
+
+              <TabsContent value="settings">
+                <TeamSettings />
               </TabsContent>
 
             </Tabs>
@@ -798,5 +846,13 @@ export default function TeamSpacePage() {
         />
       </main>
     </div>
+  );
+}
+
+export default function TeamSpacePage() {
+  return (
+    <TeamManagementProvider>
+      <TeamSpacePageContent />
+    </TeamManagementProvider>
   );
 }

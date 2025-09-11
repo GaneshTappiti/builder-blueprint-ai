@@ -24,8 +24,14 @@ class PushNotificationService {
   private permission: NotificationPermission = 'default';
 
   constructor() {
-    this.isSupported = 'Notification' in window && 'serviceWorker' in navigator;
-    this.permission = Notification.permission;
+    // Check if we're on the client side
+    if (typeof window !== 'undefined') {
+      this.isSupported = 'Notification' in window && 'serviceWorker' in navigator;
+      this.permission = Notification.permission;
+    } else {
+      this.isSupported = false;
+      this.permission = 'default';
+    }
   }
 
   // Check if push notifications are supported
@@ -262,6 +268,8 @@ class PushNotificationService {
 
   // Handle notification click
   handleNotificationClick(notification: Notification) {
+    if (typeof window === 'undefined') return;
+    
     const data = notification.data;
     if (data && data.url) {
       // Focus the window if it's already open
@@ -276,6 +284,8 @@ class PushNotificationService {
 
   // Handle notification action click
   handleNotificationAction(notification: Notification, action: string) {
+    if (typeof window === 'undefined') return;
+    
     const data = notification.data;
     
     switch (action) {
@@ -296,7 +306,7 @@ class PushNotificationService {
 
   // Setup notification event listeners
   setupEventListeners() {
-    if (!this.isSupported) return;
+    if (typeof window === 'undefined' || !this.isSupported) return;
 
     // Handle notification click
     window.addEventListener('notificationclick', (event) => {

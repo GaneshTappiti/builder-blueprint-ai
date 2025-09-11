@@ -26,21 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'busy';
-  joinedAt: string;
-  skills: string[];
-  currentTask?: string;
-  tasksCompleted: number;
-  totalTasks: number;
-  lastActive: string;
-}
+import { TeamMember } from "@/types/teamManagement";
 
 interface GroupMessage {
   id: string;

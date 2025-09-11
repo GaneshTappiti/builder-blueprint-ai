@@ -13,18 +13,7 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'busy';
-  tasksCompleted: number;
-  totalTasks: number;
-  lastActive: string;
-}
+import { TeamMember } from "@/types/teamManagement";
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -78,7 +67,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           <div className="flex-1 space-y-2">
             <div>
               <h3 className="font-semibold text-white">{member.name}</h3>
-              <p className="text-sm text-gray-400">{member.role}</p>
+              <p className="text-sm text-gray-400">{member.role.displayName}</p>
             </div>
             
             <div className="flex items-center gap-2">

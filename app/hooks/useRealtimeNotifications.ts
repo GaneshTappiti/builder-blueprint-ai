@@ -147,16 +147,16 @@ export const useRealtimeNotifications = () => {
 
   // Browser notification permission
   const requestNotificationPermission = useCallback(async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
       return permission === 'granted';
     }
-    return Notification.permission === 'granted';
+    return typeof window !== 'undefined' && Notification.permission === 'granted';
   }, []);
 
   // Show browser notification
   const showBrowserNotification = useCallback((title: string, options?: NotificationOptions) => {
-    if (Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
       new Notification(title, {
         icon: '/favicon.ico',
         badge: '/favicon.ico',

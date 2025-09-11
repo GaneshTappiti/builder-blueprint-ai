@@ -95,7 +95,7 @@ const MeetingNotificationSystem: React.FC<MeetingNotificationSystemProps> = ({
           setNotifications(prev => [newNotification, ...prev.slice(0, 4)]); // Keep max 5 notifications
           
           // Show browser notification if permission granted
-          if (Notification.permission === 'granted') {
+          if (typeof window !== 'undefined' && Notification.permission === 'granted') {
             new Notification(`🔔 ${randomMember.name} started a meeting`, {
               body: 'Click to join the meeting',
               icon: '/favicon.ico'
@@ -110,7 +110,7 @@ const MeetingNotificationSystem: React.FC<MeetingNotificationSystemProps> = ({
 
   // Request notification permission
   useEffect(() => {
-    if (Notification.permission === 'default') {
+    if (typeof window !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);

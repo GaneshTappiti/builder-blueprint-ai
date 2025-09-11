@@ -8,21 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'busy';
-  joinedAt: string;
-  skills: string[];
-  currentTask?: string;
-  tasksCompleted: number;
-  totalTasks: number;
-  lastActive: string;
-}
+import { TeamMember } from "@/types/teamManagement";
 
 interface AddTeamMemberModalProps {
   isOpen: boolean;
