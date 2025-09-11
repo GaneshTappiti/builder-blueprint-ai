@@ -56,7 +56,17 @@ const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({ isOpen, onClose
     onAddMember({
       name: formData.name,
       email: formData.email,
-      role: formData.role,
+      role: {
+        id: formData.role.toLowerCase().replace(/\s+/g, '-'),
+        name: formData.role === 'Admin' ? 'Admin' : formData.role === 'Viewer' ? 'Viewer' : 'Member',
+        displayName: formData.role,
+        description: `${formData.role} role`,
+        permissions: [],
+        color: '#3b82f6',
+        isSystemRole: false,
+        canBeAssigned: true,
+        order: 1
+      },
       skills: [] // Default empty skills array
     });
     

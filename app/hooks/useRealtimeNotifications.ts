@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { notificationService, Notification, NotificationPreferences } from '@/services/notificationService';
+import { notificationService, type Notification, NotificationPreferences } from '@/services/notificationService';
 import { emailNotificationService } from '@/services/emailNotificationService';
 import { pushNotificationService } from '@/services/pushNotificationService';
 

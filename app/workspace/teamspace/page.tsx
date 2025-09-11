@@ -98,11 +98,11 @@ interface Task {
   id: number;
   title: string;
   description: string;
-  assignee: string;
+  assignee?: string;
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'in-progress' | 'completed';
   dueDate: string;
-  tags: string[];
+  tags?: string[];
 }
 
 interface Message {
@@ -191,7 +191,13 @@ function TeamSpacePageContent() {
       name: "Alex Johnson",
       email: "alex@startup.com",
       role: DEFAULT_ROLES.find(r => r.id === 'admin')!,
-      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Product') || DEFAULT_DEPARTMENTS[0],
+      department: {
+        ...(DEFAULT_DEPARTMENTS.find(d => d.name === 'Product') || DEFAULT_DEPARTMENTS[0]),
+        id: 'product-dept',
+        memberCount: 0,
+        createdBy: 'system',
+        createdAt: new Date().toISOString()
+      },
       avatar: "/api/placeholder/40/40",
       status: 'online',
       joinedAt: "2024-01-15",
@@ -209,7 +215,13 @@ function TeamSpacePageContent() {
       name: "Sarah Chen",
       email: "sarah@startup.com",
       role: DEFAULT_ROLES.find(r => r.id === 'member')!,
-      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Engineering') || DEFAULT_DEPARTMENTS[0],
+      department: {
+        ...(DEFAULT_DEPARTMENTS.find(d => d.name === 'Engineering') || DEFAULT_DEPARTMENTS[0]),
+        id: 'engineering-dept',
+        memberCount: 0,
+        createdBy: 'system',
+        createdAt: new Date().toISOString()
+      },
       avatar: "/api/placeholder/40/40",
       status: 'online',
       joinedAt: "2024-01-10",
@@ -227,7 +239,13 @@ function TeamSpacePageContent() {
       name: "Mike Rodriguez",
       email: "mike@startup.com",
       role: DEFAULT_ROLES.find(r => r.id === 'member')!,
-      department: DEFAULT_DEPARTMENTS.find(d => d.name === 'Design') || DEFAULT_DEPARTMENTS[0],
+      department: {
+        ...(DEFAULT_DEPARTMENTS.find(d => d.name === 'Design') || DEFAULT_DEPARTMENTS[0]),
+        id: 'design-dept',
+        memberCount: 0,
+        createdBy: 'system',
+        createdAt: new Date().toISOString()
+      },
       avatar: "/api/placeholder/40/40",
       status: 'busy',
       joinedAt: "2024-01-20",
@@ -311,7 +329,13 @@ function TeamSpacePageContent() {
       name: memberData.name || '',
       email: memberData.email || '',
       role: memberData.role || DEFAULT_ROLES.find(r => r.id === 'member')!,
-      department: memberData.department || DEFAULT_DEPARTMENTS[0],
+      department: memberData.department || {
+        ...DEFAULT_DEPARTMENTS[0],
+        id: 'default-dept',
+        memberCount: 0,
+        createdBy: 'system',
+        createdAt: new Date().toISOString()
+      },
       avatar: "/api/placeholder/40/40",
       status: 'offline',
       joinedAt: new Date().toISOString().split('T')[0],
@@ -635,10 +659,14 @@ function TeamSpacePageContent() {
               </TabsContent>
 
               <TabsContent value="tasks">
-                <TaskList 
-                  tasks={tasks} 
+                <TaskList
+                  tasks={tasks}
                   onTaskUpdate={setTasks}
-                  teamMembers={teamMembers}
+                  teamMembers={teamMembers.map(member => ({
+                    id: member.id,
+                    name: member.name,
+                    role: member.role.displayName
+                  }))}
                   currentUserId={currentUserId}
                 />
               </TabsContent>
@@ -738,7 +766,11 @@ function TeamSpacePageContent() {
                 <MeetingsList 
                   meetings={meetings} 
                   onScheduleMeeting={setMeetings}
-                  teamMembers={teamMembers}
+                  teamMembers={teamMembers.map(member => ({
+                    id: member.id,
+                    name: member.name,
+                    role: member.role.displayName
+                  }))}
                   onJoinMeeting={handleJoinMeeting}
                   onStartInstantMeeting={handleStartInstantMeeting}
                   onEndMeeting={handleEndMeeting}

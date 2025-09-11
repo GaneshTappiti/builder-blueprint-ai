@@ -158,7 +158,9 @@ export class IdeaVaultHelpers {
       competitor_analysis: storedIdea.content?.competitiveAnalysis,
       market_opportunity: storedIdea.content?.marketValidation,
       risk_assessment: storedIdea.content?.risks?.[0],
-      next_steps: storedIdea.content?.nextSteps
+      next_steps: storedIdea.content?.nextSteps,
+      isPrivate: true, // Default to private for converted ideas
+      visibility: 'private' as const
     };
   }
 

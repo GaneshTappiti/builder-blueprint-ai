@@ -22,14 +22,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  status: 'online' | 'offline' | 'busy';
-}
+import { TeamMember } from '@/types/teamManagement';
 
 interface MeetingNotification {
   id: string;

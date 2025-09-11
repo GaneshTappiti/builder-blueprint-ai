@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ReactQueryProvider } from './providers/ReactQueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ProfileProvider } from '@/contexts/ProfileContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
@@ -57,15 +58,17 @@ export default function RootLayout({
           <ErrorBoundary>
             <ReactQueryProvider>
               <AuthProvider>
-                <AdminProvider>
-                  <TooltipProvider>
-                    <IdeaProvider>
-                      {children}
-                    </IdeaProvider>
-                    <Toaster />
-                    <Sonner />
-                  </TooltipProvider>
-                </AdminProvider>
+                <ProfileProvider>
+                  <AdminProvider>
+                    <TooltipProvider>
+                      <IdeaProvider>
+                        {children}
+                      </IdeaProvider>
+                      <Toaster />
+                      <Sonner />
+                    </TooltipProvider>
+                  </AdminProvider>
+                </ProfileProvider>
               </AuthProvider>
             </ReactQueryProvider>
           </ErrorBoundary>

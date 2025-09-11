@@ -13,6 +13,19 @@ interface User {
   role?: string;
   created_at?: string;
   updated_at?: string;
+  // Enhanced profile fields
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  bio?: string;
+  phone?: string;
+  location?: string;
+  timezone?: string;
+  jobTitle?: string;
+  department?: string;
+  status?: 'online' | 'offline' | 'busy' | 'away';
+  profileCompletion?: number;
+  lastLogin?: string;
 }
 
 interface AuthContextType {

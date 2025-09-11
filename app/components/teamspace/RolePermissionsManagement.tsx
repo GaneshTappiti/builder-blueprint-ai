@@ -262,7 +262,7 @@ const RolePermissionsManagement: React.FC<RolePermissionsManagementProps> = ({ c
     const categoryPermissions = permissionsByCategory[category].map(p => p.id);
     setFormData(prev => ({
       ...prev,
-      permissions: [...new Set([...prev.permissions, ...categoryPermissions])]
+      permissions: Array.from(new Set([...prev.permissions, ...categoryPermissions]))
     }));
   };
 

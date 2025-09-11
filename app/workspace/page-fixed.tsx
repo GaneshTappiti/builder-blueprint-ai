@@ -307,10 +307,10 @@ export default function WorkspacePage() {
                         <Button
                           variant="ghost"
                           className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10"
-                          onClick={() => router.push('/profile')}
+                          onClick={() => router.push('/account')}
                         >
                           <User className="h-4 w-4 mr-2" />
-                          View Profile
+                          Account Settings
                         </Button>
                         <Button
                           variant="ghost"

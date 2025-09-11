@@ -20,23 +20,23 @@ export interface NotificationAction {
 }
 
 class PushNotificationService {
-  private isSupported: boolean;
+  private _isSupported: boolean;
   private permission: NotificationPermission = 'default';
 
   constructor() {
     // Check if we're on the client side
     if (typeof window !== 'undefined') {
-      this.isSupported = 'Notification' in window && 'serviceWorker' in navigator;
+      this._isSupported = 'Notification' in window && 'serviceWorker' in navigator;
       this.permission = Notification.permission;
     } else {
-      this.isSupported = false;
+      this._isSupported = false;
       this.permission = 'default';
     }
   }
 
   // Check if push notifications are supported
   isSupported(): boolean {
-    return this.isSupported;
+    return this._isSupported;
   }
 
   // Get current permission status
@@ -46,7 +46,7 @@ class PushNotificationService {
 
   // Request notification permission
   async requestPermission(): Promise<NotificationPermission> {
-    if (!this.isSupported) {
+    if (!this._isSupported) {
       throw new Error('Push notifications are not supported in this browser');
     }
 
@@ -61,7 +61,7 @@ class PushNotificationService {
 
   // Show a push notification
   async showNotification(data: PushNotificationData): Promise<Notification | null> {
-    if (!this.isSupported || this.permission !== 'granted') {
+    if (!this._isSupported || this.permission !== 'granted') {
       console.warn('Push notifications not available or permission not granted');
       return null;
     }
@@ -73,7 +73,6 @@ class PushNotificationService {
         badge: data.badge || '/favicon.ico',
         tag: data.tag,
         data: data.data,
-        actions: data.actions,
         requireInteraction: data.requireInteraction || false,
         silent: data.silent || false
       });
@@ -306,16 +305,16 @@ class PushNotificationService {
 
   // Setup notification event listeners
   setupEventListeners() {
-    if (typeof window === 'undefined' || !this.isSupported) return;
+    if (typeof window === 'undefined' || !this._isSupported) return;
 
     // Handle notification click
-    window.addEventListener('notificationclick', (event) => {
+    window.addEventListener('notificationclick', (event: any) => {
       event.preventDefault();
       this.handleNotificationClick(event.notification);
     });
 
     // Handle notification action click
-    window.addEventListener('notificationaction', (event) => {
+    window.addEventListener('notificationaction', (event: any) => {
       event.preventDefault();
       this.handleNotificationAction(event.notification, event.action);
     });
@@ -323,7 +322,7 @@ class PushNotificationService {
 
   // Check if push notifications are enabled for a category
   isPushEnabledForCategory(category: string, preferences: any): boolean {
-    if (!this.isSupported || this.permission !== 'granted' || !preferences.pushNotifications) {
+    if (!this._isSupported || this.permission !== 'granted' || !preferences.pushNotifications) {
       return false;
     }
     
@@ -369,14 +368,14 @@ class PushNotificationService {
 
   // Check if notifications are supported and permission is granted
   isReady(): boolean {
-    return this.isSupported && this.permission === 'granted';
+    return this._isSupported && this.permission === 'granted';
   }
 
   // Get permission status with detailed info
   getPermissionStatus(): { status: NotificationPermission; supported: boolean; ready: boolean } {
     return {
       status: this.permission,
-      supported: this.isSupported,
+      supported: this._isSupported,
       ready: this.isReady()
     };
   }

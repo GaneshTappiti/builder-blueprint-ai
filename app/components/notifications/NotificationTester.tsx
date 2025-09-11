@@ -25,7 +25,7 @@ interface NotificationTesterProps {
 
 const NotificationTester: React.FC<NotificationTesterProps> = ({ onClose }) => {
   const { preferences, updatePreferences } = useRealtimeNotifications();
-  const [testResults, setTestResults] = useState<{ [key: string]: boolean }>({});
+  const [testResults, setTestResults] = useState<{ [key: string]: { inApp: boolean; push: boolean; email: boolean } }>({});
 
   const testNotification = async (category: 'meeting' | 'task' | 'idea' | 'chat' | 'team' | 'system') => {
     const testData = {
@@ -38,7 +38,11 @@ const NotificationTester: React.FC<NotificationTesterProps> = ({ onClose }) => {
     };
 
     const data = testData[category];
-    const results: { [key: string]: boolean } = {};
+    const results: { inApp: boolean; push: boolean; email: boolean } = {
+      inApp: false,
+      push: false,
+      email: false
+    };
 
     try {
       // Test in-app notification
@@ -285,7 +289,7 @@ const NotificationTester: React.FC<NotificationTesterProps> = ({ onClose }) => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Push Permission Granted</span>
-              {getStatusIcon(pushNotificationService.getPermission().status === 'granted')}
+              {getStatusIcon(pushNotificationService.getPermission() === 'granted')}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Ready to Send Push</span>
