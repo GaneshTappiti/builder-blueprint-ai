@@ -43,6 +43,9 @@ import TeamRoles from "@/components/teamspace/TeamRoles";
 import TaskList from "@/components/teamspace/TaskList";
 import MessagesPanel from "@/components/teamspace/MessagesPanel";
 import MeetingsList from "@/components/teamspace/MeetingsList";
+import GroupChat from "@/components/teamspace/GroupChat";
+import IndividualChat from "@/components/teamspace/IndividualChat";
+import MeetingNotificationSystem from "@/components/teamspace/MeetingNotificationSystem";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -81,6 +84,21 @@ interface Meeting {
   attendees: string[];
   type: 'video' | 'audio' | 'screen-share';
   status: 'upcoming' | 'ongoing' | 'completed';
+  description?: string;
+  meetingLink?: string;
+  startedBy?: string;
+  startedAt?: string;
+  participants?: {
+    userId: string;
+    name: string;
+    status: 'joined' | 'pending' | 'declined';
+    joinedAt?: string;
+    isMuted?: boolean;
+    isVideoOff?: boolean;
+  }[];
+  isInstant?: boolean;
+  agenda?: string[];
+  linkedTasks?: number[];
 }
 
 interface Task {
@@ -99,7 +117,59 @@ interface Message {
   sender: string;
   content: string;
   timestamp: string;
-  type: 'text' | 'file' | 'system';
+  type: 'text' | 'file' | 'system' | 'voice';
+  attachments?: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }[];
+  readBy?: string[];
+  isEdited?: boolean;
+}
+
+interface GroupMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'file' | 'voice' | 'system';
+  attachments?: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }[];
+  mentions?: string[];
+  readBy: {
+    userId: string;
+    readAt: string;
+  }[];
+  isEdited?: boolean;
+  editedAt?: string;
+}
+
+interface PrivateMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'file' | 'voice' | 'system';
+  attachments?: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }[];
+  readBy: {
+    userId: string;
+    readAt: string;
+  }[];
+  isEdited?: boolean;
+  editedAt?: string;
+  isEncrypted?: boolean;
 }
 
 export default function TeamSpacePage() {
@@ -113,6 +183,13 @@ export default function TeamSpacePage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  
+  // Chat states
+  const [chatMode, setChatMode] = useState<'group' | 'individual' | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
+  const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
+  const [currentUserId] = useState('1'); // Mock current user ID
 
   // Mock data - in production, this would come from your database
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
@@ -267,7 +344,113 @@ export default function TeamSpacePage() {
     });
   };
 
-  // Video call and analytics functionality will be implemented in future updates
+  // Chat handling functions
+  const handleStartGroupChat = () => {
+    setChatMode('group');
+    setActiveTab('messages');
+  };
+
+  const handleStartIndividualChat = (member: TeamMember) => {
+    setSelectedMember(member);
+    setChatMode('individual');
+    setActiveTab('messages');
+  };
+
+  const handleBackToMessages = () => {
+    setChatMode(null);
+    setSelectedMember(null);
+  };
+
+  const handleSendGroupMessage = (message: GroupMessage) => {
+    setGroupMessages(prev => [...prev, message]);
+  };
+
+  const handleSendPrivateMessage = (message: PrivateMessage) => {
+    setPrivateMessages(prev => [...prev, message]);
+  };
+
+  const handleStartCall = (type: 'video' | 'audio', memberId?: string) => {
+    if (type === 'video') {
+      setIsVideoCallActive(true);
+      toast({
+        title: `${type === 'video' ? 'Video' : 'Audio'} call started`,
+        description: memberId 
+          ? `Calling ${teamMembers.find(m => m.id === memberId)?.name}...`
+          : "Starting team call...",
+      });
+    } else {
+      toast({
+        title: "Audio call started",
+        description: memberId 
+          ? `Calling ${teamMembers.find(m => m.id === memberId)?.name}...`
+          : "Starting team audio call...",
+      });
+    }
+  };
+
+  const handleJoinMeeting = (meetingId: number) => {
+    const meeting = meetings.find(m => m.id === meetingId);
+    if (meeting?.meetingLink) {
+      window.open(meeting.meetingLink, '_blank');
+    }
+    toast({
+      title: "Joining meeting",
+      description: `Joining ${meeting?.title}...`,
+    });
+  };
+
+  const handleStartInstantMeeting = (type: 'video' | 'audio') => {
+    // This will be handled by the MeetingsList component
+    toast({
+      title: "Starting instant meeting",
+      description: `Starting ${type} meeting...`,
+    });
+  };
+
+  const handleEndMeeting = (meetingId: number) => {
+    setMeetings(prev => prev.filter(meeting => meeting.id !== meetingId));
+    toast({
+      title: "Meeting ended",
+      description: "The meeting has been ended.",
+    });
+  };
+
+  const handleToggleMute = (meetingId: number) => {
+    // Handle mute toggle
+    toast({
+      title: "Microphone toggled",
+      description: "Microphone status changed.",
+    });
+  };
+
+  const handleToggleVideo = (meetingId: number) => {
+    // Handle video toggle
+    toast({
+      title: "Video toggled",
+      description: "Video status changed.",
+    });
+  };
+
+  const handleToggleScreenShare = (meetingId: number) => {
+    // Handle screen share toggle
+    toast({
+      title: "Screen sharing toggled",
+      description: "Screen sharing status changed.",
+    });
+  };
+
+  const handleDeclineMeeting = (meetingId: number) => {
+    // Handle meeting decline
+    toast({
+      title: "Meeting declined",
+      description: "You declined the meeting invitation.",
+    });
+  };
+
+  const handleDismissNotification = (notificationId: string) => {
+    // Handle notification dismissal
+    console.log('Notification dismissed:', notificationId);
+  };
 
   return (
     <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
@@ -351,7 +534,24 @@ export default function TeamSpacePage() {
                   <h2 className="text-xl font-semibold text-white mb-6">Team Members</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {teamMembers.map((member) => (
-                      <TeamMemberCard key={member.id} member={member} />
+                      <TeamMemberCard 
+                        key={member.id} 
+                        member={member} 
+                        onMessage={(memberId) => {
+                          const member = teamMembers.find(m => m.id === memberId);
+                          if (member) handleStartIndividualChat(member);
+                        }}
+                        onEmail={(memberId) => {
+                          const member = teamMembers.find(m => m.id === memberId);
+                          if (member) {
+                            window.open(`mailto:${member.email}`, '_blank');
+                            toast({
+                              title: "Opening email",
+                              description: `Opening email client for ${member.name}`,
+                            });
+                          }
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
@@ -374,12 +574,12 @@ export default function TeamSpacePage() {
                     <Button
                       variant="outline"
                       className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
-                      onClick={() => setActiveTab('messages')}
+                      onClick={handleStartGroupChat}
                     >
                       <MessageSquare className="h-6 w-6 mr-3 text-blue-400" />
                       <div>
                         <div className="font-medium text-white">Team Chat</div>
-                        <div className="text-sm text-gray-400">Send a message</div>
+                        <div className="text-sm text-gray-400">Group messaging</div>
                       </div>
                     </Button>
 
@@ -399,15 +599,86 @@ export default function TeamSpacePage() {
               </TabsContent>
 
               <TabsContent value="tasks">
-                <TaskList tasks={tasks} onTaskUpdate={setTasks} />
+                <TaskList 
+                  tasks={tasks} 
+                  onTaskUpdate={setTasks}
+                  teamMembers={teamMembers}
+                />
               </TabsContent>
 
               <TabsContent value="messages">
-                <MessagesPanel messages={messages} onSendMessage={setMessages} />
+                {chatMode === 'group' ? (
+                  <GroupChat
+                    teamMembers={teamMembers}
+                    currentUserId={currentUserId}
+                    onSendMessage={handleSendGroupMessage}
+                    onStartCall={handleStartCall}
+                  />
+                ) : chatMode === 'individual' && selectedMember ? (
+                  <IndividualChat
+                    member={selectedMember}
+                    currentUserId={currentUserId}
+                    onSendMessage={handleSendPrivateMessage}
+                    onStartCall={handleStartCall}
+                    onBack={handleBackToMessages}
+                    isAdmin={false} // You can determine this based on user role
+                  />
+                ) : (
+                  <div className="space-y-6">
+                    <div className="text-center py-8">
+                      <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-xl font-semibold text-white mb-2">Choose a Chat</h3>
+                      <p className="text-gray-400 mb-6">Start a group conversation or message a team member privately</p>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button
+                          onClick={handleStartGroupChat}
+                          className="bg-green-600 hover:bg-green-700 px-8 py-3"
+                        >
+                          <MessageSquare className="h-5 w-5 mr-2" />
+                          Start Group Chat
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          onClick={() => setActiveTab('overview')}
+                          className="border-white/10 hover:bg-white/5 px-8 py-3"
+                        >
+                          <Users className="h-5 w-5 mr-2" />
+                          Message Team Members
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Show recent messages if any */}
+                    {messages.length > 0 && (
+                      <div>
+                        <h4 className="text-lg font-semibold text-white mb-4">Recent Messages</h4>
+                        <MessagesPanel 
+                          messages={messages} 
+                          onSendMessage={setMessages}
+                          teamMembers={teamMembers}
+                          onStartCall={handleStartCall}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="meetings">
-                <MeetingsList meetings={meetings} onScheduleMeeting={setMeetings} />
+                <MeetingsList 
+                  meetings={meetings} 
+                  onScheduleMeeting={setMeetings}
+                  teamMembers={teamMembers}
+                  onJoinMeeting={handleJoinMeeting}
+                  onStartInstantMeeting={handleStartInstantMeeting}
+                  onEndMeeting={handleEndMeeting}
+                  onToggleMute={handleToggleMute}
+                  onToggleVideo={handleToggleVideo}
+                  onToggleScreenShare={handleToggleScreenShare}
+                  currentUserId={currentUserId}
+                />
               </TabsContent>
 
               <TabsContent value="analytics" className="space-y-6">
@@ -550,6 +821,16 @@ export default function TeamSpacePage() {
           isOpen={isAddMemberModalOpen}
           onClose={() => setIsAddMemberModalOpen(false)}
           onAddMember={handleAddMember}
+        />
+
+        {/* Meeting Notification System */}
+        <MeetingNotificationSystem
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
+          onJoinMeeting={handleJoinMeeting}
+          onDeclineMeeting={handleDeclineMeeting}
+          onEndMeeting={handleEndMeeting}
+          onDismissNotification={handleDismissNotification}
         />
       </main>
     </div>

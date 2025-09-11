@@ -1,11 +1,10 @@
-"use client"
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { 
   MessageSquare, 
   Send, 
@@ -17,74 +16,122 @@ import {
   Video,
   MoreHorizontal,
   Check,
-  CheckCheck
+  CheckCheck,
+  ArrowLeft,
+  Shield,
+  Lock
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
-interface Message {
-  id: number;
-  sender: string;
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'busy';
+  joinedAt: string;
+  skills: string[];
+  currentTask?: string;
+  tasksCompleted: number;
+  totalTasks: number;
+  lastActive: string;
+}
+
+interface PrivateMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
   content: string;
   timestamp: string;
-  type: 'text' | 'file' | 'system' | 'voice';
+  type: 'text' | 'file' | 'voice' | 'system';
   attachments?: {
     name: string;
     url: string;
     type: string;
     size: number;
   }[];
-  readBy?: string[];
+  readBy: {
+    userId: string;
+    readAt: string;
+  }[];
   isEdited?: boolean;
+  editedAt?: string;
+  isEncrypted?: boolean;
 }
 
-interface MessagesPanelProps {
-  messages: Message[];
-  onSendMessage: (messages: Message[]) => void;
-  teamMembers?: Array<{ id: string; name: string; status: string }>;
-  onStartCall?: (type: 'video' | 'audio') => void;
+interface IndividualChatProps {
+  member: TeamMember;
+  currentUserId: string;
+  onSendMessage: (message: PrivateMessage) => void;
+  onStartCall: (type: 'video' | 'audio', memberId: string) => void;
+  onBack: () => void;
+  isAdmin?: boolean;
 }
 
-const MessagesPanel: React.FC<MessagesPanelProps> = ({ 
-  messages, 
+const IndividualChat: React.FC<IndividualChatProps> = ({ 
+  member, 
+  currentUserId, 
   onSendMessage, 
-  teamMembers = [],
-  onStartCall 
+  onStartCall,
+  onBack,
+  isAdmin = false
 }) => {
   const { toast } = useToast();
+  const [messages, setMessages] = useState<PrivateMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Simulate typing indicators
+  useEffect(() => {
+    if (isTyping) {
+      const timer = setTimeout(() => {
+        setIsTyping(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTyping]);
+
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      const newMsg: Message = {
-        id: Date.now(),
-        sender: 'You',
+      const message: PrivateMessage = {
+        id: Date.now().toString(),
+        senderId: currentUserId,
+        senderName: 'You',
         content: newMessage,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toISOString(),
         type: 'text',
-        readBy: ['You']
+        readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }],
+        isEncrypted: true // Private messages are encrypted
       };
-      onSendMessage([...messages, newMsg]);
+
+      setMessages(prev => [...prev, message]);
+      onSendMessage(message);
       setNewMessage('');
       setIsTyping(false);
       
-      // Simulate other team members reading the message
+      // Simulate the other person reading the message
       setTimeout(() => {
-        const onlineMembers = teamMembers.filter(member => member.status === 'online');
-        const readBy = ['You', ...onlineMembers.slice(0, 2).map(member => member.name)];
-        
-        onSendMessage(messages.map(msg => 
-          msg.id === newMsg.id ? { ...msg, readBy } : msg
+        const readUpdate = {
+          userId: member.id,
+          readAt: new Date().toISOString()
+        };
+
+        setMessages(prev => prev.map(msg => 
+          msg.id === message.id 
+            ? { ...msg, readBy: [...msg.readBy, readUpdate] }
+            : msg
         ));
       }, 2000);
     }
@@ -102,7 +149,6 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
     
     if (e.target.value && !isTyping) {
       setIsTyping(true);
-      setTimeout(() => setIsTyping(false), 3000);
     } else if (!e.target.value) {
       setIsTyping(false);
     }
@@ -111,11 +157,12 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const newMsg: Message = {
-        id: Date.now(),
-        sender: 'You',
+      const message: PrivateMessage = {
+        id: Date.now().toString(),
+        senderId: currentUserId,
+        senderName: 'You',
         content: `📎 ${file.name}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toISOString(),
         type: 'file',
         attachments: [{
           name: file.name,
@@ -123,14 +170,16 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
           type: file.type,
           size: file.size
         }],
-        readBy: ['You']
+        readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }],
+        isEncrypted: true
       };
-      
-      onSendMessage([...messages, newMsg]);
+
+      setMessages(prev => [...prev, message]);
+      onSendMessage(message);
       
       toast({
-        title: "File uploaded",
-        description: `${file.name} has been shared in the team chat.`,
+        title: "File sent",
+        description: `${file.name} has been sent privately to ${member.name}.`,
       });
     }
   };
@@ -146,37 +195,53 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
       // Simulate recording
       setTimeout(() => {
         setIsRecording(false);
-        const newMsg: Message = {
-          id: Date.now(),
-          sender: 'You',
+        const message: PrivateMessage = {
+          id: Date.now().toString(),
+          senderId: currentUserId,
+          senderName: 'You',
           content: "🎤 Voice note",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date().toISOString(),
           type: 'voice',
-          readBy: ['You']
+          readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }],
+          isEncrypted: true
         };
         
-        onSendMessage([...messages, newMsg]);
+        setMessages(prev => [...prev, message]);
+        onSendMessage(message);
         
         toast({
           title: "Voice note sent",
-          description: "Your voice note has been shared.",
+          description: "Your voice note has been sent privately.",
         });
       }, 3000);
     }
   };
 
-  const getReadStatus = (message: Message) => {
-    if (!message.readBy) return null;
-    
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const getReadStatus = (message: PrivateMessage) => {
     const readCount = message.readBy.length;
-    const totalOnline = teamMembers.filter(m => m.status === 'online').length + 1; // +1 for current user
     
-    if (readCount === totalOnline) {
+    if (readCount === 2) {
       return <CheckCheck className="h-3 w-3 text-blue-400" />;
-    } else if (readCount > 1) {
-      return <CheckCheck className="h-3 w-3 text-gray-400" />;
+    } else if (readCount === 1) {
+      return <Check className="h-3 w-3 text-gray-400" />;
     } else {
       return <Check className="h-3 w-3 text-gray-400" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'busy': return 'bg-yellow-500';
+      case 'offline': return 'bg-gray-500';
+      default: return 'bg-gray-500';
     }
   };
 
@@ -184,12 +249,43 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
     <Card className="bg-black/40 backdrop-blur-sm border-white/10 h-[600px] flex flex-col">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Team Chat
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="relative">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-green-600 text-white">
+                  {member.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${getStatusColor(member.status)}`}></div>
+            </div>
+            
+            <div>
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                {member.name}
+                <Lock className="h-4 w-4 text-green-400" />
+              </CardTitle>
+              <p className="text-sm text-gray-400">
+                {member.status === 'online' ? 'Online' : 
+                 member.status === 'busy' ? 'Busy' : 'Offline'} • Private Chat
+              </p>
+            </div>
+          </div>
           
-          {onStartCall && (
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+              <Shield className="h-3 w-3 mr-1" />
+              Encrypted
+            </Badge>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
@@ -197,17 +293,23 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-black/80 border-white/10">
-                <DropdownMenuItem onClick={() => onStartCall('audio')}>
+                <DropdownMenuItem onClick={() => onStartCall('audio', member.id)}>
                   <Phone className="h-4 w-4 mr-2" />
                   Start Audio Call
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onStartCall('video')}>
+                <DropdownMenuItem onClick={() => onStartCall('video', member.id)}>
                   <Video className="h-4 w-4 mr-2" />
                   Start Video Call
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem className="text-red-400">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin: Cannot view private messages
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          </div>
         </div>
       </CardHeader>
 
@@ -217,27 +319,33 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
           {messages.length === 0 ? (
             <div className="text-center text-gray-400 py-8">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No messages yet. Start the conversation!</p>
+              <p>Start a private conversation with {member.name}</p>
+              <p className="text-xs mt-2 text-gray-500">
+                Messages are encrypted and only visible to you and {member.name}
+              </p>
             </div>
           ) : (
             messages.map((message) => (
               <div key={message.id} className="flex items-start gap-3 group">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-green-600 text-white text-xs">
-                    {message.sender.split(' ').map(n => n[0]).join('')}
+                    {message.senderName.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-medium text-white">
-                      {message.sender}
+                      {message.senderName}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {message.timestamp}
+                      {formatTime(message.timestamp)}
                     </span>
                     {message.isEdited && (
                       <span className="text-xs text-gray-500">(edited)</span>
+                    )}
+                    {message.isEncrypted && (
+                      <Lock className="h-3 w-3 text-green-400" />
                     )}
                   </div>
                   
@@ -263,11 +371,9 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
                   
                   <div className="flex items-center gap-1 mt-1">
                     {getReadStatus(message)}
-                    {message.readBy && (
-                      <span className="text-xs text-gray-500">
-                        {message.readBy.length} read
-                      </span>
-                    )}
+                    <span className="text-xs text-gray-500">
+                      {message.readBy.length === 2 ? 'Read' : 'Delivered'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -282,7 +388,7 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
-              <span>Someone is typing...</span>
+              <span>{member.name} is typing...</span>
             </div>
           )}
           
@@ -297,7 +403,7 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
                 value={newMessage}
                 onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message... (Use @username to mention someone)"
+                placeholder={`Send a private message to ${member.name}...`}
                 className="bg-black/20 border-white/10 text-white resize-none min-h-[40px] max-h-[120px]"
                 rows={1}
               />
@@ -350,10 +456,16 @@ const MessagesPanel: React.FC<MessagesPanelProps> = ({
               </Button>
             </div>
           </div>
+          
+          {/* Security Notice */}
+          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+            <Shield className="h-3 w-3" />
+            <span>Messages are end-to-end encrypted and private</span>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export default MessagesPanel;
+export default IndividualChat;

@@ -216,7 +216,7 @@ export default function FeedbackPage() {
                         {idea ? idea.title : 'Loading...'}
                       </h2>
                       <p className="text-xl text-muted-foreground mb-4">
-                        {idea?.elevatorPitch || idea?.description || 'Loading description...'}
+                        {idea?.description || 'Loading description...'}
                       </p>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {idea?.tags && idea.tags.map((tag, index) => (
@@ -241,7 +241,7 @@ export default function FeedbackPage() {
                         The Problem
                       </h3>
                       <p className="text-muted-foreground leading-relaxed">
-                        {idea?.problemStatement || 'Problem statement not available.'}
+                        {idea?.description || 'Problem statement not available.'}
                       </p>
                     </div>
                   </div>
@@ -252,26 +252,26 @@ export default function FeedbackPage() {
                         Our Solution
                       </h3>
                       <p className="text-muted-foreground leading-relaxed">
-                        {idea?.solution || 'Solution details not available.'}
+                        {idea?.description || 'Solution details not available.'}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Key Features */}
-                {idea?.keyFeatures && idea.keyFeatures.length > 0 && (
+                {idea?.tags && idea.tags.length > 0 && (
                   <div className="mb-8">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                       Key Features
                     </h3>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {idea.keyFeatures.map((feature, index) => (
+                      {idea.tags.map((tag, index) => (
                         <div key={index} className="flex items-start gap-3 p-3 bg-background/50 rounded-lg border">
                           <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                             <span className="text-xs text-green-600 font-bold">✓</span>
                           </div>
-                          <span className="text-sm text-foreground">{feature}</span>
+                          <span className="text-sm text-foreground">{tag}</span>
                         </div>
                       ))}
                     </div>
@@ -280,18 +280,14 @@ export default function FeedbackPage() {
 
                 {/* Target Audience & Market */}
                 <div className="grid sm:grid-cols-2 gap-6 mb-8">
-                  {idea?.targetAudience && (
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-2">Target Audience</h4>
-                      <p className="text-sm text-muted-foreground">{idea.targetAudience}</p>
-                    </div>
-                  )}
-                  {idea?.marketSize && (
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-2">Market Opportunity</h4>
-                      <p className="text-sm text-muted-foreground">{idea.marketSize}</p>
-                    </div>
-                  )}
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-2">Target Audience</h4>
+                    <p className="text-sm text-muted-foreground">General users and businesses</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-2">Market Opportunity</h4>
+                    <p className="text-sm text-muted-foreground">Growing market opportunity</p>
+                  </div>
                 </div>
 
                 {/* Feedback Guidance */}
