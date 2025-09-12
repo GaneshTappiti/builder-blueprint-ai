@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { notificationService, Notification } from '@/services/notificationService';
+import { ChatNotification } from '@/types/chat';
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<ChatNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -14,7 +15,8 @@ export const useNotifications = () => {
         const userId = 'current-user-id'; // TODO: Get from auth context
         const notifications = await notificationService.getNotifications(userId);
         setNotifications(notifications);
-        setUnreadCount(notificationService.getUnreadCount());
+        const count = await notificationService.getUnreadCount(userId);
+        setUnreadCount(count);
       } catch (error) {
         console.error('Failed to load notifications:', error);
       }
@@ -23,9 +25,11 @@ export const useNotifications = () => {
     loadNotifications();
 
     // Subscribe to changes
-    const unsubscribe = notificationService.subscribe((updatedNotifications) => {
+    const unsubscribe = notificationService.subscribe(async (updatedNotifications) => {
       setNotifications(updatedNotifications);
-      setUnreadCount(notificationService.getUnreadCount());
+      const userId = 'current-user-id'; // TODO: Get from auth context
+      const count = await notificationService.getUnreadCount(userId);
+      setUnreadCount(count);
     });
 
     return unsubscribe;
@@ -47,7 +51,7 @@ export const useNotifications = () => {
     notificationService.clearAll();
   };
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>) => {
+  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
     notificationService.addNotification(notification);
   };
 

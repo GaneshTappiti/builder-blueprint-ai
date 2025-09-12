@@ -29,6 +29,7 @@ export function CelebrationAnimation({
       const timer = setTimeout(() => setShowConfetti(false), 3000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible]);
 
   if (!isVisible) return null;

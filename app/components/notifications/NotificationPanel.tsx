@@ -24,7 +24,8 @@ import {
   TestTube
 } from 'lucide-react';
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
-import { Notification, notificationService } from '@/services/notificationService';
+import { notificationService } from '@/services/notificationService';
+import { ChatNotification } from '@/types/chat';
 import NotificationPreferences from './NotificationPreferences';
 import NotificationTester from './NotificationTester';
 
@@ -47,52 +48,56 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
 
   const [showPreferences, setShowPreferences] = useState(false);
   const [showTester, setShowTester] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Notification['category'] | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<ChatNotification['type'] | 'all'>('all');
 
   if (!isOpen) return null;
 
-  const getCategoryIcon = (category: Notification['category']) => {
+  const getCategoryIcon = (category: ChatNotification['type']) => {
     switch (category) {
-      case 'meeting':
-        return <Video className="h-4 w-4" />;
-      case 'task':
-        return <CheckCircle2 className="h-4 w-4" />;
-      case 'idea':
-        return <Lightbulb className="h-4 w-4" />;
-      case 'chat':
+      case 'message':
         return <MessageSquare className="h-4 w-4" />;
-      case 'team':
+      case 'mention':
         return <Users className="h-4 w-4" />;
-      case 'system':
+      case 'reaction':
+        return <CheckCircle2 className="h-4 w-4" />;
+      case 'file_upload':
+        return <Video className="h-4 w-4" />;
+      case 'channel_invite':
         return <Settings className="h-4 w-4" />;
       default:
         return <Bell className="h-4 w-4" />;
     }
   };
 
-  const getTypeIcon = (type: Notification['type']) => {
+  const getTypeIcon = (type: ChatNotification['type']) => {
     switch (type) {
-      case 'success':
-        return <CheckCircle2 className="h-4 w-4 text-green-400" />;
-      case 'warning':
-        return <AlertCircle className="h-4 w-4 text-yellow-400" />;
-      case 'error':
-        return <XCircle className="h-4 w-4 text-red-400" />;
-      case 'info':
+      case 'message':
+        return <MessageSquare className="h-4 w-4 text-blue-400" />;
+      case 'mention':
+        return <Users className="h-4 w-4 text-green-400" />;
+      case 'reaction':
+        return <CheckCircle2 className="h-4 w-4 text-yellow-400" />;
+      case 'file_upload':
+        return <Video className="h-4 w-4 text-purple-400" />;
+      case 'channel_invite':
+        return <Settings className="h-4 w-4 text-orange-400" />;
       default:
         return <Info className="h-4 w-4 text-blue-400" />;
     }
   };
 
-  const getTypeColors = (type: Notification['type']) => {
+  const getTypeColors = (type: ChatNotification['type']) => {
     switch (type) {
-      case 'success':
+      case 'message':
+        return 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20';
+      case 'mention':
         return 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20';
-      case 'warning':
+      case 'reaction':
         return 'bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20';
-      case 'error':
-        return 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20';
-      case 'info':
+      case 'file_upload':
+        return 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20';
+      case 'channel_invite':
+        return 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20';
       default:
         return 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20';
     }
@@ -100,22 +105,21 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
 
   const filteredNotifications = selectedCategory === 'all' 
     ? notifications 
-    : notifications.filter(n => n.category === selectedCategory);
+    : notifications.filter(n => n.type === selectedCategory);
 
   const categories = [
     { key: 'all', label: 'All', count: notifications.length },
-    { key: 'meeting', label: 'Meetings', count: notifications.filter(n => n.category === 'meeting').length },
-    { key: 'task', label: 'Tasks', count: notifications.filter(n => n.category === 'task').length },
-    { key: 'idea', label: 'Ideas', count: notifications.filter(n => n.category === 'idea').length },
-    { key: 'chat', label: 'Chat', count: notifications.filter(n => n.category === 'chat').length },
-    { key: 'team', label: 'Team', count: notifications.filter(n => n.category === 'team').length },
-    { key: 'system', label: 'System', count: notifications.filter(n => n.category === 'system').length }
+    { key: 'message', label: 'Messages', count: notifications.filter(n => n.type === 'message').length },
+    { key: 'mention', label: 'Mentions', count: notifications.filter(n => n.type === 'mention').length },
+    { key: 'reaction', label: 'Reactions', count: notifications.filter(n => n.type === 'reaction').length },
+    { key: 'file_upload', label: 'File Uploads', count: notifications.filter(n => n.type === 'file_upload').length },
+    { key: 'channel_invite', label: 'Channel Invites', count: notifications.filter(n => n.type === 'channel_invite').length }
   ];
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: ChatNotification) => {
     markAsRead(notification.id);
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+    if (notification.data?.actionUrl) {
+      window.location.href = notification.data.actionUrl;
     }
   };
 
@@ -208,7 +212,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                     : 'border-white/20 text-white hover:bg-white/10'
                 }`}
               >
-                {category.key !== 'all' && getCategoryIcon(category.key as Notification['category'])}
+                {category.key !== 'all' && getCategoryIcon(category.key as ChatNotification['type'])}
                 <span className="ml-1 hidden sm:inline">{category.label}</span>
                 <span className="ml-1 sm:hidden">{category.label.charAt(0)}</span>
                 {category.count > 0 && (
@@ -254,7 +258,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
           {filteredNotifications.length > 0 ? (
             <div className="space-y-3">
               {filteredNotifications
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                 .map((notification) => (
                 <div
                   key={notification.id}
@@ -269,7 +273,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        {getCategoryIcon(notification.category)}
+                        {getCategoryIcon(notification.type)}
                         <p className="text-sm font-medium text-white truncate">
                           {notification.title}
                         </p>
@@ -282,13 +286,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                       </p>
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-500">
-                          {formatTimeAgo(notification.createdAt)}
+                          {formatTimeAgo(notification.created_at)}
                         </p>
-                        {notification.actionText && (
-                          <span className="text-xs text-green-400 font-medium">
-                            {notification.actionText}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <Button

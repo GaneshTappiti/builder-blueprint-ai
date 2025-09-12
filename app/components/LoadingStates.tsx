@@ -126,6 +126,7 @@ export function TypewriterText({ text, speed = 50, className = '' }: TypewriterT
 
       return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [currentIndex, text, speed]);
 
   return (

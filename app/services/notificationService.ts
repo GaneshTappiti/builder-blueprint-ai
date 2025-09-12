@@ -15,7 +15,7 @@ export interface PushNotificationPayload {
 }
 
 class NotificationService {
-  private permission: NotificationPermission = 'default';
+  protected permission: NotificationPermission = 'default';
   private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
@@ -471,7 +471,7 @@ export interface NotificationPreferences {
 // Extend NotificationService with missing methods
 class ExtendedNotificationService extends NotificationService {
   private notifications: Notification[] = [];
-  private subscribers: ((notifications: Notification[]) => void)[] = [];
+  private subscribers: ((notifications: ChatNotification[]) => void)[] = [];
 
   // Missing methods that are being used in hooks
   async addNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'read'>): Promise<void> {
@@ -487,16 +487,28 @@ class ExtendedNotificationService extends NotificationService {
     this.notifySubscribers();
   }
 
-  async getNotifications(userId: string, limit = 50, offset = 0): Promise<Notification[]> {
-    // For now, return local notifications
-    return this.notifications.slice(offset, offset + limit);
+  async getNotifications(userId: string, limit = 50, offset = 0): Promise<ChatNotification[]> {
+    // For now, return local notifications converted to ChatNotification format
+    return this.notifications.slice(offset, offset + limit).map(notification => ({
+      id: notification.id,
+      channel_id: 'local',
+      sender_id: 'system',
+      recipient_id: userId,
+      type: notification.type as 'message' | 'mention' | 'reaction' | 'file_upload' | 'channel_invite',
+      title: notification.title,
+      body: notification.body,
+      data: notification.data,
+      read: notification.read,
+      created_at: notification.createdAt,
+      updated_at: notification.createdAt
+    }));
   }
 
   async getUnreadCount(userId: string, channelId?: string): Promise<number> {
     return this.notifications.filter(n => !n.read).length;
   }
 
-  subscribe(callback: (notifications: Notification[]) => void): () => void {
+  subscribe(callback: (notifications: ChatNotification[]) => void): () => void {
     this.subscribers.push(callback);
     return () => {
       const index = this.subscribers.indexOf(callback);
@@ -628,7 +640,20 @@ class ExtendedNotificationService extends NotificationService {
   }
 
   private notifySubscribers(): void {
-    this.subscribers.forEach(callback => callback([...this.notifications]));
+    const chatNotifications = this.notifications.map(notification => ({
+      id: notification.id,
+      channel_id: 'local',
+      sender_id: 'system',
+      recipient_id: 'current-user', // TODO: Get actual user ID
+      type: notification.type as 'message' | 'mention' | 'reaction' | 'file_upload' | 'channel_invite',
+      title: notification.title,
+      body: notification.body,
+      data: notification.data,
+      read: notification.read,
+      created_at: notification.createdAt,
+      updated_at: notification.createdAt
+    }));
+    this.subscribers.forEach(callback => callback(chatNotifications));
   }
 }
 

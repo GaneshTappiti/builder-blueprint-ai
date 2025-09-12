@@ -418,6 +418,7 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [state.appIdea, state.validationQuestions, state.appBlueprint, state.screenPrompts, state.appFlow, state.exportPrompts]);
 
   // Clear errors after 5 seconds
@@ -429,6 +430,7 @@ export function BuilderProvider({ children }: { children: ReactNode }) {
 
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [state.error]);
 
   // Persist current state to sessionStorage for recovery

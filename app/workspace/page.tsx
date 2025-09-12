@@ -42,6 +42,8 @@ import {
 import StartupBriefGenerator from "@/components/StartupBriefGenerator";
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import ProfileCompletionProgress from '@/components/profile/ProfileCompletionProgress';
 import { aiEngine } from '@/services/aiEngine';
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAI } from '@/hooks/useEnhancedAI';
@@ -234,6 +236,7 @@ export default function WorkspacePage() {
   const router = useRouter();
   const { signOut, user, loading } = useAuth();
   const { isAdmin } = useAdmin();
+  const { profile, isProfileComplete } = useProfile();
 
   // Click outside handlers for dropdowns
   useEffect(() => {
@@ -993,9 +996,9 @@ Format the response as JSON with this structure:
     console.log('🔥 Notification clicked:', notificationId);
     markAsRead(notificationId);
     const notification = notifications.find(n => n.id === notificationId);
-    if (notification?.actionUrl) {
-      console.log('🔥 Navigating to:', notification.actionUrl);
-      router.push(notification.actionUrl);
+    if (notification?.data?.actionUrl) {
+      console.log('🔥 Navigating to:', notification.data.actionUrl);
+      router.push(notification.data.actionUrl);
     }
     setShowNotifications(false);
   };
@@ -1250,6 +1253,13 @@ Format the response as JSON with this structure:
                       </Button>
                   </div>
                 </div>
+
+                {/* Profile Completion Progress */}
+                {profile && !isProfileComplete() && (
+                  <div className="mb-8">
+                    <ProfileCompletionProgress showDetails={true} />
+                  </div>
+                )}
 
                 {/* Founder's GPT - Redesigned as AI Co-founder */}
                 <section className="mb-6 md:mb-8 flex justify-center items-center min-h-[60vh]">

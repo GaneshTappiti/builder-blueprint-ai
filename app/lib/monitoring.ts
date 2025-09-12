@@ -126,6 +126,11 @@ class MonitoringService {
       ...properties
     });
   }
+
+  // Public flush method
+  flush() {
+    this.flushEvents();
+  }
 }
 
 // Lazy-loaded monitoring service to avoid SSR issues

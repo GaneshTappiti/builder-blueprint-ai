@@ -120,6 +120,8 @@ const ShareIdeaModal: React.FC<ShareIdeaModalProps> = ({
         return <Globe className="h-4 w-4" />;
       case 'team':
         return <Users className="h-4 w-4" />;
+      default:
+        return <Lock className="h-4 w-4" />;
     }
   };
 
@@ -131,6 +133,8 @@ const ShareIdeaModal: React.FC<ShareIdeaModalProps> = ({
         return 'bg-green-600/20 text-green-400';
       case 'team':
         return 'bg-blue-600/20 text-blue-400';
+      default:
+        return 'bg-gray-600/20 text-gray-400';
     }
   };
 

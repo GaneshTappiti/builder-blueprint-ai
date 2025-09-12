@@ -195,6 +195,7 @@ const EnhancedIndividualChat: React.FC<EnhancedIndividualChatProps> = ({
       subscribeToChannel(privateChannel.id);
       return () => unsubscribeFromChannel(privateChannel.id);
     }
+    return undefined;
   }, [privateChannel, subscribeToChannel, unsubscribeFromChannel]);
 
   // Mark messages as read when channel is active

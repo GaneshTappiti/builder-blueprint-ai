@@ -138,6 +138,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
               const urlParams = new URLSearchParams(window.location.search);
               const redirectTo = urlParams.get('redirectTo') || '/workspace';
+              
+              // Check if this is a new user signup and redirect to profile setup
+              if (event === 'SIGNED_IN' && session?.user?.created_at) {
+                const userCreatedAt = new Date(session.user.created_at);
+                const now = new Date();
+                const isNewUser = (now.getTime() - userCreatedAt.getTime()) < 60000; // Less than 1 minute old
+                
+                if (isNewUser) {
+                  router.push('/profile/setup');
+                  return;
+                }
+              }
+              
               router.push(redirectTo);
             }
           } else {

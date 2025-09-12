@@ -617,8 +617,11 @@ class ChatService implements IChatService {
       }, async (payload) => {
         if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
           try {
-            const reaction = await this.getReactions(payload.new?.message_id || payload.old.message_id);
-            reaction.forEach(r => callback(r));
+            const messageId = (payload.new as any)?.message_id || (payload.old as any)?.message_id;
+            if (messageId) {
+              const reaction = await this.getReactions(messageId);
+              reaction.forEach(r => callback(r));
+            }
           } catch (error) {
             console.error('Error fetching reactions in subscription:', error);
           }

@@ -150,7 +150,7 @@ export function lazyLoadComponent<T extends React.ComponentType<any>>(
       monitoring.trackError(error as Error, 'lazy_load_component');
       // Return a fallback component
       return {
-        default: (() => React.createElement('div', null, 'Failed to load component')) as T
+        default: (() => React.createElement('div', null, 'Failed to load component')) as unknown as T
       };
     })
   );

@@ -1,24 +1,56 @@
 import { useState, useEffect, useCallback } from 'react';
-import { notificationService, type Notification, NotificationPreferences } from '@/services/notificationService';
+import { notificationService, NotificationPreferences } from '@/services/notificationService';
+import { ChatNotification } from '@/types/chat';
 import { emailNotificationService } from '@/services/emailNotificationService';
 import { pushNotificationService } from '@/services/pushNotificationService';
 
 export const useRealtimeNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<ChatNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [preferences, setPreferences] = useState<NotificationPreferences>(() => 
-    notificationService.getNotificationPreferences()
-  );
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    email: true,
+    push: true,
+    sms: false,
+    desktop: true,
+    types: {
+      mentions: true,
+      tasks: true,
+      meetings: true,
+      ideas: true,
+      projects: true,
+      teamUpdates: true,
+      achievements: true
+    },
+    frequency: 'immediate',
+    quietHours: {
+      enabled: false,
+      start: '22:00',
+      end: '08:00'
+    }
+  });
 
   useEffect(() => {
     // Initial load
-    setNotifications(notificationService.getNotifications());
-    setUnreadCount(notificationService.getUnreadCount());
+    const loadData = async () => {
+      try {
+        const userId = 'current-user-id'; // TODO: Get from auth context
+        const notifications = await notificationService.getNotifications(userId);
+        const unreadCount = await notificationService.getUnreadCount(userId);
+        setNotifications(notifications);
+        setUnreadCount(unreadCount);
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      }
+    };
+
+    loadData();
 
     // Subscribe to changes
-    const unsubscribe = notificationService.subscribe((updatedNotifications) => {
+    const unsubscribe = notificationService.subscribe(async (updatedNotifications) => {
       setNotifications(updatedNotifications);
-      setUnreadCount(notificationService.getUnreadCount());
+      const userId = 'current-user-id'; // TODO: Get from auth context
+      const unreadCount = await notificationService.getUnreadCount(userId);
+      setUnreadCount(unreadCount);
     });
 
     // Setup push notification event listeners
@@ -141,7 +173,7 @@ export const useRealtimeNotifications = () => {
   }, [preferences]);
 
   // Get notifications by category
-  const getNotificationsByCategory = useCallback((category: Notification['category']) => {
+  const getNotificationsByCategory = useCallback((category: ChatNotification['type']) => {
     return notificationService.getNotificationsByCategory(category);
   }, []);
 

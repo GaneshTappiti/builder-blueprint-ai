@@ -152,6 +152,7 @@ export function ExportComposerCard() {
       }, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [state.exportPrompts, showCelebration, celebrationShownForExport]);
 
   const copyToClipboard = async (text: string, itemId: string) => {
