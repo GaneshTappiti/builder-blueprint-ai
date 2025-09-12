@@ -15,7 +15,7 @@ import {
   Volume2,
   VolumeX,
   Clock,
-  Waveform
+  Activity
 } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { cn } from "@/lib/utils";
@@ -189,7 +189,7 @@ export function VoiceMessage({
       {isRecording && (
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <Waveform className="h-4 w-4 text-red-400" />
+            <Activity className="h-4 w-4 text-red-400" />
             <Progress 
               value={(duration / maxDuration) * 100} 
               className="flex-1"

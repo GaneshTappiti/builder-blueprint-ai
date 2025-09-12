@@ -63,10 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state and listen for changes
   useEffect(() => {
     // Debug logging
-    console.log('🔍 Auth Debug Info:', {
-      isSupabaseConfigured,
+    console.log('🔧 AuthContext: Initializing...', {
       isDevelopmentMode,
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      isSupabaseConfigured,
       nodeEnv: process.env.NODE_ENV
     });
 

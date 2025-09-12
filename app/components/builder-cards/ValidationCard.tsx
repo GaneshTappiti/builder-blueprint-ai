@@ -14,7 +14,7 @@ import { useBuilder, builderActions, AppBlueprint, Screen, UserRole, Modal, Inte
 import { useToast } from "@/hooks/use-toast";
 import { RAGTool, RAGToolProfile } from "@/types/ideaforge";
 import { getAllRAGToolProfiles } from "@/services/ragToolProfiles";
-import { RAGContextInjector } from "@/services/ragContextInjector";
+import { RAGContextClient } from "@/services/ragContextClient";
 
 const validationQuestions = [
   {
@@ -95,7 +95,7 @@ export function ValidationCard() {
     // Enhance with RAG context (background process, doesn't affect UI)
     if (selectedTool) {
       try {
-        const ragContext = await RAGContextInjector.getContextForStage({
+        const ragContext = await RAGContextClient.getContextForStage({
           stage: 'tool_selection',
           toolId: selectedTool,
           appIdea: state.appIdea.ideaDescription,
@@ -153,7 +153,7 @@ export function ValidationCard() {
     let ragContext = null;
     if (state.validationQuestions.selectedTool) {
       try {
-        ragContext = await RAGContextInjector.getContextForStage({
+        ragContext = await RAGContextClient.getContextForStage({
           stage: 'blueprint_generation',
           toolId: state.validationQuestions.selectedTool,
           appIdea: state.appIdea.ideaDescription,

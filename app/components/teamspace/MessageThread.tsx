@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -67,7 +67,7 @@ function ThreadReplyInput({ threadId, onReply, placeholder = "Reply in thread...
         "flex items-end space-x-2 p-2 rounded-lg border transition-colors",
         isFocused ? "border-blue-500 bg-blue-500/5" : "border-gray-600 bg-gray-800"
       )}>
-        <Input
+        <Textarea
           value={replyContent}
           onChange={(e) => setReplyContent(e.target.value)}
           onKeyPress={handleKeyPress}

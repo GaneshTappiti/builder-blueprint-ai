@@ -6,27 +6,74 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SixStageArchitecture } from "@/components/builder-cards/SixStageArchitecture";
 
-import { BuilderProvider } from "@/lib/builderContext";
-import { useState } from "react";
-import { ArrowLeft, Brain, Sparkles, Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Brain, Sparkles, Menu, Save, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { MinimalHeader } from "@/components/MinimalHeader";
+import { useMVPProjectStorage } from "@/hooks/useMVPProjectStorage";
+import { useSearchParams } from "next/navigation";
 
 export default function BuilderPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get('project');
+  
+  const {
+    currentProject,
+    isLoading,
+    isSaving,
+    saveProject,
+    createNewProject,
+    loadProject
+  } = useMVPProjectStorage({
+    autoSave: true,
+    projectId: projectId || undefined
+  });
 
   return (
-    <BuilderProvider>
-      <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
+    <div className="layout-container bg-gradient-to-br from-black via-gray-900 to-green-950">
         <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         
         <main className="layout-main transition-all duration-300">
           {/* Minimal Header */}
-                  <MinimalHeader 
-          onToggleSidebar={() => setSidebarOpen(true)}
-          backToPath="/workspace/mvp-studio"
-          backToLabel="Back to MVP Studio"
-        />
+          <MinimalHeader 
+            onToggleSidebar={() => setSidebarOpen(true)}
+            backToPath="/workspace/mvp-studio"
+            backToLabel="Back to MVP Studio"
+          />
+          
+          {/* Project Status Bar */}
+          {currentProject && (
+            <div className="px-6 py-3 bg-black/20 backdrop-blur-xl border-b border-white/10">
+              <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FolderOpen className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-medium text-white">
+                    {currentProject.name}
+                  </span>
+                  <Badge variant="outline" className="text-xs">
+                    {currentProject.status}
+                  </Badge>
+                  {isSaving && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                      Saving...
+                    </span>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveProject()}
+                  disabled={isSaving}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="w-3 h-3" />
+                  Save
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="px-6 py-8">
@@ -55,6 +102,5 @@ export default function BuilderPage() {
           </div>
         </main>
       </div>
-    </BuilderProvider>
   );
 }

@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowRight, Layout, Users, GitBranch, Eye, Edit3, MessageSquare, Plug } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
-import { RAGContextInjector } from "@/services/ragContextInjector";
+import { RAGContextClient } from "@/services/ragContextClient";
 
 export function BlueprintCard() {
   const { state, dispatch } = useBuilder();
@@ -46,7 +46,7 @@ export function BlueprintCard() {
     let ragContext = null;
     if (state.validationQuestions.selectedTool) {
       try {
-        ragContext = await RAGContextInjector.getContextForStage({
+        ragContext = await RAGContextClient.getContextForStage({
           stage: 'blueprint_generation',
           toolId: state.validationQuestions.selectedTool,
           appIdea: state.appIdea.ideaDescription,
@@ -529,7 +529,7 @@ export function BlueprintCard() {
                 // Get RAG context if a tool is selected
                 if (state.validationQuestions.selectedTool) {
                   try {
-                    ragContext = await RAGContextInjector.getContextForStage({
+                    ragContext = await RAGContextClient.getContextForStage({
                       stage: 'blueprint_generation',
                       toolId: state.validationQuestions.selectedTool,
                       appIdea: state.appIdea.ideaDescription,

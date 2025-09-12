@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Globe, Smartphone, Palette, Briefcase, Heart } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
-import { LoadingSpinner } from "../LoadingStates";
+import { LoadingSpinner } from "../LoadingSpinner";
 
 const designStyles = [
   {

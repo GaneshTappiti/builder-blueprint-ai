@@ -56,7 +56,93 @@ const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
   useEffect(() => {
     const checkMvpStudioData = () => {
       try {
-        // Check if there's any completed MVP Studio project
+        // Check new MVP Studio storage format first
+        const mvpProjects = localStorage.getItem('mvp_studio_projects');
+        if (mvpProjects) {
+          const projects = JSON.parse(mvpProjects);
+          const completedProject = projects.find((project: any) => 
+            project.status === 'completed' && 
+            (project.name.toLowerCase().includes(idea.title.toLowerCase()) ||
+             project.appIdea.ideaDescription.toLowerCase().includes(idea.title.toLowerCase()))
+          );
+
+          if (completedProject) {
+            // Convert new MVP Studio project data to MVPStudioData format
+            const mvpData: MVPStudioData = {
+              isCompleted: true,
+              completedAt: completedProject.updatedAt,
+              wizardData: {
+                step1: { 
+                  appName: completedProject.appIdea.appName, 
+                  appType: completedProject.appIdea.platforms.includes('mobile') ? 'mobile-app' : 'web-app'
+                },
+                step2: { 
+                  theme: "dark", 
+                  designStyle: completedProject.appIdea.designStyle, 
+                  selectedTool: completedProject.validationQuestions.selectedTool as RAGTool
+                },
+                step3: { 
+                  platforms: completedProject.appIdea.platforms as any[]
+                },
+                step4: { 
+                  selectedAI: "gpt-4" 
+                },
+                userPrompt: completedProject.appIdea.ideaDescription
+              },
+              generatedFramework: {
+                prompts: {
+                  framework: `Create a modern application called "${completedProject.appIdea.appName}". ${completedProject.appIdea.ideaDescription}`,
+                  pages: completedProject.screenPrompts?.map((screen: any) => ({
+                    pageName: screen.title,
+                    prompt: `${screen.layout}\n\nComponents: ${screen.components}\n\nBehavior: ${screen.behavior}`,
+                    components: screen.components.split(',').map((c: string) => c.trim()),
+                    layout: screen.layout,
+                    interactions: screen.conditionalLogic ? [screen.conditionalLogic] : []
+                  })) || [],
+                  linking: completedProject.appFlow?.flowLogic || "Implement proper navigation and user flow"
+                },
+                recommendedTools: [
+                  {
+                    name: completedProject.validationQuestions.selectedTool || "Cursor",
+                    description: "AI-powered development tool",
+                    url: "https://cursor.sh",
+                    bestFor: ["Web apps", "Full-stack development"],
+                    category: "ai-coding"
+                  }
+                ],
+                metadata: {
+                  generatedAt: completedProject.updatedAt,
+                  toolUsed: completedProject.validationQuestions.selectedTool as RAGTool,
+                  confidence: 0.95
+                }
+              },
+              promptHistory: completedProject.screenPrompts?.map((screen: any, index: number) => ({
+                id: screen.screenId,
+                type: "page" as const,
+                content: `${screen.layout}\n\nComponents: ${screen.components}\n\nBehavior: ${screen.behavior}`,
+                timestamp: completedProject.updatedAt,
+                version: index + 1,
+                toolUsed: completedProject.validationQuestions.selectedTool as RAGTool,
+                confidence: 0.95
+              })) || [],
+              analytics: {
+                screensCount: completedProject.screenPrompts?.length || 0,
+                userRolesCount: completedProject.appBlueprint?.userRoles?.length || 0,
+                chosenTool: completedProject.validationQuestions.selectedTool as RAGTool,
+                exportFormats: ["Markdown", "JSON", "PDF"],
+                totalPrompts: (completedProject.screenPrompts?.length || 0) + 1,
+                lastUpdated: completedProject.updatedAt,
+                completionPercentage: 100
+              }
+            };
+
+            setMvpStudioData(mvpData);
+            setMvpStudioCompleted(true);
+            return;
+          }
+        }
+
+        // Fallback: Check old storage format for backwards compatibility
         const builderHistory = localStorage.getItem('builder-blueprint-history');
         if (builderHistory) {
           const projects = JSON.parse(builderHistory);
@@ -66,7 +152,7 @@ const BlueprintView: React.FC<BlueprintViewProps> = ({ idea, onUpdate }) => {
           );
 
           if (completedProject) {
-            // Convert builder project data to MVPStudioData format
+            // Convert old builder project data to MVPStudioData format
             const mvpData: MVPStudioData = {
               isCompleted: true,
               completedAt: completedProject.dateModified,

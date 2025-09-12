@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useBuilder, builderActions } from "@/lib/builderContext";
 import { useToast } from "@/hooks/use-toast";
-import { RAGContextInjector } from "@/services/ragContextInjector";
+import { RAGContextClient } from "@/services/ragContextClient";
 
 export function FlowDescriptionCard() {
   const { state, dispatch } = useBuilder();
@@ -85,7 +85,7 @@ export function FlowDescriptionCard() {
     let ragContext = null;
     if (state.validationQuestions.selectedTool) {
       try {
-        ragContext = await RAGContextInjector.getContextForStage({
+        ragContext = await RAGContextClient.getContextForStage({
           stage: 'flow_generation',
           toolId: state.validationQuestions.selectedTool,
           appIdea: state.appIdea.ideaDescription,

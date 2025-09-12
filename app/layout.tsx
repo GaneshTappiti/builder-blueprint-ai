@@ -14,6 +14,7 @@ import { ProfileProvider } from '@/contexts/ProfileContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { TeamManagementProvider } from '@/contexts/TeamManagementContext';
 import { ChatProvider } from '@/contexts/ChatContext';
+import { BuilderProvider } from '@/lib/builderContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 export const viewport: Viewport = {
@@ -64,13 +65,15 @@ export default function RootLayout({
                   <AdminProvider>
                     <TeamManagementProvider>
                       <ChatProvider>
-                        <TooltipProvider>
-                          <IdeaProvider>
-                            {children}
-                          </IdeaProvider>
-                          <Toaster />
-                          <Sonner />
-                        </TooltipProvider>
+                        <BuilderProvider>
+                          <TooltipProvider>
+                            <IdeaProvider>
+                              {children}
+                            </IdeaProvider>
+                            <Toaster />
+                            <Sonner />
+                          </TooltipProvider>
+                        </BuilderProvider>
                       </ChatProvider>
                     </TeamManagementProvider>
                   </AdminProvider>
