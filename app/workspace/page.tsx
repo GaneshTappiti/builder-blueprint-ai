@@ -473,26 +473,42 @@ export default function WorkspacePage() {
     clearError();
 
     try {
-      // Enhanced prompt for Founder's GPT expertise
+      // Enhanced prompt for Founder's GPT expertise with better structure
       const enhancedPrompt = `
       As an AI co-founder with deep expertise in startup journeys, provide detailed advice on: ${gptInput}
 
-      Structure your response with clear sections including:
-      1. Strategic Analysis
-      2. Actionable Recommendations
-      3. Potential Challenges & Solutions
-      4. Next Steps
+      Please structure your response with clear sections:
+      
+      ## Strategic Analysis
+      - Market opportunity assessment
+      - Competitive landscape overview
+      - Key success factors
+      
+      ## Actionable Recommendations
+      - Specific next steps (prioritized)
+      - Resource requirements
+      - Timeline considerations
+      
+      ## Potential Challenges & Solutions
+      - Common pitfalls to avoid
+      - Risk mitigation strategies
+      - Alternative approaches
+      
+      ## Next Steps
+      - Immediate actions (next 30 days)
+      - Medium-term goals (3-6 months)
+      - Long-term vision (6+ months)
 
-      Draw from Y Combinator principles, IndieHackers insights, and successful founder strategies. Provide specific, practical guidance.`
+      Draw from Y Combinator principles, IndieHackers insights, and successful founder strategies. Provide specific, practical guidance with concrete examples.`
 
-      // Use the AI instance from useEnhancedAI hook
-      console.log('Sending AI request with prompt:', enhancedPrompt);
+      // Use the AI instance from useEnhancedAI hook with enhanced options
+      console.log('Sending AI request with enhanced prompt');
       const response = await ai.generateText(enhancedPrompt, {
-        temperature: 0.7,
-        maxTokens: 1500
+        temperature: 0.8,
+        maxTokens: 2000
       });
       
-      console.log('AI response received:', response);
+      console.log('AI response received with confidence:', response.confidence);
 
       if (!response || !response.text) {
         console.error('Invalid response format:', response);
@@ -501,25 +517,63 @@ export default function WorkspacePage() {
 
       setAiResponse(response.text);
 
-      // Auto-sync to Idea Vault if the response looks like a startup idea
-      if (gptInput.toLowerCase().includes('idea') ||
-          gptInput.toLowerCase().includes('app') ||
-          gptInput.toLowerCase().includes('startup') ||
-          gptInput.toLowerCase().includes('build')) {
+      // Enhanced auto-sync to Idea Vault with better idea detection
+      const responseText = response.text.toLowerCase();
+      const isStartupRelated = responseText.includes('startup') || 
+                              responseText.includes('business') ||
+                              responseText.includes('idea') ||
+                              responseText.includes('venture') ||
+                              responseText.includes('entrepreneur') ||
+                              gptInput.toLowerCase().includes('idea') ||
+                              gptInput.toLowerCase().includes('app') ||
+                              gptInput.toLowerCase().includes('startup') ||
+                              gptInput.toLowerCase().includes('build');
 
+      if (isStartupRelated) {
         setIsGeneratingIdea(true);
 
         try {
-          // Mock idea creation
-          const ideaTitle = gptInput.length > 50 ? gptInput.substring(0, 50) + '...' : gptInput;
+          // Enhanced idea extraction with better patterns
+          const ideaPatterns = [
+            /(?:idea|concept|solution|opportunity):\s*([^\n]+)/i,
+            /(?:build|create|develop)\s+(?:a\s+)?([^.!?]+)/i,
+            /(?:startup|business|venture)\s+(?:idea|concept):\s*([^\n]+)/i
+          ];
+
+          let extractedIdea = null;
+          for (const pattern of ideaPatterns) {
+            const match = response.text.match(pattern);
+            if (match && match[1]) {
+              extractedIdea = match[1].trim();
+              break;
+            }
+          }
+
+          const ideaTitle = extractedIdea || (gptInput.length > 50 ? gptInput.substring(0, 50) + '...' : gptInput);
+
+          // Set validation result for better idea tracking
+          setValidationResult({
+            idea: ideaTitle,
+            score: Math.min(85, 70 + (response.confidence * 20)),
+            feedback: `AI-generated insight (Confidence: ${Math.round(response.confidence * 100)}%)`,
+            suggestions: [
+              "Validate with market research",
+              "Test with potential customers", 
+              "Analyze competitive landscape",
+              "Define clear value proposition"
+            ],
+            marketPotential: Math.min(85, 65 + (response.confidence * 25)),
+            technicalFeasibility: Math.min(85, 70 + (response.confidence * 20)),
+            competitiveAdvantage: Math.min(85, 60 + (response.confidence * 30))
+          });
 
           toast({
-            title: "💡 Idea Saved!",
-            description: "Your AI-generated idea has been automatically saved to Idea Vault",
+            title: "💡 Idea Detected!",
+            description: "We've identified a potential startup idea in the AI response. Check the validation section below.",
             duration: 5000,
           });
         } catch (ideaError) {
-          console.error('Error saving idea:', ideaError);
+          console.error('Error processing idea:', ideaError);
         } finally {
           setIsGeneratingIdea(false);
         }

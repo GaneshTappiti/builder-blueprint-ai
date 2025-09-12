@@ -31,37 +31,44 @@ export function useEnhancedAI(): UseEnhancedAIReturn {
     setError(null);
 
     try {
-      console.log('Making AI request:', { type, prompt, options });
+      console.log('Making AI request:', { type, prompt: prompt?.toString().substring(0, 100) + '...', options });
       
+      const requestBody = {
+        type,
+        prompt: typeof prompt === 'string' ? prompt : JSON.stringify(prompt),
+        options: {
+          ...options,
+          timestamp: new Date().toISOString(),
+          requestId: Math.random().toString(36).substring(7)
+        },
+      };
+
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          type,
-          prompt: typeof prompt === 'string' ? prompt : JSON.stringify(prompt),
-          options,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('API response status:', response.status);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('API response data:', data);
+      console.log('API response received successfully');
       
       if (!data.success) {
         throw new Error(data.error || 'AI request failed');
       }
 
-      console.log('Returning data.data:', data.data);
       return data.data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('AI request failed:', errorMessage);
       setError(errorMessage);
       throw err;
     } finally {

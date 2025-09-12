@@ -135,55 +135,92 @@ export default function WorkshopPage() {
     setIsValidating(true);
     
     try {
-      // Model initialization removed - using API route instead
-      
+      // Enhanced prompt with better structure and AI-powered analysis
       const prompt = `
-      As an expert startup consultant, analyze this idea and provide a comprehensive validation:
+      As an expert startup consultant and AI co-founder, provide a comprehensive validation analysis for this idea:
 
-      Idea: "${ideaInput}"
+      **IDEA TO ANALYZE:** "${ideaInput}"
 
-      Please provide a well-formatted structured analysis with clear sections:
+      Please provide a detailed, well-structured analysis with the following sections:
 
-      ## VALIDATION SCORE
-      Provide a score from 1-100 with brief justification.
+      ## 🎯 VALIDATION SCORE
+      Provide a score from 1-100 with detailed justification based on:
+      - Market opportunity size
+      - Problem-solution fit
+      - Technical feasibility
+      - Competitive landscape
+      - Business model viability
 
-      ## PROBLEM STATEMENT
-      Clearly define the problem being solved and its significance.
+      ## 🔍 PROBLEM STATEMENT
+      Clearly define the core problem being solved:
+      - Problem description and significance
+      - Target audience pain points
+      - Current solutions and their limitations
+      - Why this problem matters now
 
-      ## TARGET MARKET ANALYSIS
-      Analyze the target market including TAM/SAM/SOM if possible. Include demographics and market size.
+      ## 📊 TARGET MARKET ANALYSIS
+      Comprehensive market analysis including:
+      - Total Addressable Market (TAM) size and growth
+      - Serviceable Addressable Market (SAM) estimation
+      - Serviceable Obtainable Market (SOM) projection
+      - Target customer demographics and psychographics
+      - Market timing and readiness factors
 
-      ## KEY MVP FEATURES
+      ## 🚀 KEY MVP FEATURES
       List 3-5 essential features for the minimum viable product:
-      - Feature 1: Description and importance
-      - Feature 2: Description and importance
-      - Feature 3: Description and importance
+      - **Feature 1:** [Name] - [Description and business importance]
+      - **Feature 2:** [Name] - [Description and business importance]
+      - **Feature 3:** [Name] - [Description and business importance]
+      - **Feature 4:** [Name] - [Description and business importance]
+      - **Feature 5:** [Name] - [Description and business importance]
 
-      ## MONETIZATION STRATEGY
-      Describe revenue models and pricing strategies with specific examples.
+      ## 💰 MONETIZATION STRATEGY
+      Detailed revenue model analysis:
+      - Primary revenue streams
+      - Pricing strategy and tiers
+      - Customer acquisition cost estimates
+      - Lifetime value projections
+      - Revenue timeline and milestones
 
-      ## NEXT ACTIONABLE STEPS
-      Provide immediate steps to validate and develop the idea:
-      - Step 1: Specific action with timeline
-      - Step 2: Specific action with timeline
-      - Step 3: Specific action with timeline
+      ## 📋 NEXT ACTIONABLE STEPS
+      Prioritized action plan for the next 90 days:
+      - **Week 1-2:** [Specific validation actions]
+      - **Week 3-4:** [Market research and customer interviews]
+      - **Week 5-8:** [MVP development and testing]
+      - **Week 9-12:** [Iteration and refinement]
 
-      ## MARKET OPPORTUNITY ASSESSMENT
-      Evaluate market size, growth potential, and timing.
+      ## 🌟 MARKET OPPORTUNITY ASSESSMENT
+      Market opportunity evaluation:
+      - Market size and growth trends
+      - Competitive landscape overview
+      - Market gaps and opportunities
+      - Timing and market readiness
 
-      ## RISK ASSESSMENT
-      Identify key risks and mitigation strategies:
-      - Risk 1: Description and mitigation
-      - Risk 2: Description and mitigation
-      - Risk 3: Description and mitigation
+      ## ⚠️ RISK ASSESSMENT
+      Key risks and mitigation strategies:
+      - **Technical Risk:** [Description and mitigation plan]
+      - **Market Risk:** [Description and mitigation plan]
+      - **Competitive Risk:** [Description and mitigation plan]
+      - **Execution Risk:** [Description and mitigation plan]
 
-      ## COMPETITOR ANALYSIS
-      Analyze existing solutions and differentiation opportunities.
+      ## 🏆 COMPETITOR ANALYSIS
+      Competitive landscape analysis:
+      - Direct competitors and their strengths/weaknesses
+      - Indirect competitors and alternatives
+      - Competitive advantages and differentiation
+      - Market positioning opportunities
 
-      Use proper markdown formatting with headers (##), bullet points (-), and clear section separation for better readability.
+      ## 💡 STRATEGIC RECOMMENDATIONS
+      High-level strategic advice:
+      - Go-to-market strategy suggestions
+      - Partnership opportunities
+      - Funding requirements and timeline
+      - Success metrics and KPIs
+
+      Use proper markdown formatting with headers (##), bullet points (-), and clear section separation for optimal readability.
       `;
 
-      // Use API route instead of direct client-side API call
+      // Use API route with enhanced error handling
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: {

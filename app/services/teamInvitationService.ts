@@ -274,7 +274,7 @@ class ProductionTeamInvitationService {
 
     try {
       const { data: user, error } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('name')
         .eq('id', userId)
         .single();
@@ -462,7 +462,7 @@ class ProductionTeamInvitationService {
         .select(`
           *,
           team:teams(id, name, owner_id),
-          inviter:profiles!team_invitations_inviter_id_fkey(id, name, email)
+          inviter:user_profiles!team_invitations_inviter_id_fkey(id, name, email)
         `)
         .eq('id', invitationId)
         .eq('status', 'pending')
@@ -593,7 +593,7 @@ class ProductionTeamInvitationService {
         .select(`
           *,
           team:teams(id, name),
-          inviter:profiles!team_invitations_inviter_id_fkey(id, name, email)
+          inviter:user_profiles!team_invitations_inviter_id_fkey(id, name, email)
         `)
         .eq('id', invitationId)
         .eq('status', 'pending')

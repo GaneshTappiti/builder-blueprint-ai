@@ -270,7 +270,7 @@ CREATE OR REPLACE FUNCTION search_messages_advanced(
   search_query TEXT,
   channel_uuid UUID DEFAULT NULL,
   sender_uuid UUID DEFAULT NULL,
-  message_type VARCHAR DEFAULT NULL,
+  msg_type VARCHAR DEFAULT NULL,
   date_from TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   date_to TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   limit_count INTEGER DEFAULT 50,
@@ -308,7 +308,7 @@ BEGIN
     AND to_tsvector('english', m.content) @@ plainto_tsquery('english', search_query)
     AND (channel_uuid IS NULL OR m.channel_id = channel_uuid)
     AND (sender_uuid IS NULL OR m.sender_id = sender_uuid)
-    AND (message_type IS NULL OR m.message_type = message_type)
+    AND (msg_type IS NULL OR m.message_type = msg_type)
     AND (date_from IS NULL OR m.created_at >= date_from)
     AND (date_to IS NULL OR m.created_at <= date_to)
     AND m.channel_id IN (

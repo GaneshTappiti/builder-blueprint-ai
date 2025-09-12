@@ -32,7 +32,12 @@ import {
   AlertCircle,
   Star,
   Building,
-  Shield
+  Shield,
+  Search,
+  BarChart3,
+  Paperclip,
+  Send,
+  Hash
 } from "lucide-react";
 import Link from "next/link";
 import TeamMemberCard from "@/components/teamspace/TeamMemberCard";
@@ -65,11 +70,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { TeamManagementProvider } from "@/contexts/TeamManagementContext";
-import { ChatProvider } from "@/contexts/ChatContext";
+import { ChatProvider, useChat } from "@/contexts/ChatContext";
 import { useTeamPermissions } from "@/hooks/useTeamPermissions";
 import ChannelManager from "@/components/teamspace/ChannelManager";
 import MessageSearch from "@/components/teamspace/MessageSearch";
 import FileUpload from "@/components/teamspace/FileUpload";
+import { SlackStyleSidebar } from "@/components/teamspace/SlackStyleSidebar";
+import { MessageThread } from "@/components/teamspace/MessageThread";
+import { AdvancedSearch } from "@/components/teamspace/AdvancedSearch";
+import { VoiceMessage } from "@/components/teamspace/VoiceMessage";
+import { ChatMetrics } from "@/components/admin/ChatMetrics";
 import { TeamMember, TeamRole, Department, DEFAULT_ROLES, DEFAULT_DEPARTMENTS } from "@/types/teamManagement";
 import { supabase } from "@/lib/supabase";
 
@@ -175,6 +185,8 @@ function TeamSpacePageContent() {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin, isMember, isViewer, canManageMembers, canInviteMembers } = useTeamPermissions();
+  const { channels, messages: chatMessages, sendMessage, createChannel, joinChannel, leaveChannel } = useChat();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -189,6 +201,13 @@ function TeamSpacePageContent() {
   const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
   const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
   const [currentUserId] = useState('1'); // Mock current user ID
+  
+  // New UI states
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [showVoiceMessage, setShowVoiceMessage] = useState(false);
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Mock data - in production, this would come from your database
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
@@ -501,8 +520,6 @@ function TeamSpacePageContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
-                  variant="ghost"
-                  size="icon"
                   className="text-gray-400 hover:text-white hover:bg-black/30"
                   onClick={() => setSidebarOpen(true)}
                 >
@@ -630,8 +647,7 @@ function TeamSpacePageContent() {
                     </Button>
 
                     <Button
-                      variant="outline"
-                      className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
+                      className="bg-black/20 border border-white/10 hover:bg-black/30 h-16 text-left justify-start"
                       onClick={handleStartGroupChat}
                     >
                       <MessageSquare className="h-6 w-6 mr-3 text-blue-400" />
@@ -642,8 +658,7 @@ function TeamSpacePageContent() {
                     </Button>
 
                     <Button
-                      variant="outline"
-                      className="bg-black/20 border-white/10 hover:bg-black/30 h-16 text-left justify-start"
+                      className="bg-black/20 border border-white/10 hover:bg-black/30 h-16 text-left justify-start"
                       onClick={() => setActiveTab('tasks')}
                     >
                       <Target className="h-6 w-6 mr-3 text-purple-400" />
@@ -689,113 +704,136 @@ function TeamSpacePageContent() {
                        <h3 className="text-2xl font-bold text-white">Messages</h3>
                        <p className="text-gray-400">Communicate with your team</p>
                      </div>
+                     <div className="flex items-center space-x-2">
+                       <Button
+                         onClick={() => setShowAdvancedSearch(true)}
+                         className="border border-gray-600 text-gray-300 hover:bg-gray-700"
+                       >
+                         <Search className="h-4 w-4 mr-2" />
+                         Advanced Search
+                       </Button>
+                       <Button
+                         onClick={() => setShowMetrics(true)}
+                         className="border border-gray-600 text-gray-300 hover:bg-gray-700"
+                       >
+                         <BarChart3 className="h-4 w-4 mr-2" />
+                         Metrics
+                       </Button>
+                     </div>
                    </div>
 
-                   {/* Chat Layout */}
-                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                     {/* Left Sidebar - Channels and Search */}
-                     <div className="lg:col-span-1 space-y-4">
-                       <ChannelManager 
-                         teamId={user?.id}
-                         onChannelSelect={(channel) => {
-                           // Handle channel selection
-                           console.log('Selected channel:', channel);
-                         }}
-                         className="h-[400px]"
-                       />
-                       
-                       <MessageSearch 
-                         onMessageSelect={(message) => {
-                           // Handle message selection
-                           console.log('Selected message:', message);
-                         }}
-                         className="h-[300px]"
-                       />
-                     </div>
+                   {/* Enhanced Chat Layout with Slack-style Sidebar */}
+                   <div className="flex h-[600px] bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                     {/* Slack-style Sidebar */}
+                     <SlackStyleSidebar
+                       onChannelSelect={(channel: any) => {
+                         setSelectedChannel(channel);
+                         setChatMode('group');
+                       }}
+                       onDirectMessageSelect={(member: any) => {
+                         setSelectedMember(member);
+                         setChatMode('individual');
+                       }}
+                       onStartCall={handleStartCall}
+                       className="w-64 flex-shrink-0"
+                     />
 
                      {/* Main Chat Area */}
-                     <div className="lg:col-span-3">
-                       <Tabs value={chatMode || 'group'} onValueChange={(value) => {
-                         if (value === 'group') {
-                           setChatMode('group');
-                         } else if (value === 'individual') {
-                           setChatMode('individual');
-                         }
-                       }} className="space-y-4">
-                         <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
-                           <TabsTrigger value="group" className="data-[state=active]:bg-green-600">
-                             <MessageSquare className="h-4 w-4 mr-2" />
-                             Team Chat
-                           </TabsTrigger>
-                           <TabsTrigger value="individual" className="data-[state=active]:bg-green-600">
-                             <Users className="h-4 w-4 mr-2" />
-                             Private Chats
-                           </TabsTrigger>
-                         </TabsList>
-
-                     {/* Team Chat Session */}
-                     <TabsContent value="group" className="space-y-4">
-                       <GroupChat
-                         teamMembers={teamMembers}
-                         onStartCall={handleStartCall}
-                       />
-                       
-                       {/* File Upload for Group Chat */}
-                       <FileUpload 
-                         onUploadComplete={(attachment) => {
-                           console.log('File uploaded:', attachment);
-                         }}
-                         className="mt-4"
-                       />
-                     </TabsContent>
-
-                     {/* Individual Chats Session */}
-                     <TabsContent value="individual" className="space-y-4">
-                       {selectedMember ? (
-                         <IndividualChat
-                           member={selectedMember}
-                           onStartCall={handleStartCall}
-                           onBack={() => setSelectedMember(null)}
-                           isAdmin={false} // You can determine this based on user role
-                         />
-                       ) : (
-                         <div className="space-y-6">
-                           {/* Team Members List for Private Chat */}
-                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                             {teamMembers.map((member) => (
-                               <Card 
-                                 key={member.id} 
-                                 className="bg-black/20 border-white/10 hover:bg-black/30 transition-colors cursor-pointer"
-                                 onClick={() => setSelectedMember(member)}
+                     <div className="flex-1 flex flex-col">
+                       {chatMode === 'group' ? (
+                         <div className="flex-1 flex flex-col">
+                           {/* Channel Header */}
+                           {selectedChannel && (
+                             <div className="p-4 border-b border-gray-700 bg-gray-800">
+                               <div className="flex items-center justify-between">
+                                 <div className="flex items-center space-x-3">
+                                   <Hash className="h-5 w-5 text-gray-400" />
+                                   <h4 className="text-white font-medium">{selectedChannel.name}</h4>
+                                   <Badge className="bg-green-900 text-green-400">
+                                     {selectedChannel.type}
+                                   </Badge>
+                                 </div>
+                                 <div className="flex items-center space-x-2">
+                                   <Button
+                                     onClick={() => setShowVoiceMessage(true)}
+                                     className="text-gray-400 hover:text-white"
+                                   >
+                                     <Mic className="h-4 w-4" />
+                                   </Button>
+                                   <Button
+                                     onClick={() => setShowAdvancedSearch(true)}
+                                     className="text-gray-400 hover:text-white"
+                                   >
+                                     <Search className="h-4 w-4" />
+                                   </Button>
+                                 </div>
+                               </div>
+                             </div>
+                           )}
+                           
+                           {/* Messages Area */}
+                           <div className="flex-1 overflow-y-auto p-4">
+                             <GroupChat
+                               teamMembers={teamMembers}
+                               onStartCall={handleStartCall}
+                             />
+                           </div>
+                           
+                           {/* Message Input Area */}
+                           <div className="p-4 border-t border-gray-700 bg-gray-800">
+                             <div className="flex items-center space-x-2">
+                               <Button
+                                 onClick={() => setShowVoiceMessage(true)}
+                                 className="text-gray-400 hover:text-white"
                                >
-                                 <CardContent className="p-4">
-                                   <div className="flex items-center gap-3">
-                                     <div className="relative">
-                                       <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                                         <span className="text-white font-medium">
-                                           {member.name.split(' ').map(n => n[0]).join('')}
-                                         </span>
-                                       </div>
-                                       <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-black ${
-                                         member.status === 'online' ? 'bg-green-500' : 
-                                         member.status === 'busy' ? 'bg-yellow-500' : 'bg-gray-500'
-                                       }`} />
-                                     </div>
-                                     <div className="flex-1">
-                                       <h4 className="font-medium text-white">{member.name}</h4>
-                                       <p className="text-sm text-gray-400">{member.role.displayName}</p>
-                                       <p className="text-xs text-gray-500 capitalize">{member.status}</p>
-                                     </div>
-                                     <MessageSquare className="h-5 w-5 text-gray-400" />
-                                   </div>
-                                 </CardContent>
-                               </Card>
-                             ))}
+                                 <Mic className="h-4 w-4" />
+                               </Button>
+                               <Input
+                                 placeholder="Type a message..."
+                                 className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                               />
+                               <Button
+                                 className="text-gray-400 hover:text-white"
+                               >
+                                 <Paperclip className="h-4 w-4" />
+                               </Button>
+                               <Button
+                                 className="bg-green-600 hover:bg-green-700"
+                               >
+                                 <Send className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           </div>
+                         </div>
+                       ) : chatMode === 'individual' ? (
+                         <div className="flex-1 flex flex-col">
+                           {selectedMember ? (
+                             <IndividualChat
+                               member={selectedMember}
+                               onStartCall={handleStartCall}
+                               onBack={() => setSelectedMember(null)}
+                               isAdmin={false}
+                               className="flex-1"
+                             />
+                           ) : (
+                             <div className="flex-1 flex items-center justify-center">
+                               <div className="text-center">
+                                 <Users className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                                 <h3 className="text-lg font-medium text-white mb-2">Select a team member</h3>
+                                 <p className="text-gray-400">Choose someone to start a private conversation</p>
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       ) : (
+                         <div className="flex-1 flex items-center justify-center">
+                           <div className="text-center">
+                             <MessageSquare className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                             <h3 className="text-lg font-medium text-white mb-2">Welcome to Messages</h3>
+                             <p className="text-gray-400">Select a channel or team member to start chatting</p>
                            </div>
                          </div>
                        )}
-                         </TabsContent>
-                       </Tabs>
                      </div>
                    </div>
                  </div>
@@ -845,8 +883,6 @@ function TeamSpacePageContent() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-white">Team Video Call</h3>
                 <Button
-                  variant="ghost"
-                  size="icon"
                   onClick={handleEndVideoCall}
                   className="text-gray-400 hover:text-white"
                 >
@@ -871,34 +907,27 @@ function TeamSpacePageContent() {
               {/* Video Controls */}
               <div className="flex items-center justify-center gap-4">
                 <Button
-                  variant={isMuted ? "destructive" : "outline"}
-                  size="icon"
                   onClick={() => setIsMuted(!isMuted)}
-                  className="bg-black/20 border-white/10"
+                  className={`bg-black/20 border border-white/10 ${isMuted ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-black/30'}`}
                 >
                   {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>
 
                 <Button
-                  variant={isVideoOff ? "destructive" : "outline"}
-                  size="icon"
                   onClick={() => setIsVideoOff(!isVideoOff)}
-                  className="bg-black/20 border-white/10"
+                  className={`bg-black/20 border border-white/10 ${isVideoOff ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-black/30'}`}
                 >
                   {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
                 </Button>
 
                 <Button
-                  variant={isScreenSharing ? "default" : "outline"}
-                  size="icon"
                   onClick={() => setIsScreenSharing(!isScreenSharing)}
-                  className="bg-black/20 border-white/10"
+                  className={`bg-black/20 border border-white/10 ${isScreenSharing ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-black/30'}`}
                 >
                   <ScreenShare className="h-5 w-5" />
                 </Button>
 
                 <Button
-                  variant="destructive"
                   onClick={handleEndVideoCall}
                   className="px-6"
                 >
@@ -925,6 +954,71 @@ function TeamSpacePageContent() {
           onEndMeeting={handleEndMeeting}
           onDismissNotification={handleDismissNotification}
         />
+
+        {/* Advanced Search Modal */}
+        {showAdvancedSearch && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 w-full max-w-4xl max-h-[80vh] overflow-hidden">
+              <AdvancedSearch
+                onResultSelect={(message: any) => {
+                  console.log('Selected message:', message);
+                  setSearchResults([message]);
+                }}
+                onClose={() => setShowAdvancedSearch(false)}
+                className="h-full"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Voice Message Modal */}
+        {showVoiceMessage && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 w-full max-w-md">
+              <div className="p-4 border-b border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Record Voice Message</h3>
+                  <Button
+                    onClick={() => setShowVoiceMessage(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-4">
+                <VoiceMessage
+                  onSend={(audioBlob: any) => {
+                    console.log('Voice message recorded:', audioBlob);
+                    setShowVoiceMessage(false);
+                    // Handle sending voice message
+                  }}
+                  onCancel={() => setShowVoiceMessage(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Metrics Modal */}
+        {showMetrics && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 w-full max-w-6xl max-h-[90vh] overflow-hidden">
+              <div className="p-4 border-b border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Chat Performance Metrics</h3>
+                  <Button
+                    onClick={() => setShowMetrics(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <ChatMetrics />
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -934,7 +1028,9 @@ export default function TeamSpacePage() {
   return (
     <TeamManagementProvider>
       <ChatProvider>
-        <TeamSpacePageContent />
+        <TeamManagementErrorBoundary>
+          <TeamSpacePageContent />
+        </TeamManagementErrorBoundary>
       </ChatProvider>
     </TeamManagementProvider>
   );
