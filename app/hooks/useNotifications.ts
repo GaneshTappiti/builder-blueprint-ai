@@ -6,9 +6,21 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // Initial load
-    setNotifications(notificationService.getNotifications());
-    setUnreadCount(notificationService.getUnreadCount());
+    // Initial load - we'll need to get userId from context or props
+    // For now, we'll use a placeholder or get it from auth context
+    const loadNotifications = async () => {
+      try {
+        // This should be replaced with actual user ID from auth context
+        const userId = 'current-user-id'; // TODO: Get from auth context
+        const notifications = await notificationService.getNotifications(userId);
+        setNotifications(notifications);
+        setUnreadCount(notificationService.getUnreadCount());
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      }
+    };
+
+    loadNotifications();
 
     // Subscribe to changes
     const unsubscribe = notificationService.subscribe((updatedNotifications) => {

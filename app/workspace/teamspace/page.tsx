@@ -43,6 +43,8 @@ import MessagesPanel from "@/components/teamspace/MessagesPanel";
 import MeetingsList from "@/components/teamspace/MeetingsList";
 import GroupChat from "@/components/teamspace/GroupChat";
 import IndividualChat from "@/components/teamspace/IndividualChat";
+import EnhancedIndividualChat from "@/components/teamspace/EnhancedIndividualChat";
+import ChannelManagement from "@/components/teamspace/ChannelManagement";
 import MeetingNotificationSystem from "@/components/teamspace/MeetingNotificationSystem";
 import TeamMemberManagement from "@/components/teamspace/TeamMemberManagement";
 import DepartmentManagement from "@/components/teamspace/DepartmentManagement";
@@ -63,7 +65,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { TeamManagementProvider } from "@/contexts/TeamManagementContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 import { useTeamPermissions } from "@/hooks/useTeamPermissions";
+import ChannelManager from "@/components/teamspace/ChannelManager";
+import MessageSearch from "@/components/teamspace/MessageSearch";
+import FileUpload from "@/components/teamspace/FileUpload";
 import { TeamMember, TeamRole, Department, DEFAULT_ROLES, DEFAULT_DEPARTMENTS } from "@/types/teamManagement";
 import { supabase } from "@/lib/supabase";
 
@@ -563,6 +569,10 @@ function TeamSpacePageContent() {
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Messages
                 </TabsTrigger>
+                <TabsTrigger value="channels" className="data-[state=active]:bg-green-600">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Channels
+                </TabsTrigger>
                 <TabsTrigger value="meetings" className="data-[state=active]:bg-green-600">
                   <Calendar className="h-4 w-4 mr-2" />
                   Meetings
@@ -681,32 +691,61 @@ function TeamSpacePageContent() {
                      </div>
                    </div>
 
-                   {/* Two Session Tabs */}
-                   <Tabs value={chatMode || 'group'} onValueChange={(value) => {
-                     if (value === 'group') {
-                       setChatMode('group');
-                     } else if (value === 'individual') {
-                       setChatMode('individual');
-                     }
-                   }} className="space-y-4">
-                     <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
-                       <TabsTrigger value="group" className="data-[state=active]:bg-green-600">
-                         <MessageSquare className="h-4 w-4 mr-2" />
-                         Team Chat
-                       </TabsTrigger>
-                       <TabsTrigger value="individual" className="data-[state=active]:bg-green-600">
-                         <Users className="h-4 w-4 mr-2" />
-                         Private Chats
-                       </TabsTrigger>
-                     </TabsList>
+                   {/* Chat Layout */}
+                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                     {/* Left Sidebar - Channels and Search */}
+                     <div className="lg:col-span-1 space-y-4">
+                       <ChannelManager 
+                         teamId={user?.id}
+                         onChannelSelect={(channel) => {
+                           // Handle channel selection
+                           console.log('Selected channel:', channel);
+                         }}
+                         className="h-[400px]"
+                       />
+                       
+                       <MessageSearch 
+                         onMessageSelect={(message) => {
+                           // Handle message selection
+                           console.log('Selected message:', message);
+                         }}
+                         className="h-[300px]"
+                       />
+                     </div>
+
+                     {/* Main Chat Area */}
+                     <div className="lg:col-span-3">
+                       <Tabs value={chatMode || 'group'} onValueChange={(value) => {
+                         if (value === 'group') {
+                           setChatMode('group');
+                         } else if (value === 'individual') {
+                           setChatMode('individual');
+                         }
+                       }} className="space-y-4">
+                         <TabsList className="bg-black/40 backdrop-blur-sm border-white/10">
+                           <TabsTrigger value="group" className="data-[state=active]:bg-green-600">
+                             <MessageSquare className="h-4 w-4 mr-2" />
+                             Team Chat
+                           </TabsTrigger>
+                           <TabsTrigger value="individual" className="data-[state=active]:bg-green-600">
+                             <Users className="h-4 w-4 mr-2" />
+                             Private Chats
+                           </TabsTrigger>
+                         </TabsList>
 
                      {/* Team Chat Session */}
                      <TabsContent value="group" className="space-y-4">
                        <GroupChat
                          teamMembers={teamMembers}
-                         currentUserId={currentUserId}
-                         onSendMessage={handleSendGroupMessage}
                          onStartCall={handleStartCall}
+                       />
+                       
+                       {/* File Upload for Group Chat */}
+                       <FileUpload 
+                         onUploadComplete={(attachment) => {
+                           console.log('File uploaded:', attachment);
+                         }}
+                         className="mt-4"
                        />
                      </TabsContent>
 
@@ -715,8 +754,6 @@ function TeamSpacePageContent() {
                        {selectedMember ? (
                          <IndividualChat
                            member={selectedMember}
-                           currentUserId={currentUserId}
-                           onSendMessage={handleSendPrivateMessage}
                            onStartCall={handleStartCall}
                            onBack={() => setSelectedMember(null)}
                            isAdmin={false} // You can determine this based on user role
@@ -757,10 +794,22 @@ function TeamSpacePageContent() {
                            </div>
                          </div>
                        )}
-                     </TabsContent>
-                   </Tabs>
+                         </TabsContent>
+                       </Tabs>
+                     </div>
+                   </div>
                  </div>
                </TabsContent>
+
+              <TabsContent value="channels">
+                <ChannelManagement 
+                  teamMembers={teamMembers}
+                  onChannelSelect={(channel) => {
+                    console.log('Selected channel:', channel);
+                    // Handle channel selection - could switch to messages tab with specific channel
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="meetings">
                 <MeetingsList 
@@ -884,7 +933,9 @@ function TeamSpacePageContent() {
 export default function TeamSpacePage() {
   return (
     <TeamManagementProvider>
-      <TeamSpacePageContent />
+      <ChatProvider>
+        <TeamSpacePageContent />
+      </ChatProvider>
     </TeamManagementProvider>
   );
 }

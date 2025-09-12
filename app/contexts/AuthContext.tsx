@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+// import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -50,12 +50,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Check if we're in development mode and should bypass auth
-  const isDevelopmentMode = process.env.NODE_ENV === 'development' || 
+  // Only bypass if explicitly enabled AND Supabase is not configured
+  const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL && 
+                              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+                              process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
+                              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder-key';
+  
+  const isDevelopmentMode = (process.env.NODE_ENV === 'development' || 
                            process.env.NEXT_PUBLIC_DEVELOPMENT_MODE === 'true' ||
-                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') && !isSupabaseConfigured;
 
   // Initialize auth state and listen for changes
   useEffect(() => {
+    // Debug logging
+    console.log('🔍 Auth Debug Info:', {
+      isSupabaseConfigured,
+      isDevelopmentMode,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     // If in development mode, set a mock user and skip auth
     if (isDevelopmentMode) {
       console.log('🔧 Development mode: Bypassing authentication');
@@ -70,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       setLoading(false);
       return;
+    }
+
+    // If Supabase is configured, use real authentication
+    if (isSupabaseConfigured) {
+      console.log('✅ Supabase configured: Using real authentication');
     }
 
     // Get initial session
@@ -103,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes (only if not in development mode)
     if (!isDevelopmentMode) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
+        async (event: any, session: any) => {
           if (session?.user) {
             setUser({
               id: session.user.id,
@@ -131,6 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return () => subscription.unsubscribe();
     }
+    
+    // Return cleanup function for development mode
+    return () => {};
   }, []);
 
   const signIn = async (email: string, password: string) => {

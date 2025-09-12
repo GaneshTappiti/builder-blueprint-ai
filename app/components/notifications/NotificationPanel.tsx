@@ -100,16 +100,16 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
 
   const filteredNotifications = selectedCategory === 'all' 
     ? notifications 
-    : getNotificationsByCategory(selectedCategory);
+    : notifications.filter(n => n.category === selectedCategory);
 
   const categories = [
     { key: 'all', label: 'All', count: notifications.length },
-    { key: 'meeting', label: 'Meetings', count: getNotificationsByCategory('meeting').length },
-    { key: 'task', label: 'Tasks', count: getNotificationsByCategory('task').length },
-    { key: 'idea', label: 'Ideas', count: getNotificationsByCategory('idea').length },
-    { key: 'chat', label: 'Chat', count: getNotificationsByCategory('chat').length },
-    { key: 'team', label: 'Team', count: getNotificationsByCategory('team').length },
-    { key: 'system', label: 'System', count: getNotificationsByCategory('system').length }
+    { key: 'meeting', label: 'Meetings', count: notifications.filter(n => n.category === 'meeting').length },
+    { key: 'task', label: 'Tasks', count: notifications.filter(n => n.category === 'task').length },
+    { key: 'idea', label: 'Ideas', count: notifications.filter(n => n.category === 'idea').length },
+    { key: 'chat', label: 'Chat', count: notifications.filter(n => n.category === 'chat').length },
+    { key: 'team', label: 'Team', count: notifications.filter(n => n.category === 'team').length },
+    { key: 'system', label: 'System', count: notifications.filter(n => n.category === 'system').length }
   ];
 
   const handleNotificationClick = (notification: Notification) => {
@@ -259,7 +259,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                 <div
                   key={notification.id}
                   className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${getTypeColors(notification.type)} ${
-                    !notification.isRead ? 'border-l-4 border-l-green-400' : ''
+                    !notification.read ? 'border-l-4 border-l-green-400' : ''
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -273,12 +273,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                         <p className="text-sm font-medium text-white truncate">
                           {notification.title}
                         </p>
-                        {!notification.isRead && (
+                        {!notification.read && (
                           <div className="h-2 w-2 bg-green-400 rounded-full flex-shrink-0"></div>
                         )}
                       </div>
                       <p className="text-xs text-gray-300 line-clamp-2 mb-2">
-                        {notification.message}
+                        {notification.body}
                       </p>
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-gray-500">

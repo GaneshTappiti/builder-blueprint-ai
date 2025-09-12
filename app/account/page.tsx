@@ -91,8 +91,8 @@ export default function AccountSettingsPage() {
     website: "",
     firstName: "",
     lastName: "",
-    skills: "",
-    interests: "",
+    skills: [] as string[],
+    interests: [] as string[],
     linkedin: "",
     twitter: "",
     github: "",
@@ -115,15 +115,15 @@ export default function AccountSettingsPage() {
         website: profile.website || "",
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
-        skills: profile.skills || "",
-        interests: profile.interests || "",
+        skills: profile.skills?.map(skill => skill.name) || [],
+        interests: profile.interests || [],
         linkedin: profile.linkedin || "",
         twitter: profile.twitter || "",
         github: profile.github || "",
-        portfolio: profile.portfolio || "",
-        isPublic: profile.isPublic || false,
-        showContact: profile.showContact || false,
-        showSocial: profile.showSocial || false
+        portfolio: profile.website || "",
+        isPublic: profile.privacy?.profileVisibility === 'public' || false,
+        showContact: profile.privacy?.contactInfoVisibility === 'public' || false,
+        showSocial: profile.privacy?.activityVisibility === 'public' || false
       });
     }
   }, [profile]);
@@ -180,15 +180,31 @@ export default function AccountSettingsPage() {
         website: formData.website,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        skills: formData.skills,
+        skills: formData.skills.map(skillName => ({
+          id: crypto.randomUUID(),
+          name: skillName,
+          category: 'technical' as const,
+          level: 'intermediate' as const,
+          verified: false,
+          endorsements: 0,
+          endorsers: [],
+          isPublic: true
+        })),
         interests: formData.interests,
         linkedin: formData.linkedin,
         twitter: formData.twitter,
         github: formData.github,
-        portfolio: formData.portfolio,
-        isPublic: formData.isPublic,
-        showContact: formData.showContact,
-        showSocial: formData.showSocial
+        privacy: {
+          profileVisibility: formData.isPublic ? 'public' : 'team',
+          contactInfoVisibility: formData.showContact ? 'public' : 'team',
+          activityVisibility: formData.showSocial ? 'public' : 'team',
+          skillsVisibility: 'team',
+          availabilityVisibility: 'team',
+          allowDirectMessages: true,
+          allowMeetingInvites: true,
+          showOnlineStatus: true,
+          showLastActive: true
+        }
       });
 
       if (success) {
@@ -220,15 +236,15 @@ export default function AccountSettingsPage() {
         website: profile.website || "",
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
-        skills: profile.skills || "",
-        interests: profile.interests || "",
+        skills: profile.skills?.map(skill => skill.name) || [],
+        interests: profile.interests || [],
         linkedin: profile.linkedin || "",
         twitter: profile.twitter || "",
         github: profile.github || "",
-        portfolio: profile.portfolio || "",
-        isPublic: profile.isPublic || false,
-        showContact: profile.showContact || false,
-        showSocial: profile.showSocial || false
+        portfolio: profile.website || "",
+        isPublic: profile.privacy?.profileVisibility === 'public' || false,
+        showContact: profile.privacy?.contactInfoVisibility === 'public' || false,
+        showSocial: profile.privacy?.activityVisibility === 'public' || false
       });
     }
     setIsEditing(false);
@@ -629,8 +645,8 @@ export default function AccountSettingsPage() {
                       <Label htmlFor="skills" className="text-white font-medium">Skills</Label>
                       <Input
                         id="skills"
-                        value={formData.skills || ""}
-                        onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                        value={Array.isArray(formData.skills) ? formData.skills.join(', ') : formData.skills}
+                        onChange={(e) => setFormData({...formData, skills: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
                         disabled={!isEditing}
                         className="workspace-input"
                         placeholder="e.g., Product Management, Marketing, Development, Design"
@@ -641,8 +657,8 @@ export default function AccountSettingsPage() {
                       <Label htmlFor="interests" className="text-white font-medium">Interests</Label>
                       <Input
                         id="interests"
-                        value={formData.interests || ""}
-                        onChange={(e) => setFormData({...formData, interests: e.target.value})}
+                        value={Array.isArray(formData.interests) ? formData.interests.join(', ') : formData.interests}
+                        onChange={(e) => setFormData({...formData, interests: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
                         disabled={!isEditing}
                         className="workspace-input"
                         placeholder="e.g., AI, Fintech, Sustainability, E-commerce"

@@ -19,13 +19,23 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handlePreferenceChange = async (key: keyof typeof preferences, value: boolean) => {
+  const handlePreferenceChange = async (key: string, value: boolean) => {
     setIsLoading(true);
     try {
-      updatePreferences({ [key]: value });
+      if (key.startsWith('types.')) {
+        const typeKey = key.split('.')[1] as keyof typeof preferences.types;
+        updatePreferences({ 
+          types: { 
+            ...preferences.types, 
+            [typeKey]: value 
+          } 
+        });
+      } else {
+        updatePreferences({ [key]: value });
+      }
       
       // Request browser notification permission if enabling push notifications
-      if (key === 'pushNotifications' && value) {
+      if (key === 'push' && value) {
         const hasPermission = await requestNotificationPermission();
         if (!hasPermission) {
           toast({
@@ -54,17 +64,17 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
       icon: Bell,
       items: [
         {
-          key: 'inAppNotifications' as const,
+          key: 'desktop' as const,
           label: 'In-app notifications',
           description: 'Show notifications within the application'
         },
         {
-          key: 'emailNotifications' as const,
+          key: 'email' as const,
           label: 'Email notifications',
           description: 'Receive notifications via email'
         },
         {
-          key: 'pushNotifications' as const,
+          key: 'push' as const,
           label: 'Push notifications',
           description: 'Receive browser push notifications'
         }
@@ -75,22 +85,22 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
       icon: Settings,
       items: [
         {
-          key: 'meetingNotifications' as const,
+          key: 'types.meetings' as const,
           label: 'Meeting notifications',
           description: 'Get notified when team members start meetings'
         },
         {
-          key: 'chatNotifications' as const,
+          key: 'types.mentions' as const,
           label: 'Chat notifications',
           description: 'Get notified about new messages in team chat'
         },
         {
-          key: 'ideaSharingNotifications' as const,
+          key: 'types.ideas' as const,
           label: 'Idea sharing notifications',
           description: 'Get notified when ideas are shared in team vault'
         },
         {
-          key: 'teamUpdates' as const,
+          key: 'types.teamUpdates' as const,
           label: 'Team updates',
           description: 'Get notified about team member changes'
         }
@@ -101,17 +111,17 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
       icon: Settings,
       items: [
         {
-          key: 'taskReminders' as const,
+          key: 'types.tasks' as const,
           label: 'Task reminders',
           description: 'Get reminded about upcoming and overdue tasks'
         },
         {
-          key: 'ideaValidationAlerts' as const,
+          key: 'types.achievements' as const,
           label: 'Idea validation alerts',
           description: 'Get notified when idea validation completes'
         },
         {
-          key: 'systemUpdates' as const,
+          key: 'types.projects' as const,
           label: 'System updates',
           description: 'Get notified about new features and updates'
         }
@@ -154,7 +164,12 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
                     </div>
                     <Switch
                       id={item.key}
-                      checked={preferences[item.key]}
+                      checked={item.key.startsWith('types.') 
+                        ? preferences.types[item.key.split('.')[1] as keyof typeof preferences.types]
+                        : typeof preferences[item.key as keyof typeof preferences] === 'boolean' 
+                          ? preferences[item.key as keyof typeof preferences] as boolean
+                          : false
+                      }
                       onCheckedChange={(checked) => handlePreferenceChange(item.key, checked)}
                       disabled={isLoading}
                     />
@@ -175,16 +190,25 @@ const NotificationPreferences: React.FC<NotificationPreferencesProps> = ({ onClo
           onClick={() => {
             // Reset to defaults
             updatePreferences({
-              emailNotifications: true,
-              pushNotifications: true,
-              inAppNotifications: true,
-              ideaValidationAlerts: true,
-              taskReminders: true,
-              teamUpdates: true,
-              systemUpdates: true,
-              meetingNotifications: true,
-              chatNotifications: true,
-              ideaSharingNotifications: true
+              email: true,
+              push: true,
+              desktop: true,
+              sms: false,
+              types: {
+                mentions: true,
+                tasks: true,
+                meetings: true,
+                ideas: true,
+                projects: true,
+                teamUpdates: true,
+                achievements: true
+              },
+              frequency: 'immediate',
+              quietHours: {
+                enabled: false,
+                start: '22:00',
+                end: '08:00'
+              }
             });
             toast({
               title: "Preferences Reset",

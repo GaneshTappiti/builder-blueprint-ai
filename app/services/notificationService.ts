@@ -1,446 +1,635 @@
-// Notification Service
-import { formatDisplayDate } from '@/utils/dateUtils';
+import { supabase } from '@/lib/supabase';
+import { ChatNotification, NotificationSettings } from '@/types/chat';
 
-export interface Notification {
-  id: string;
+export interface PushNotificationPayload {
   title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  category: 'meeting' | 'task' | 'idea' | 'chat' | 'system' | 'team';
-  isRead: boolean;
-  createdAt: Date;
-  actionUrl?: string;
-  actionText?: string;
-  metadata?: {
-    userId?: string;
-    userName?: string;
-    taskId?: string;
-    ideaId?: string;
-    meetingId?: string;
-    messageId?: string;
-    progress?: number;
-    [key: string]: any;
-  };
-}
-
-export interface NotificationPreferences {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  inAppNotifications: boolean;
-  ideaValidationAlerts: boolean;
-  taskReminders: boolean;
-  teamUpdates: boolean;
-  systemUpdates: boolean;
-  meetingNotifications: boolean;
-  chatNotifications: boolean;
-  ideaSharingNotifications: boolean;
+  body: string;
+  icon?: string;
+  badge?: string;
+  data?: Record<string, any>;
+  actions?: Array<{
+    action: string;
+    title: string;
+    icon?: string;
+  }>;
 }
 
 class NotificationService {
-  private notifications: Notification[] = [];
-  private listeners: ((notifications: Notification[]) => void)[] = [];
-  private readonly STORAGE_KEY = 'workspace_notifications';
+  private permission: NotificationPermission = 'default';
+  private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
-    this.loadFromStorage();
+    this.initializeServiceWorker();
   }
 
-  private loadFromStorage() {
-    try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem(this.STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          this.notifications = parsed.map((n: any) => ({
-            ...n,
-            createdAt: new Date(n.createdAt)
-          }));
-          return;
-        }
+  private async initializeServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      try {
+        this.serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js');
+        console.log('Service Worker registered successfully');
+      } catch (error) {
+        console.error('Service Worker registration failed:', error);
       }
-    } catch (error) {
-      console.error('Failed to load notifications from storage:', error);
-    }
-
-    // Initialize with mock data if no stored data
-    this.initializeWithMockData();
-  }
-
-  private saveToStorage() {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.notifications));
-      }
-    } catch (error) {
-      console.error('Failed to save notifications to storage:', error);
     }
   }
 
-  private initializeWithMockData() {
-    // Mock notifications for demo
-    this.notifications = [
-      {
-        id: '1',
-        title: 'Idea Validation Complete',
-        message: 'Your startup idea "AI-powered fitness app" has been validated with a score of 85/100.',
-        type: 'success',
-        category: 'idea',
-        isRead: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        actionUrl: '/workspace/idea-vault',
-        actionText: 'View Results'
-      },
-      {
-        id: '2',
-        title: 'New AI Feature Available',
-        message: 'Business Model Canvas generator is now available in your workspace.',
-        type: 'info',
-        category: 'system',
-        isRead: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        actionUrl: '/workspace/idea-forge?tab=bmc',
-        actionText: 'Try Now'
-      },
-      {
-        id: '3',
-        title: 'Task Reminder',
-        message: 'Don\'t forget to complete your market research task due today.',
-        type: 'warning',
-        category: 'task',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-        actionUrl: '/workspace/task-planner',
-        actionText: 'View Task'
-      },
-      {
-        id: '4',
-        title: 'Welcome to Builder Blueprint AI',
-        message: 'Get started by validating your first startup idea in the Workshop.',
-        type: 'info',
-        category: 'system',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        actionUrl: '/workspace/workshop',
-        actionText: 'Get Started'
-      }
-    ];
-  }
-
-  // Get all notifications
-  getNotifications(): Notification[] {
-    return [...this.notifications].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
-  // Get unread notifications
-  getUnreadNotifications(): Notification[] {
-    return this.notifications.filter(n => !n.isRead);
-  }
-
-  // Get unread count
-  getUnreadCount(): number {
-    return this.notifications.filter(n => !n.isRead).length;
-  }
-
-  // Mark notification as read
-  markAsRead(notificationId: string): void {
-    const notification = this.notifications.find(n => n.id === notificationId);
-    if (notification) {
-      notification.isRead = true;
-      this.saveToStorage();
-      this.notifyListeners();
+  async requestPermission(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      console.warn('This browser does not support notifications');
+      return 'denied';
     }
+
+    if (Notification.permission === 'granted') {
+      this.permission = 'granted';
+      return 'granted';
+    }
+
+    if (Notification.permission === 'denied') {
+      this.permission = 'denied';
+      return 'denied';
+    }
+
+    const permission = await Notification.requestPermission();
+    this.permission = permission;
+    return permission;
   }
 
-  // Mark all notifications as read
-  markAllAsRead(): void {
-    this.notifications.forEach(n => n.isRead = true);
-    this.saveToStorage();
-    this.notifyListeners();
-  }
+  async sendPushNotification(payload: PushNotificationPayload): Promise<void> {
+    if (this.permission !== 'granted') {
+      console.warn('Notification permission not granted');
+      return;
+    }
 
-  // Add new notification
-  addNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): void {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      isRead: false
-    };
-    
-    this.notifications.unshift(newNotification);
-    this.saveToStorage();
-    this.notifyListeners();
-  }
-
-  // Remove notification
-  removeNotification(notificationId: string): void {
-    this.notifications = this.notifications.filter(n => n.id !== notificationId);
-    this.saveToStorage();
-    this.notifyListeners();
-  }
-
-  // Clear all notifications
-  clearAll(): void {
-    this.notifications = [];
-    this.saveToStorage();
-    this.notifyListeners();
-  }
-
-  // Subscribe to notification changes
-  subscribe(listener: (notifications: Notification[]) => void): () => void {
-    this.listeners.push(listener);
-    
-    // Return unsubscribe function
-    return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
-    };
-  }
-
-  private notifyListeners(): void {
-    this.listeners.forEach(listener => listener(this.getNotifications()));
-  }
-
-  // Format time ago
-  formatTimeAgo(date: Date): string {
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) {
-      return 'Just now';
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else if (diffInSeconds < 604800) {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
+    if (this.serviceWorkerRegistration) {
+      // Send to service worker for background handling
+      this.serviceWorkerRegistration.showNotification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || '/favicon.ico',
+        badge: payload.badge || '/favicon.ico',
+        data: payload.data,
+        // actions: payload.actions, // Not supported in all browsers
+        tag: payload.data?.channel_id || 'chat-notification',
+        requireInteraction: true,
+        silent: false
+      });
     } else {
-      return formatDisplayDate(date);
+      // Fallback to browser notification
+      new Notification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || '/favicon.ico',
+        data: payload.data
+      });
     }
   }
 
-  // Real-time notification methods
-  notifyMeetingStarted(userName: string, meetingId: string, meetingType: 'video' | 'audio' = 'video'): void {
-    this.addNotification({
-      title: `${userName} started a meeting`,
-      message: `${userName} started a ${meetingType} meeting. Click to join.`,
-      type: 'info',
-      category: 'meeting',
-      actionUrl: `/workspace/teamspace?meeting=${meetingId}`,
-      actionText: 'Join Meeting',
-      metadata: {
-        userName,
-        meetingId,
-        meetingType
-      }
-    });
-  }
-
-  notifyTaskUpdated(userName: string, taskTitle: string, progress: number, taskId: string): void {
-    this.addNotification({
-      title: `${userName} updated Task X → ${progress}% complete`,
-      message: `"${taskTitle}" is now ${progress}% complete.`,
-      type: 'info',
-      category: 'task',
-      actionUrl: `/workspace/teamspace?tab=tasks&task=${taskId}`,
-      actionText: 'View Task',
-      metadata: {
-        userName,
-        taskId,
-        progress
-      }
-    });
-  }
-
-  notifyIdeaShared(userName: string, ideaTitle: string, ideaId: string): void {
-    this.addNotification({
-      title: `New idea shared in Team Vault: ${ideaTitle}`,
-      message: `${userName} shared "${ideaTitle}" in the team idea vault.`,
-      type: 'info',
-      category: 'idea',
-      actionUrl: `/workspace/idea-vault/${ideaId}`,
-      actionText: 'View Idea',
-      metadata: {
-        userName,
-        ideaId
-      }
-    });
-  }
-
-  notifyMessageSent(userName: string, messagePreview: string, messageId: string, isGroup: boolean = true): void {
-    this.addNotification({
-      title: `${userName} sent a message in ${isGroup ? 'Team Chat' : 'Private Chat'}`,
-      message: messagePreview.length > 50 ? `${messagePreview.substring(0, 50)}...` : messagePreview,
-      type: 'info',
-      category: 'chat',
-      actionUrl: `/workspace/teamspace?tab=messages&message=${messageId}`,
-      actionText: 'View Message',
-      metadata: {
-        userName,
-        messageId,
-        isGroup
-      }
-    });
-  }
-
-  // Get notifications by category
-  getNotificationsByCategory(category: Notification['category']): Notification[] {
-    return this.notifications.filter(n => n.category === category);
-  }
-
-  // Get notification preferences
-  getNotificationPreferences(): NotificationPreferences {
+  async createChatNotification(
+    type: ChatNotification['type'],
+    channelId: string,
+    messageId: string,
+    senderId: string,
+    recipientId: string,
+    title: string,
+    body: string,
+    data: Record<string, any> = {}
+  ): Promise<string> {
     try {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('notification_preferences');
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load notification preferences:', error);
-    }
+      const { data: notification, error } = await supabase
+        .from('chat_notifications')
+        .insert([{
+          type,
+          channel_id: channelId,
+          message_id: messageId,
+          sender_id: senderId,
+          recipient_id: recipientId,
+          title,
+          body,
+          data
+        }])
+        .select()
+        .single();
 
-    // Default preferences
-    return {
-      emailNotifications: true,
-      pushNotifications: true,
-      inAppNotifications: true,
-      ideaValidationAlerts: true,
-      taskReminders: true,
-      teamUpdates: true,
-      systemUpdates: true,
-      meetingNotifications: true,
-      chatNotifications: true,
-      ideaSharingNotifications: true
+      if (error) throw error;
+
+      // Send push notification if user has it enabled
+      await this.sendPushNotification({
+        title,
+        body,
+        data: {
+          ...data,
+          notificationId: notification.id,
+          channelId,
+          messageId,
+          type
+        },
+        actions: [
+          {
+            action: 'view',
+            title: 'View Message',
+            icon: '/icons/view.svg'
+          },
+          {
+            action: 'mark_read',
+            title: 'Mark as Read',
+            icon: '/icons/check.svg'
+          }
+        ]
+      });
+
+      return notification.id;
+    } catch (error) {
+      console.error('Error creating chat notification:', error);
+      throw error;
+    }
+  }
+
+  async getNotifications(userId: string, limit = 50, offset = 0): Promise<ChatNotification[]> {
+    try {
+      const { data, error } = await supabase
+        .from('chat_notifications')
+        .select(`
+          *,
+          channel:chat_channels(id, name, type),
+          sender:profiles!chat_notifications_sender_id_fkey(id, name, avatar_url)
+        `)
+        .eq('recipient_id', userId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('chat_notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  }
+
+  async markAllNotificationsAsRead(userId: string, channelId?: string): Promise<void> {
+    try {
+      let query = supabase
+        .from('chat_notifications')
+        .update({ read: true })
+        .eq('recipient_id', userId);
+
+      if (channelId) {
+        query = query.eq('channel_id', channelId);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
+  }
+
+  async getUnreadCount(userId: string, channelId?: string): Promise<number> {
+    try {
+      let query = supabase
+        .from('chat_notifications')
+        .select('id', { count: 'exact' })
+        .eq('recipient_id', userId)
+        .eq('read', false);
+
+      if (channelId) {
+        query = query.eq('channel_id', channelId);
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting unread count:', error);
+      throw error;
+    }
+  }
+
+  async updateNotificationSettings(
+    userId: string,
+    channelId: string,
+    settings: Partial<NotificationSettings>
+  ): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('user_notification_preferences')
+        .upsert([{
+          user_id: userId,
+          channel_id: channelId,
+          ...settings
+        }], {
+          onConflict: 'user_id,channel_id'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      throw error;
+    }
+  }
+
+  async getNotificationSettings(
+    userId: string,
+    channelId: string
+  ): Promise<NotificationSettings | null> {
+    try {
+      const { data, error } = await supabase
+        .from('user_notification_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('channel_id', channelId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting notification settings:', error);
+      throw error;
+    }
+  }
+
+  async subscribeToNotifications(
+    userId: string,
+    callback: (notification: ChatNotification) => void
+  ): Promise<() => void> {
+    const subscription = supabase
+      .channel(`notifications:${userId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_notifications',
+        filter: `recipient_id=eq.${userId}`
+      }, async (payload) => {
+        try {
+          const notification = await this.getNotificationById(payload.new.id);
+          if (notification) {
+            callback(notification);
+          }
+        } catch (error) {
+          console.error('Error fetching notification in subscription:', error);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
     };
   }
 
-  // Save notification preferences
-  saveNotificationPreferences(preferences: NotificationPreferences): void {
+  private async getNotificationById(notificationId: string): Promise<ChatNotification | null> {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('notification_preferences', JSON.stringify(preferences));
-      }
+      const { data, error } = await supabase
+        .from('chat_notifications')
+        .select(`
+          *,
+          channel:chat_channels(id, name, type),
+          sender:profiles!chat_notifications_sender_id_fkey(id, name, avatar_url)
+        `)
+        .eq('id', notificationId)
+        .single();
+
+      if (error) throw error;
+      return data;
     } catch (error) {
-      console.error('Failed to save notification preferences:', error);
+      console.error('Error fetching notification by ID:', error);
+      return null;
     }
   }
 
-  // Check if notification should be shown based on preferences
-  shouldShowNotification(category: Notification['category']): boolean {
-    const preferences = this.getNotificationPreferences();
-    
-    // First check if in-app notifications are enabled
-    if (!preferences.inAppNotifications) {
-      return false;
-    }
-    
-    // Then check category-specific preferences
-    switch (category) {
-      case 'meeting':
-        return preferences.meetingNotifications;
-      case 'task':
-        return preferences.taskReminders;
-      case 'idea':
-        return preferences.ideaSharingNotifications;
-      case 'chat':
-        return preferences.chatNotifications;
-      case 'team':
-        return preferences.teamUpdates;
-      case 'system':
-        return preferences.systemUpdates;
-      default:
-        return true; // Allow unknown categories if in-app is enabled
-    }
-  }
-
-  // Check if email notifications should be sent
-  shouldSendEmail(category: Notification['category']): boolean {
-    const preferences = this.getNotificationPreferences();
-    
-    if (!preferences.emailNotifications) {
-      return false;
-    }
-    
-    switch (category) {
-      case 'meeting':
-        return preferences.meetingNotifications;
-      case 'task':
-        return preferences.taskReminders;
-      case 'idea':
-        return preferences.ideaSharingNotifications;
-      case 'chat':
-        return preferences.chatNotifications;
-      case 'team':
-        return preferences.teamUpdates;
-      case 'system':
-        return preferences.systemUpdates;
-      default:
-        return true;
-    }
-  }
-
-  // Check if push notifications should be sent
-  shouldSendPush(category: Notification['category']): boolean {
-    const preferences = this.getNotificationPreferences();
-    
-    if (!preferences.pushNotifications) {
-      return false;
-    }
-    
-    switch (category) {
-      case 'meeting':
-        return preferences.meetingNotifications;
-      case 'task':
-        return preferences.taskReminders;
-      case 'idea':
-        return preferences.ideaSharingNotifications;
-      case 'chat':
-        return preferences.chatNotifications;
-      case 'team':
-        return preferences.teamUpdates;
-      case 'system':
-        return preferences.systemUpdates;
-      default:
-        return true;
-    }
-  }
-
-  // Simulate real-time notifications (for demo)
-  simulateNotification(): void {
-    const mockNotifications = [
+  // Utility methods for different notification types
+  async notifyMention(
+    channelId: string,
+    messageId: string,
+    senderId: string,
+    recipientId: string,
+    channelName: string,
+    senderName: string,
+    messageContent: string
+  ): Promise<string> {
+    return this.createChatNotification(
+      'mention',
+      channelId,
+      messageId,
+      senderId,
+      recipientId,
+      `You were mentioned in #${channelName}`,
+      `${senderName}: ${messageContent.substring(0, 100)}${messageContent.length > 100 ? '...' : ''}`,
       {
-        title: 'AI Analysis Complete',
-        message: 'Your market analysis has been completed successfully.',
-        type: 'success' as const,
-        category: 'system' as const,
-        actionUrl: '/workspace/ai-tools',
-        actionText: 'View Analysis'
-      },
-      {
-        title: 'New Team Member',
-        message: 'John Doe has joined your team workspace.',
-        type: 'info' as const,
-        category: 'team' as const,
-        actionUrl: '/workspace/teamspace',
-        actionText: 'View Team'
-      },
-      {
-        title: 'Task Due Soon',
-        message: 'Your MVP wireframes task is due in 2 hours.',
-        type: 'warning' as const,
-        category: 'task' as const,
-        actionUrl: '/workspace/task-planner',
-        actionText: 'View Task'
+        channelName,
+        senderName,
+        messageContent
       }
-    ];
+    );
+  }
 
-    const randomNotification = mockNotifications[Math.floor(Math.random() * mockNotifications.length)];
-    this.addNotification(randomNotification);
+  async notifyNewMessage(
+    channelId: string,
+    messageId: string,
+    senderId: string,
+    recipientId: string,
+    channelName: string,
+    senderName: string,
+    messageContent: string
+  ): Promise<string> {
+    return this.createChatNotification(
+      'message',
+      channelId,
+      messageId,
+      senderId,
+      recipientId,
+      `New message in #${channelName}`,
+      `${senderName}: ${messageContent.substring(0, 100)}${messageContent.length > 100 ? '...' : ''}`,
+      {
+        channelName,
+        senderName,
+        messageContent
+      }
+    );
+  }
+
+  async notifyReaction(
+    channelId: string,
+    messageId: string,
+    senderId: string,
+    recipientId: string,
+    channelName: string,
+    senderName: string,
+    emoji: string
+  ): Promise<string> {
+    return this.createChatNotification(
+      'reaction',
+      channelId,
+      messageId,
+      senderId,
+      recipientId,
+      `Reaction in #${channelName}`,
+      `${senderName} reacted with ${emoji}`,
+      {
+        channelName,
+        senderName,
+        emoji
+      }
+    );
+  }
+
+  async notifyFileUpload(
+    channelId: string,
+    messageId: string,
+    senderId: string,
+    recipientId: string,
+    channelName: string,
+    senderName: string,
+    fileName: string
+  ): Promise<string> {
+    return this.createChatNotification(
+      'file_upload',
+      channelId,
+      messageId,
+      senderId,
+      recipientId,
+      `File shared in #${channelName}`,
+      `${senderName} shared ${fileName}`,
+      {
+        channelName,
+        senderName,
+        fileName
+      }
+    );
+  }
+
+  async notifyChannelInvite(
+    channelId: string,
+    senderId: string,
+    recipientId: string,
+    channelName: string,
+    senderName: string
+  ): Promise<string> {
+    return this.createChatNotification(
+      'channel_invite',
+      channelId,
+      '',
+      senderId,
+      recipientId,
+      `Invited to #${channelName}`,
+      `${senderName} invited you to join #${channelName}`,
+      {
+        channelName,
+        senderName
+      }
+    );
   }
 }
 
-export const notificationService = new NotificationService();
+// Additional interfaces for compatibility
+export interface Notification {
+  id: string;
+  type: string;
+  category: string;
+  title: string;
+  body: string;
+  data?: Record<string, any>;
+  read: boolean;
+  createdAt: string;
+  actionUrl?: string;
+  actionText?: string;
+}
+
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+  desktop: boolean;
+  types: {
+    mentions: boolean;
+    tasks: boolean;
+    meetings: boolean;
+    ideas: boolean;
+    projects: boolean;
+    teamUpdates: boolean;
+    achievements: boolean;
+  };
+  frequency: 'immediate' | 'daily' | 'weekly' | 'never';
+  quietHours: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
+}
+
+// Extend NotificationService with missing methods
+class ExtendedNotificationService extends NotificationService {
+  private notifications: Notification[] = [];
+  private subscribers: ((notifications: Notification[]) => void)[] = [];
+
+  // Missing methods that are being used in hooks
+  async addNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'read'>): Promise<void> {
+    const newNotification: Notification = {
+      ...notification,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      read: false,
+      category: notification.category || 'general'
+    };
+    
+    this.notifications.unshift(newNotification);
+    this.notifySubscribers();
+  }
+
+  async getNotifications(userId: string, limit = 50, offset = 0): Promise<Notification[]> {
+    // For now, return local notifications
+    return this.notifications.slice(offset, offset + limit);
+  }
+
+  async getUnreadCount(userId: string, channelId?: string): Promise<number> {
+    return this.notifications.filter(n => !n.read).length;
+  }
+
+  subscribe(callback: (notifications: Notification[]) => void): () => void {
+    this.subscribers.push(callback);
+    return () => {
+      const index = this.subscribers.indexOf(callback);
+      if (index > -1) {
+        this.subscribers.splice(index, 1);
+      }
+    };
+  }
+
+  async markAsRead(notificationId: string): Promise<void> {
+    const notification = this.notifications.find(n => n.id === notificationId);
+    if (notification) {
+      notification.read = true;
+      this.notifySubscribers();
+    }
+  }
+
+  async markAllAsRead(): Promise<void> {
+    this.notifications.forEach(n => n.read = true);
+    this.notifySubscribers();
+  }
+
+  async removeNotification(notificationId: string): Promise<void> {
+    this.notifications = this.notifications.filter(n => n.id !== notificationId);
+    this.notifySubscribers();
+  }
+
+  async clearAll(): Promise<void> {
+    this.notifications = [];
+    this.notifySubscribers();
+  }
+
+  shouldShowNotification(category: string): boolean {
+    // Simple implementation - always show for now
+    return true;
+  }
+
+  shouldSendPush(category: string): boolean {
+    return this.permission === 'granted';
+  }
+
+  shouldSendEmail(category: string): boolean {
+    return true;
+  }
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    return {
+      email: true,
+      push: true,
+      sms: false,
+      desktop: true,
+      types: {
+        mentions: true,
+        tasks: true,
+        meetings: true,
+        ideas: true,
+        projects: true,
+        teamUpdates: true,
+        achievements: true,
+      },
+      frequency: 'immediate',
+      quietHours: {
+        enabled: false,
+        start: '22:00',
+        end: '08:00',
+      },
+    };
+  }
+
+  async saveNotificationPreferences(preferences: NotificationPreferences): Promise<void> {
+    // Store preferences in localStorage for now
+    localStorage.setItem('notificationPreferences', JSON.stringify(preferences));
+  }
+
+  async getNotificationsByCategory(category: string): Promise<Notification[]> {
+    return this.notifications.filter(n => n.type === category);
+  }
+
+  formatTimeAgo(date: string): string {
+    const now = new Date();
+    const notificationDate = new Date(date);
+    const diffInSeconds = Math.floor((now.getTime() - notificationDate.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  }
+
+  // Notification methods for different types
+  async notifyMeetingStarted(userName: string, meetingId: string, meetingType: string): Promise<void> {
+    await this.addNotification({
+      type: 'meeting',
+      category: 'meeting',
+      title: 'Meeting Started',
+      body: `${userName} started a ${meetingType} meeting`,
+      data: { meetingId, userName, meetingType }
+    });
+  }
+
+  async notifyTaskUpdated(userName: string, taskTitle: string, progress: number, taskId: string): Promise<void> {
+    await this.addNotification({
+      type: 'task',
+      category: 'task',
+      title: 'Task Updated',
+      body: `${userName} updated "${taskTitle}" to ${progress}% complete`,
+      data: { taskId, userName, taskTitle, progress }
+    });
+  }
+
+  async notifyIdeaShared(userName: string, ideaTitle: string, ideaId: string): Promise<void> {
+    await this.addNotification({
+      type: 'idea',
+      category: 'idea',
+      title: 'New Idea Shared',
+      body: `${userName} shared "${ideaTitle}"`,
+      data: { ideaId, userName, ideaTitle }
+    });
+  }
+
+  async notifyMessageSent(userName: string, messagePreview: string, messageId: string, isGroup: boolean): Promise<void> {
+    await this.addNotification({
+      type: 'chat',
+      category: 'chat',
+      title: isGroup ? 'New Group Message' : 'New Message',
+      body: `${userName}: ${messagePreview}`,
+      data: { messageId, userName, messagePreview, isGroup }
+    });
+  }
+
+  private notifySubscribers(): void {
+    this.subscribers.forEach(callback => callback([...this.notifications]));
+  }
+}
+
+export const notificationService = new ExtendedNotificationService();

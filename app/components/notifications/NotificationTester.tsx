@@ -50,7 +50,7 @@ const NotificationTester: React.FC<NotificationTesterProps> = ({ onClose }) => {
       if (shouldShowInApp) {
         notificationService.addNotification({
           title: `Test ${category} notification`,
-          message: `This is a test ${category} notification to verify preferences are working.`,
+          body: `This is a test ${category} notification to verify preferences are working.`,
           type: 'info',
           category,
           actionUrl: '/workspace',
@@ -149,39 +149,39 @@ const NotificationTester: React.FC<NotificationTesterProps> = ({ onClose }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center justify-between">
               <span className="text-white">In-app notifications</span>
-              {getStatusIcon(preferences.inAppNotifications)}
+              {getStatusIcon(preferences.desktop)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Email notifications</span>
-              {getStatusIcon(preferences.emailNotifications)}
+              {getStatusIcon(preferences.email)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Push notifications</span>
-              {getStatusIcon(preferences.pushNotifications && pushNotificationService.isReady())}
+              {getStatusIcon(preferences.push && pushNotificationService.isReady())}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Meeting notifications</span>
-              {getStatusIcon(preferences.meetingNotifications)}
+              {getStatusIcon(preferences.types.meetings)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Task reminders</span>
-              {getStatusIcon(preferences.taskReminders)}
+              {getStatusIcon(preferences.types.tasks)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Idea sharing</span>
-              {getStatusIcon(preferences.ideaSharingNotifications)}
+              {getStatusIcon(preferences.types.ideas)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Chat notifications</span>
-              {getStatusIcon(preferences.chatNotifications)}
+              {getStatusIcon(preferences.types.mentions)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Team updates</span>
-              {getStatusIcon(preferences.teamUpdates)}
+              {getStatusIcon(preferences.types.teamUpdates)}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">System updates</span>
-              {getStatusIcon(preferences.systemUpdates)}
+              {getStatusIcon(preferences.types.projects)}
             </div>
           </div>
         </CardContent>

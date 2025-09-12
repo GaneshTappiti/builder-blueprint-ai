@@ -20,121 +20,132 @@ import {
   CheckCheck,
   Users,
   Bell,
-  BellOff
+  BellOff,
+  Search,
+  Settings,
+  Hash,
+  Plus,
+  X
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useChat } from "@/contexts/ChatContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TeamMember } from "@/types/teamManagement";
-
-interface GroupMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: string;
-  type: 'text' | 'file' | 'voice' | 'system';
-  attachments?: {
-    name: string;
-    url: string;
-    type: string;
-    size: number;
-  }[];
-  mentions?: string[];
-  readBy: {
-    userId: string;
-    readAt: string;
-  }[];
-  isEdited?: boolean;
-  editedAt?: string;
-}
+import { ChatMessage, ChatChannel } from "@/types/chat";
 
 interface GroupChatProps {
   teamMembers: TeamMember[];
-  currentUserId: string;
-  onSendMessage: (message: GroupMessage) => void;
   onStartCall: (type: 'video' | 'audio') => void;
+  channelId?: string;
+  className?: string;
 }
 
 const GroupChat: React.FC<GroupChatProps> = ({ 
   teamMembers, 
-  currentUserId, 
-  onSendMessage, 
-  onStartCall 
+  onStartCall,
+  channelId,
+  className
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { triggerMessageSent } = useRealtimeNotifications();
-  const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const {
+    currentChannel,
+    messages,
+    typingUsers,
+    sendMessage,
+    startTyping,
+    stopTyping,
+    uploadFile,
+    reactToMessage,
+    removeReaction,
+    markAsRead,
+    loading,
+    error
+  } = useChat();
+
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentUser = teamMembers.find(member => member.id === currentUserId);
+  // Get current channel or use provided channelId
+  const activeChannel = channelId ? 
+    teamMembers.find(m => m.id === channelId) : 
+    currentChannel;
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Simulate typing indicators
+  // Mark messages as read when channel changes
+  useEffect(() => {
+    if (activeChannel?.id) {
+      markAsRead(activeChannel.id);
+    }
+  }, [activeChannel?.id, markAsRead]);
+
+  // Handle typing indicators
   useEffect(() => {
     if (isTyping) {
-      const timer = setTimeout(() => {
-        setIsTyping(false);
-        setTypingUsers(prev => prev.filter(id => id !== currentUserId));
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isTyping, currentUserId]);
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const currentUser = teamMembers.find(member => member.id === currentUserId);
-      const userName = currentUser?.name || 'You';
+      startTyping();
       
-      const message: GroupMessage = {
-        id: Date.now().toString(),
-        senderId: currentUserId,
-        senderName: userName,
-        content: newMessage,
-        timestamp: new Date().toISOString(),
-        type: 'text',
-        mentions: extractMentions(newMessage),
-        readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }]
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Set new timeout to stop typing
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        stopTyping();
+      }, 3000);
+    } else {
+      stopTyping();
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [isTyping, startTyping, stopTyping]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeChannel) return;
+
+    try {
+      const mentions = extractMentions(newMessage);
+      const metadata = {
+        mentions,
+        hashtags: extractHashtags(newMessage),
+        links: extractLinks(newMessage)
       };
 
-      setMessages(prev => [...prev, message]);
-      onSendMessage(message);
+      await sendMessage(newMessage, 'text', metadata);
       
       // Trigger notification for other team members
-      triggerMessageSent(userName, newMessage, message.id, true);
+      triggerMessageSent(user?.name || 'You', newMessage, Date.now().toString(), true);
       
       setNewMessage('');
       setIsTyping(false);
-      
-      // Simulate other users reading the message
-      setTimeout(() => {
-        const otherUsers = teamMembers
-          .filter(member => member.id !== currentUserId && member.status === 'online')
-          .slice(0, 2); // Simulate 2 users reading
-        
-        const readUpdates = otherUsers.map(user => ({
-          userId: user.id,
-          readAt: new Date().toISOString()
-        }));
-
-        setMessages(prev => prev.map(msg => 
-          msg.id === message.id 
-            ? { ...msg, readBy: [...msg.readBy, ...readUpdates] }
-            : msg
-        ));
-      }, 2000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -142,6 +153,18 @@ const GroupChat: React.FC<GroupChatProps> = ({
     const mentionRegex = /@(\w+)/g;
     const matches = text.match(mentionRegex);
     return matches ? matches.map(match => match.substring(1)) : [];
+  };
+
+  const extractHashtags = (text: string): string[] => {
+    const hashtagRegex = /#(\w+)/g;
+    const matches = text.match(hashtagRegex);
+    return matches ? matches.map(match => match.substring(1)) : [];
+  };
+
+  const extractLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = text.match(urlRegex);
+    return matches ? matches.map(url => ({ url })) : [];
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -159,44 +182,45 @@ const GroupChat: React.FC<GroupChatProps> = ({
     
     if (e.target.value && !isTyping) {
       setIsTyping(true);
-      setTypingUsers(prev => [...prev.filter(id => id !== currentUserId), currentUserId]);
     } else if (!e.target.value) {
       setIsTyping(false);
-      setTypingUsers(prev => prev.filter(id => id !== currentUserId));
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const message: GroupMessage = {
-        id: Date.now().toString(),
-        senderId: currentUserId,
-        senderName: currentUser?.name || 'You',
-        content: `📎 ${file.name}`,
-        timestamp: new Date().toISOString(),
-        type: 'file',
-        attachments: [{
-          name: file.name,
-          url: URL.createObjectURL(file),
-          type: file.type,
-          size: file.size
-        }],
-        readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }]
+    if (!file || !activeChannel) return;
+
+    try {
+      const attachment = await uploadFile(file);
+      
+      const metadata = {
+        custom_data: {
+          attachments: [attachment.id],
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type
+        }
       };
 
-      setMessages(prev => [...prev, message]);
-      onSendMessage(message);
+      await sendMessage(`📎 ${file.name}`, 'file', metadata);
       
       toast({
         title: "File uploaded",
         description: `${file.name} has been shared in the group chat.`,
       });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleVoiceNote = () => {
-    if (!isRecording) {
+  const handleVoiceNote = async () => {
+    if (!isRecording && activeChannel) {
       setIsRecording(true);
       toast({
         title: "Recording started",
@@ -204,25 +228,24 @@ const GroupChat: React.FC<GroupChatProps> = ({
       });
       
       // Simulate recording
-      setTimeout(() => {
+      setTimeout(async () => {
         setIsRecording(false);
-        const message: GroupMessage = {
-          id: Date.now().toString(),
-          senderId: currentUserId,
-          senderName: currentUser?.name || 'You',
-          content: "🎤 Voice note",
-          timestamp: new Date().toISOString(),
-          type: 'voice',
-          readBy: [{ userId: currentUserId, readAt: new Date().toISOString() }]
-        };
         
-        setMessages(prev => [...prev, message]);
-        onSendMessage(message);
-        
-        toast({
-          title: "Voice note sent",
-          description: "Your voice note has been shared.",
-        });
+        try {
+          await sendMessage("🎤 Voice note", 'voice');
+          
+          toast({
+            title: "Voice note sent",
+            description: "Your voice note has been shared.",
+          });
+        } catch (error) {
+          console.error('Error sending voice note:', error);
+          toast({
+            title: "Error",
+            description: "Failed to send voice note.",
+            variant: "destructive"
+          });
+        }
       }, 3000);
     }
   };
@@ -234,8 +257,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
     });
   };
 
-  const getReadStatus = (message: GroupMessage) => {
-    const readCount = message.readBy.length;
+  const getReadStatus = (message: ChatMessage) => {
+    const readCount = message.read_receipts?.length || 0;
     const totalOnline = teamMembers.filter(m => m.status === 'online').length;
     
     if (readCount === totalOnline) {
@@ -247,19 +270,64 @@ const GroupChat: React.FC<GroupChatProps> = ({
     }
   };
 
+  const handleReaction = async (messageId: string, emoji: string) => {
+    try {
+      const message = messages.find(m => m.id === messageId);
+      const existingReaction = message?.reactions?.find(r => r.user_id === user?.id && r.emoji === emoji);
+      
+      if (existingReaction) {
+        await removeReaction(messageId, emoji);
+      } else {
+        await reactToMessage(messageId, emoji);
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+    }
+  };
+
   const onlineMembers = teamMembers.filter(member => member.status === 'online');
 
+  if (loading) {
+    return (
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10 h-[600px] flex flex-col">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading chat...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="bg-black/40 backdrop-blur-sm border-white/10 h-[600px] flex flex-col">
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-400 mb-4">Error loading chat: {error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="bg-black/40 backdrop-blur-sm border-white/10 h-[600px] flex flex-col">
+    <Card className={`bg-black/40 backdrop-blur-sm border-white/10 h-[600px] flex flex-col ${className || ''}`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Users className="h-6 w-6 text-green-400" />
+              <Hash className="h-6 w-6 text-green-400" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></div>
             </div>
             <div>
-              <CardTitle className="text-white text-lg">Group Chat</CardTitle>
+              <CardTitle className="text-white text-lg">
+                {activeChannel?.name || 'Group Chat'}
+              </CardTitle>
               <p className="text-sm text-gray-400">
                 {onlineMembers.length} of {teamMembers.length} members online
               </p>
@@ -267,6 +335,15 @@ const GroupChat: React.FC<GroupChatProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSearch(!showSearch)}
+              className="text-gray-400 hover:text-white"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            
             <Button
               variant="ghost"
               size="sm"
@@ -291,10 +368,26 @@ const GroupChat: React.FC<GroupChatProps> = ({
                   <Video className="h-4 w-4 mr-2" />
                   Start Video Call
                 </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Channel Settings
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
+        
+        {/* Search Bar */}
+        {showSearch && (
+          <div className="mt-4">
+            <Input
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-black/20 border-white/10 text-white"
+            />
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-0">
@@ -306,56 +399,114 @@ const GroupChat: React.FC<GroupChatProps> = ({
               <p>No messages yet. Start the conversation!</p>
             </div>
           ) : (
-            messages.map((message) => (
-              <div key={message.id} className="flex items-start gap-3 group">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-green-600 text-white text-xs">
-                    {message.senderName.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-white">
-                      {message.senderName}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {formatTime(message.timestamp)}
-                    </span>
-                    {message.isEdited && (
-                      <span className="text-xs text-gray-500">(edited)</span>
+            messages.map((message) => {
+              const isCurrentUser = message.sender_id === user?.id;
+              const isSystemMessage = message.message_type === 'system';
+              
+              return (
+                <div key={message.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
+                    {!isCurrentUser && !isSystemMessage && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="bg-green-500 text-white text-xs">
+                            {message.sender?.name?.charAt(0) || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-white">{message.sender?.name || 'Unknown'}</span>
+                        <span className="text-xs text-gray-400">{formatTime(message.created_at)}</span>
+                      </div>
                     )}
-                  </div>
-                  
-                  <div className="bg-black/20 rounded-lg p-3 max-w-md">
-                    <p className="text-sm text-gray-100 whitespace-pre-wrap">
-                      {message.content}
-                    </p>
                     
-                    {message.attachments && message.attachments.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        {message.attachments.map((attachment, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-black/30 rounded">
-                            <Paperclip className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-300">{attachment.name}</span>
-                            <span className="text-xs text-gray-500">
-                              ({(attachment.size / 1024).toFixed(1)} KB)
-                            </span>
-                          </div>
-                        ))}
+                    <div className={`rounded-lg p-3 ${
+                      isSystemMessage 
+                        ? 'bg-yellow-500/20 text-yellow-200 text-center text-sm'
+                        : isCurrentUser 
+                          ? 'bg-green-500/20 text-white' 
+                          : 'bg-white/10 text-white'
+                    }`}>
+                      {message.message_type === 'file' && message.attachments && message.attachments.length > 0 && (
+                        <div className="mb-2">
+                          <a 
+                            href={message.attachments[0].file_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-green-400 hover:text-green-300 underline"
+                          >
+                            {message.attachments[0].file_name}
+                          </a>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {(message.attachments[0].file_size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      )}
+                      
+                      {message.message_type === 'voice' && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                          <span>Voice note</span>
+                        </div>
+                      )}
+                      
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      
+                      {message.metadata?.mentions && message.metadata.mentions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {message.metadata.mentions.map((mention, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              @{mention}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {message.edited_at && (
+                        <p className="text-xs text-gray-400 mt-1 italic">(edited)</p>
+                      )}
+                      
+                      {/* Reactions */}
+                      {message.reactions && message.reactions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {Object.entries(
+                            message.reactions.reduce((acc, reaction) => {
+                              acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>)
+                          ).map(([emoji, count]) => (
+                            <Button
+                              key={emoji}
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs hover:bg-white/10"
+                              onClick={() => handleReaction(message.id, emoji)}
+                            >
+                              {emoji} {count}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {isCurrentUser && !isSystemMessage && (
+                      <div className="flex items-center justify-end gap-1 mt-1">
+                        <span className="text-xs text-gray-400">{formatTime(message.created_at)}</span>
+                        {getReadStatus(message)}
                       </div>
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-1 mt-1">
-                    {getReadStatus(message)}
-                    <span className="text-xs text-gray-500">
-                      {message.readBy.length} read
-                    </span>
-                  </div>
+                  {!isCurrentUser && !isSystemMessage && (
+                    <div className="order-2 ml-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-green-500 text-white">
+                          {message.sender?.name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           
           {/* Typing Indicator */}
@@ -367,7 +518,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
               <span>
-                {typingUsers.map(id => teamMembers.find(m => m.id === id)?.name).join(', ')} 
+                {typingUsers.map(typing => typing.user?.name || 'Someone').join(', ')} 
                 {typingUsers.length === 1 ? ' is' : ' are'} typing...
               </span>
             </div>

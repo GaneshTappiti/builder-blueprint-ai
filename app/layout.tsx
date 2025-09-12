@@ -12,6 +12,8 @@ import { ReactQueryProvider } from './providers/ReactQueryProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProfileProvider } from '@/contexts/ProfileContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import { TeamManagementProvider } from '@/contexts/TeamManagementContext';
+import { ChatProvider } from '@/contexts/ChatContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 export const viewport: Viewport = {
@@ -60,13 +62,17 @@ export default function RootLayout({
               <AuthProvider>
                 <ProfileProvider>
                   <AdminProvider>
-                    <TooltipProvider>
-                      <IdeaProvider>
-                        {children}
-                      </IdeaProvider>
-                      <Toaster />
-                      <Sonner />
-                    </TooltipProvider>
+                    <TeamManagementProvider>
+                      <ChatProvider>
+                        <TooltipProvider>
+                          <IdeaProvider>
+                            {children}
+                          </IdeaProvider>
+                          <Toaster />
+                          <Sonner />
+                        </TooltipProvider>
+                      </ChatProvider>
+                    </TeamManagementProvider>
                   </AdminProvider>
                 </ProfileProvider>
               </AuthProvider>

@@ -24,10 +24,26 @@ export default function AuthGuard({
   requireAuth = true,
   allowedRoles = []
 }: AuthGuardProps) {
-  const { user, loading } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [authContext, setAuthContext] = useState<{ user: any; loading: boolean } | null>(null);
+  
+  // Safely get auth context with error handling
+  let user = null;
+  let loading = true;
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    loading = auth.loading;
+  } catch (error) {
+    console.warn('AuthGuard: useAuth hook failed, using fallback state:', error);
+    // Fallback to loading state if context is not available
+    loading = true;
+    user = null;
+  }
+  
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Check if we're in development mode and should bypass auth
   const isDevelopmentMode = process.env.NODE_ENV === 'development' || 
@@ -57,6 +73,39 @@ export default function AuthGuard({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
         <LoadingSpinner size="lg" text="Checking authentication..." />
+      </div>
+    );
+  }
+
+  // If auth context failed to load and we're not in development mode, show error
+  if (!isDevelopmentMode && user === null && loading === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
+        <Card className="w-full max-w-md mx-4 workspace-card">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-red-500/20 rounded-full border border-red-500/30">
+                <AlertCircle className="h-8 w-8 text-red-400" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl text-white">Authentication Error</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center space-y-2">
+              <p className="text-gray-400">
+                There was an error loading authentication. Please refresh the page.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="w-full workspace-button"
+              >
+                Refresh Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
