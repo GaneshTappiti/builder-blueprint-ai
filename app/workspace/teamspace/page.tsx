@@ -57,6 +57,7 @@ import RolePermissionsManagement from "@/components/teamspace/RolePermissionsMan
 import TeamSettings from "@/components/teamspace/TeamSettings";
 import TeamManagementErrorBoundary from "@/components/teamspace/TeamManagementErrorBoundary";
 import TeamManagementTest from "@/components/teamspace/TeamManagementTest";
+import JitsiVideoCall from "@/components/teamspace/JitsiVideoCall";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -194,6 +195,7 @@ function TeamSpacePageContent() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [currentRoomName, setCurrentRoomName] = useState('');
   
   // Chat states
   const [chatMode, setChatMode] = useState<'group' | 'individual' | null>(null);
@@ -384,6 +386,8 @@ function TeamSpacePageContent() {
   };
 
   const handleStartVideoCall = () => {
+    const roomName = `team-${Date.now()}`;
+    setCurrentRoomName(roomName);
     setIsVideoCallActive(true);
     toast({
       title: "Video call started",
@@ -396,10 +400,23 @@ function TeamSpacePageContent() {
     setIsMuted(false);
     setIsVideoOff(false);
     setIsScreenSharing(false);
+    setCurrentRoomName('');
     toast({
       title: "Video call ended",
       description: "The video call has been ended.",
     });
+  };
+
+  const handleMuteToggle = (muted: boolean) => {
+    setIsMuted(muted);
+  };
+
+  const handleVideoToggle = (videoOff: boolean) => {
+    setIsVideoOff(videoOff);
+  };
+
+  const handleScreenShareToggle = (sharing: boolean) => {
+    setIsScreenSharing(sharing);
   };
 
   // Chat handling functions
@@ -879,61 +896,17 @@ function TeamSpacePageContent() {
         {/* Video Call Overlay */}
         {isVideoCallActive && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg p-6 max-w-4xl w-full mx-4">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-white">Team Video Call</h3>
-                <Button
-                  onClick={handleEndVideoCall}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-
-              {/* Video Grid Placeholder */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {teamMembers.filter(m => m.status === 'online').map((member) => (
-                  <div key={member.id} className="bg-gray-800 rounded-lg aspect-video flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="text-white font-medium">{member.name.split(' ').map(n => n[0]).join('')}</span>
-                      </div>
-                      <p className="text-white text-sm">{member.name}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Video Controls */}
-              <div className="flex items-center justify-center gap-4">
-                <Button
-                  onClick={() => setIsMuted(!isMuted)}
-                  className={`bg-black/20 border border-white/10 ${isMuted ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-black/30'}`}
-                >
-                  {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                </Button>
-
-                <Button
-                  onClick={() => setIsVideoOff(!isVideoOff)}
-                  className={`bg-black/20 border border-white/10 ${isVideoOff ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-black/30'}`}
-                >
-                  {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
-                </Button>
-
-                <Button
-                  onClick={() => setIsScreenSharing(!isScreenSharing)}
-                  className={`bg-black/20 border border-white/10 ${isScreenSharing ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-black/30'}`}
-                >
-                  <ScreenShare className="h-5 w-5" />
-                </Button>
-
-                <Button
-                  onClick={handleEndVideoCall}
-                  className="px-6"
-                >
-                  End Call
-                </Button>
-              </div>
+            <div className="max-w-6xl w-full mx-4">
+              <JitsiVideoCall
+                roomName={currentRoomName}
+                displayName={user?.name || 'User'}
+                isActive={isVideoCallActive}
+                onEndCall={handleEndVideoCall}
+                onMuteToggle={handleMuteToggle}
+                onVideoToggle={handleVideoToggle}
+                onScreenShareToggle={handleScreenShareToggle}
+                className="w-full"
+              />
             </div>
           </div>
         )}

@@ -325,15 +325,7 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="dark min-h-screen bg-green-glass">
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
-      )}
-      
-      <div className={`fixed left-0 top-0 h-full transition-transform duration-300 z-50 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <WorkspaceSidebar />
-      </div>
+      <WorkspaceSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       <main className="flex-1 transition-all duration-300">
         <div className="flex flex-col w-full">
