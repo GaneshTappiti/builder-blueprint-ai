@@ -49,46 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Check if we're in development mode and should bypass auth
-  // Only bypass if explicitly enabled AND Supabase is not configured
-  const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-                              process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
-                              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder-key';
-  
-  const isDevelopmentMode = (process.env.NODE_ENV === 'development' || 
-                           process.env.NEXT_PUBLIC_DEVELOPMENT_MODE === 'true' ||
-                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') && !isSupabaseConfigured;
+  // Development mode bypass removed - onboarding will always work
 
   // Initialize auth state and listen for changes
   useEffect(() => {
     // Debug logging
     console.log('🔧 AuthContext: Initializing...', {
-      isDevelopmentMode,
-      isSupabaseConfigured,
       nodeEnv: process.env.NODE_ENV
     });
 
-    // If in development mode, set a mock user and skip auth
-    if (isDevelopmentMode) {
-      console.log('🔧 Development mode: Bypassing authentication');
-      setUser({
-        id: 'dev-user-123',
-        email: 'dev@example.com',
-        name: 'Development User',
-        avatar_url: undefined,
-        role: 'user',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      setLoading(false);
-      return;
-    }
-
-    // If Supabase is configured, use real authentication
-    if (isSupabaseConfigured) {
-      console.log('✅ Supabase configured: Using real authentication');
-    }
+    // Use real authentication with Supabase
+    console.log('✅ Using Supabase authentication');
 
     // Get initial session
     const getInitialSession = async () => {
@@ -118,8 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes (only if not in development mode)
-    if (!isDevelopmentMode) {
+    // Listen for auth changes
+    {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event: any, session: any) => {
           if (session?.user) {
@@ -142,9 +113,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               if (event === 'SIGNED_IN' && session?.user?.created_at) {
                 const userCreatedAt = new Date(session.user.created_at);
                 const now = new Date();
-                const isNewUser = (now.getTime() - userCreatedAt.getTime()) < 60000; // Less than 1 minute old
+                const isNewUser = (now.getTime() - userCreatedAt.getTime()) < 300000; // Less than 5 minutes old (increased window)
+                
+                console.log('🔍 AuthContext: Checking new user status', {
+                  userCreatedAt: userCreatedAt.toISOString(),
+                  now: now.toISOString(),
+                  timeDiff: now.getTime() - userCreatedAt.getTime(),
+                  isNewUser,
+                  event
+                });
                 
                 if (isNewUser) {
+                  console.log('🆕 AuthContext: New user detected, redirecting to profile setup');
                   router.push('/profile/setup');
                   return;
                 }
@@ -162,17 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return () => subscription.unsubscribe();
     }
-    
-    // Return cleanup function for development mode
-    return () => {};
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (isDevelopmentMode) {
-      console.log('🔧 Development mode: Sign in bypassed');
-      return;
-    }
-    
     setLoading(true);
     setError(null);
     try {
@@ -194,24 +166,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (isDevelopmentMode) {
-      console.log('🔧 Development mode: Sign out bypassed');
-      setUser(null);
-      return;
-    }
-    
+    console.log('🔓 AuthContext: Starting sign out process...');
     setLoading(true);
     setError(null);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
+        console.error('❌ AuthContext: Sign out error:', error);
         setError(error.message);
         throw error;
       }
+      console.log('✅ AuthContext: Successfully signed out from Supabase');
+      
+      // Clear user state
+      setUser(null);
+      console.log('✅ AuthContext: User state cleared');
+      
       // Redirect to auth page after sign out
+      console.log('🔄 AuthContext: Redirecting to auth page...');
       router.push('/auth');
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('❌ AuthContext: Sign out error:', error);
       throw error;
     } finally {
       setLoading(false);

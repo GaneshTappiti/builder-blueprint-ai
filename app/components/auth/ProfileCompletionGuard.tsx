@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -33,18 +32,9 @@ export default function ProfileCompletionGuard({
   const { profile, loading: profileLoading, getProfileCompletion, isProfileComplete } = useProfile();
   const router = useRouter();
 
-  // Check if we're in development mode and should bypass profile completion
-  const isDevelopmentMode = process.env.NODE_ENV === 'development' || 
-                           process.env.NEXT_PUBLIC_DEVELOPMENT_MODE === 'true' ||
-                           process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true';
+  // Development mode bypass removed - profile completion always enforced
 
   useEffect(() => {
-    // Skip profile completion checks in development mode
-    if (isDevelopmentMode) {
-      setIsChecking(false);
-      return;
-    }
-
     // Wait for auth and profile to load
     if (authLoading || profileLoading) {
       return;
@@ -66,21 +56,43 @@ export default function ProfileCompletionGuard({
     const completionPercentage = getProfileCompletion();
     const isComplete = isProfileComplete();
 
+    console.log('🔍 ProfileCompletionGuard: Checking profile completion', {
+      profileId: profile?.id,
+      onboardingCompleted: profile?.onboardingCompleted,
+      completionPercentage,
+      isComplete,
+      requireCompleteProfile,
+      profileData: {
+        firstName: profile?.firstName,
+        lastName: profile?.lastName,
+        bio: profile?.bio,
+        jobTitle: profile?.jobTitle,
+        skills: profile?.skills?.length || 0,
+        location: profile?.location,
+        timezone: profile?.timezone
+      }
+    });
+
     if (requireCompleteProfile && !isComplete) {
+      console.log('⚠️ ProfileCompletionGuard: Profile incomplete, redirecting to setup');
       setIsRedirecting(true);
       setTimeout(() => {
         router.push(redirectTo);
       }, 1000);
     } else {
+      console.log('✅ ProfileCompletionGuard: Profile complete, allowing access');
       setIsChecking(false);
     }
-  }, [user, profile, authLoading, profileLoading, requireCompleteProfile, isProfileComplete, getProfileCompletion, redirectTo, router, isDevelopmentMode]);
+  }, [user, profile, authLoading, profileLoading, requireCompleteProfile, isProfileComplete, getProfileCompletion, redirectTo, router]);
 
   // Show loading while checking profile completion
   if (isChecking || authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
-        <LoadingSpinner size="lg" text="Checking profile completion..." />
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin h-8 w-8 border-2 border-green-400 border-t-transparent rounded-full"></div>
+          <p className="text-gray-400">Checking profile completion...</p>
+        </div>
       </div>
     );
   }
@@ -90,7 +102,10 @@ export default function ProfileCompletionGuard({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
         <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" text="Redirecting to profile setup..." />
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin h-8 w-8 border-2 border-green-400 border-t-transparent rounded-full"></div>
+            <p className="text-gray-400">Redirecting to profile setup...</p>
+          </div>
           <p className="text-gray-400">Please complete your profile to continue</p>
         </div>
       </div>

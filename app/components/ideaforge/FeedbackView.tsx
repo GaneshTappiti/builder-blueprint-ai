@@ -635,15 +635,71 @@ Respond ONLY in this JSON format (no additional text, no markdown, just pure JSO
     return Users;
   };
 
-  const generatePublicLink = () => {
-    const link = `${window.location.origin}/feedback/${idea.id}`;
-    setPublicLink(link);
-    navigator.clipboard.writeText(link);
-    toast({
-      title: "Link Copied!",
-      description: "Public feedback link copied to clipboard",
-      duration: 2000,
-    });
+  const generatePublicLink = async () => {
+    try {
+      // Ensure we have a valid idea ID
+      if (!idea?.id) {
+        toast({
+          title: "Error",
+          description: "No idea selected. Please select an idea first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Import the public feedback persistence
+      const { publicFeedbackPersistence } = await import('@/utils/public-feedback-persistence');
+      const { createTestIdeaWithFeedback } = await import('@/utils/create-test-idea');
+
+      // Check if public idea exists, if not create it
+      const isPublic = await publicFeedbackPersistence.isPublicIdea(idea.id);
+      if (!isPublic) {
+        console.log('Creating public idea for feedback sharing:', idea.id);
+        
+        // Create a public version of the current idea
+        const publicIdeaData = {
+          id: idea.id,
+          title: idea.title || `Idea ${idea.id}`,
+          description: idea.description || 'Idea from Idea Forge',
+          tags: idea.tags || ['idea', 'feedback'],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          feedback: feedback || []
+        };
+        
+        await publicFeedbackPersistence.savePublicIdea(publicIdeaData);
+        console.log('Public idea created successfully');
+      }
+
+      // Generate the public link
+      const link = `${window.location.origin}/feedback/${idea.id}`;
+      setPublicLink(link);
+      
+      // Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(link);
+        toast({
+          title: "Link Copied!",
+          description: "Public feedback link copied to clipboard",
+          duration: 2000,
+        });
+      } catch (clipboardError) {
+        // Fallback for browsers that don't support clipboard API
+        console.warn('Clipboard API not available, showing link instead');
+        toast({
+          title: "Link Generated",
+          description: `Public link: ${link}`,
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Error generating public link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate public link. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const exportSurveyData = () => {

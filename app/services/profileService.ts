@@ -72,6 +72,8 @@ export class ProfileService {
         .update({
           ...updates,
           profile_completion: completion,
+          // If onboardingCompleted is being set to true, ensure it's properly saved
+          onboarding_completed: updates.onboardingCompleted !== undefined ? updates.onboardingCompleted : undefined,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);

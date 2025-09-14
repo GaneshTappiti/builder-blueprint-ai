@@ -769,10 +769,7 @@ export default function WorkspacePage() {
     }
   ];
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
-  };
+  // Removed duplicate handleSignOut - using handleLogout instead
 
   // Handler functions for non-functional buttons
 
@@ -1267,7 +1264,7 @@ Format the response as JSON with this structure:
                         <div className="border-t border-white/10 my-2"></div>
                         <button
                           className="w-full flex items-center gap-3 p-2 hover:bg-red-500/10 rounded-lg transition-colors text-left"
-                          onClick={handleSignOut}
+                          onClick={handleLogout}
                         >
                           <LogOut className="h-4 w-4 text-red-400" />
                           <span className="text-sm text-red-400">Sign Out</span>

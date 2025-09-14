@@ -31,7 +31,6 @@ import {
   Users,
   Lightbulb
 } from 'lucide-react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface ProfileSetupData {
   // Personal Information
@@ -300,7 +299,10 @@ export default function ProfileSetupPage() {
   if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
-        <LoadingSpinner size="lg" text="Loading profile..." />
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin h-8 w-8 border-2 border-green-400 border-t-transparent rounded-full"></div>
+          <p className="text-gray-400">Loading profile...</p>
+        </div>
       </div>
     );
   }

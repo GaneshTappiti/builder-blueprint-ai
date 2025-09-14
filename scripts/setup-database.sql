@@ -197,3 +197,4 @@ INSERT INTO chat_channels (name, description, type, created_by) VALUES
 ON CONFLICT DO NOTHING;
 
 COMMIT;
+

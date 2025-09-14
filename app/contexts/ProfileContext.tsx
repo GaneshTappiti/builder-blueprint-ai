@@ -512,6 +512,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   }, [profile]);
 
   const isProfileComplete = useCallback((): boolean => {
+    // Check if onboarding is explicitly completed
+    if (profile?.onboardingCompleted) {
+      return true;
+    }
+    // Fallback to profile completion percentage
     return (profile?.profileCompletion || 0) >= 80;
   }, [profile]);
 

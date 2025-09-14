@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Share Feedback Link</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 8px 8px 8px 0;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .success { border-color: #10b981; background: #ecfdf5; }
+        .error { border-color: #ef4444; background: #fef2f2; }
+        .info { border-color: #3b82f6; background: #eff6ff; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Share Feedback Link Testing</h1>
+        <p>Test the Share Feedback Link functionality step by step.</p>
+        
+        <h2>Step 1: Test Link Generation</h2>
+        <button class="test-button" onclick="testLinkGeneration()">Generate Test Link</button>
+        <div id="linkResult" class="result" style="display: none;"></div>
+        
+        <h2>Step 2: Test Public Feedback Page</h2>
+        <button class="test-button" onclick="testPublicPage()">Test Public Page</button>
+        <div id="pageResult" class="result" style="display: none;"></div>
+        
+        <h2>Step 3: Test Clipboard Functionality</h2>
+        <button class="test-button" onclick="testClipboard()">Test Clipboard Copy</button>
+        <div id="clipboardResult" class="result" style="display: none;"></div>
+        
+        <h2>Step 4: Test Complete Flow</h2>
+        <button class="test-button" onclick="testCompleteFlow()">Test Complete Flow</button>
+        <div id="completeResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const testIdeaId = 'test-idea-' + Date.now();
+        const baseUrl = 'http://localhost:3001'; // Note: using port 3001 as shown in terminal
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+        
+        function testLinkGeneration() {
+            try {
+                const link = `${baseUrl}/feedback/${testIdeaId}`;
+                showResult('linkResult', `✅ Link generated successfully:\n${link}`, 'success');
+                return link;
+            } catch (error) {
+                showResult('linkResult', `❌ Link generation failed:\n${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function testPublicPage() {
+            try {
+                const link = `${baseUrl}/feedback/${testIdeaId}`;
+                showResult('pageResult', `🔄 Testing public page access...\nLink: ${link}`, 'info');
+                
+                // Test if the page exists by making a fetch request
+                const response = await fetch(link);
+                if (response.ok) {
+                    showResult('pageResult', `✅ Public page accessible:\nStatus: ${response.status}\nURL: ${link}`, 'success');
+                } else {
+                    showResult('pageResult', `⚠️ Public page returned status ${response.status}:\nURL: ${link}\nThis might be expected if the idea doesn't exist yet.`, 'info');
+                }
+            } catch (error) {
+                showResult('pageResult', `❌ Public page test failed:\n${error.message}\n\nMake sure the development server is running on port 3001.`, 'error');
+            }
+        }
+        
+        async function testClipboard() {
+            try {
+                const testText = `Test feedback link: ${baseUrl}/feedback/${testIdeaId}`;
+                
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(testText);
+                    showResult('clipboardResult', `✅ Clipboard copy successful:\n"${testText}"`, 'success');
+                } else {
+                    showResult('clipboardResult', `⚠️ Clipboard API not available in this browser.\nThis is normal for some browsers or non-HTTPS contexts.`, 'info');
+                }
+            } catch (error) {
+                showResult('clipboardResult', `❌ Clipboard copy failed:\n${error.message}\n\nThis might be due to browser security restrictions.`, 'error');
+            }
+        }
+        
+        async function testCompleteFlow() {
+            try {
+                showResult('completeResult', '🔄 Testing complete Share Feedback Link flow...', 'info');
+                
+                // Step 1: Generate link
+                const link = testLinkGeneration();
+                if (!link) {
+                    showResult('completeResult', '❌ Complete flow failed at link generation step.', 'error');
+                    return;
+                }
+                
+                // Step 2: Test clipboard
+                await testClipboard();
+                
+                // Step 3: Test public page
+                await testPublicPage();
+                
+                showResult('completeResult', `✅ Complete flow test finished!\n\nSummary:\n- Link generation: ✅ Working\n- Clipboard copy: ${navigator.clipboard ? '✅ Working' : '⚠️ Not available'}\n- Public page: Check above results\n\nTest idea ID: ${testIdeaId}\nGenerated link: ${link}`, 'success');
+                
+            } catch (error) {
+                showResult('completeResult', `❌ Complete flow test failed:\n${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            console.log('Share Feedback Link Test Page Loaded');
+            console.log('Test Idea ID:', testIdeaId);
+            console.log('Base URL:', baseUrl);
+        });
+    </script>
+</body>
+</html>

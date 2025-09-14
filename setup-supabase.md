@@ -84,3 +84,4 @@ If you encounter issues:
 2. Verify your environment variables are correct
 3. Make sure all migrations ran successfully
 4. Check Supabase logs in the dashboard
+

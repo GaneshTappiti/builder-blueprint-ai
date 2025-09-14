@@ -30,7 +30,7 @@ export function usePublicFeedbackOnly(ideaId: string): UsePublicFeedbackOnlyRetu
       setError(null);
 
       // Get public idea data
-      let publicIdea = publicFeedbackPersistence.getPublicIdea(ideaId);
+      let publicIdea = await publicFeedbackPersistence.getPublicIdea(ideaId);
 
       if (!publicIdea) {
         setError('Idea not found. The idea may have been deleted or the ID is invalid.');
@@ -58,7 +58,7 @@ export function usePublicFeedbackOnly(ideaId: string): UsePublicFeedbackOnlyRetu
 
   const addFeedback = useCallback(async (newFeedback: Omit<FeedbackItem, 'id'>): Promise<boolean> => {
     try {
-      const success = publicFeedbackPersistence.addFeedback(ideaId, newFeedback);
+      const success = await publicFeedbackPersistence.addFeedback(ideaId, newFeedback);
       if (success) {
         await loadData(); // Refresh data
       }

@@ -33,11 +33,33 @@ export default function FeedbackPage() {
     
     // Create a test idea if it doesn't exist (for demo purposes)
     if (ideaId && typeof window !== 'undefined') {
-      if (!publicFeedbackPersistence.isPublicIdea(ideaId)) {
-        createTestIdeaWithFeedback(ideaId);
-      }
+      const checkAndCreateIdea = async () => {
+        try {
+          const isPublic = await publicFeedbackPersistence.isPublicIdea(ideaId);
+          if (!isPublic) {
+            console.log('Creating test idea with feedback for ID:', ideaId);
+            createTestIdeaWithFeedback(ideaId);
+            
+            // Show a toast to inform the user
+            toast({
+              title: "Demo Idea Created",
+              description: "A demo idea has been created for testing the feedback system.",
+              duration: 3000,
+            });
+          }
+        } catch (error) {
+          console.error('Error creating test idea:', error);
+          toast({
+            title: "Error",
+            description: "Failed to create demo idea. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      checkAndCreateIdea();
     }
-  }, [ideaId]);
+  }, [ideaId, toast]);
 
   const copyToClipboard = async () => {
     try {
@@ -141,9 +163,43 @@ export default function FeedbackPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
-            <Alert>
-              <AlertDescription>No idea data available.</AlertDescription>
-            </Alert>
+            <div className="mb-8">
+              <Link 
+                href="/workspace/ideaforge" 
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Idea Forge
+              </Link>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Idea Not Found
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  The idea with ID "{ideaId}" was not found. This could happen if:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                  <li>The idea hasn't been shared publicly yet</li>
+                  <li>The idea ID is incorrect</li>
+                  <li>The idea was deleted or moved</li>
+                </ul>
+                <div className="flex gap-2">
+                  <Button onClick={() => window.location.reload()}>
+                    Try Again
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/workspace/ideaforge">
+                      Go to Idea Forge
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

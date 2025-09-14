@@ -68,7 +68,7 @@ export default function AccountSettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { 
     profile, 
     loading, 
@@ -271,11 +271,21 @@ export default function AccountSettingsPage() {
     });
   };
 
-  const handleSignOut = () => {
-    toast({
-      title: "Signed Out",
-      description: "You have been successfully signed out.",
-    });
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Sign Out Failed",
+        description: "Unable to sign out. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleExportData = async () => {
