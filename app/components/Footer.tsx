@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-xl font-bold text-white">Builder Blueprint AI</span>
+              <span className="text-xl font-bold text-white">Buildtrix</span>
             </div>
             <p className="text-gray-400 text-sm max-w-xs">
               Your AI-powered build orchestrator for MVP development. Turn ideas into production-ready applications.
@@ -81,7 +81,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-gray-400 text-sm">
-            © 2024 Builder Blueprint AI. All rights reserved.
+            © 2024 Buildtrix. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link href="/terms" className="text-gray-400 hover:text-green-400 text-sm transition-colors">

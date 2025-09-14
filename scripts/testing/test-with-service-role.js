@@ -90,7 +90,7 @@ async function testWithServiceRole() {
     
     if (missingTables > 0) {
       log('\n⚠️  Missing tables detected. Please run the SQL migration first:', colors.yellow);
-      log('1. Copy the contents of scripts/create-missing-tables.sql', colors.yellow);
+      log('1. Copy the contents of database/sql/create-missing-tables.sql', colors.yellow);
       log('2. Go to Supabase Dashboard → SQL Editor', colors.yellow);
       log('3. Paste and execute the SQL', colors.yellow);
       log('4. Re-run this script', colors.yellow);

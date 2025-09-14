@@ -32,7 +32,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'builder-blueprint-ai'
+      'X-Client-Info': 'buildtrix'
     }
   }
 });

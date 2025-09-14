@@ -32,7 +32,7 @@ export const Hero = () => {
 
         {/* Main heading */}
         <h1 className="text-6xl md:text-7xl font-bold mb-6 text-gradient leading-tight animate-scale-in">
-          Builder Blueprint AI
+          Buildtrix
         </h1>
 
         <p className="text-xl md:text-2xl text-gray-300 mb-4 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{animationDelay: '0.2s'}}>

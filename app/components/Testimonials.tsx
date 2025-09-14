@@ -27,7 +27,7 @@ const Testimonials = () => {
             <div className="workspace-card max-w-2xl mx-auto p-8">
               <h3 className="text-xl font-semibold text-white mb-4">Coming Soon</h3>
               <p className="text-gray-400">
-                We're collecting testimonials from our early users. Check back soon to see what founders are saying about Builder Blueprint AI!
+                We're collecting testimonials from our early users. Check back soon to see what founders are saying about Buildtrix!
               </p>
             </div>
           </div>

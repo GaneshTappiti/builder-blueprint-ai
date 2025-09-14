@@ -136,7 +136,7 @@ function BuilderWizardContent() {
         {/* Header with Progress */}
         <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          🧱 Builder Blueprint AI
+          🧱 Buildtrix
         </h1>
         <p className="text-xl text-muted-foreground">
           Transform your app idea into AI-ready prompts for any builder platform

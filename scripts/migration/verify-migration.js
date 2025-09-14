@@ -54,11 +54,11 @@ function main() {
   
   // Check migration files
   log(`${colors.cyan}📁 Migration Files:${colors.reset}`);
-  allFilesExist &= checkFile('scripts/localstorage-migration-sql.sql', 'Database Schema');
-  allFilesExist &= checkFile('scripts/localstorage-migration-browser.js', 'Browser Migration Script');
-  allFilesExist &= checkFile('scripts/run-localstorage-migration.ps1', 'PowerShell Migration Script');
-  allFilesExist &= checkFile('scripts/comprehensive-migration.js', 'Comprehensive Migration');
-  allFilesExist &= checkFile('scripts/mcp-automated-migration.js', 'MCP Migration');
+  allFilesExist &= checkFile('database/sql/localstorage-migration-sql.sql', 'Database Schema');
+  allFilesExist &= checkFile('scripts/migration/localstorage-migration-browser.js', 'Browser Migration Script');
+  allFilesExist &= checkFile('scripts/migration/run-localstorage-migration.ps1', 'PowerShell Migration Script');
+  allFilesExist &= checkFile('scripts/migration/comprehensive-migration.js', 'Comprehensive Migration');
+  allFilesExist &= checkFile('scripts/migration/mcp-automated-migration.js', 'MCP Migration');
   
   // Check service files
   log(`\n${colors.cyan}🔧 Service Files:${colors.reset}`);
@@ -72,7 +72,7 @@ function main() {
   log(`\n${colors.cyan}📖 Documentation:${colors.reset}`);
   allFilesExist &= checkFile('MIGRATION_COMPLETE_SUMMARY.md', 'Complete Summary');
   allFilesExist &= checkFile('LOCALSTORAGE_MIGRATION_COMPLETE.md', 'Migration Guide');
-  allFilesExist &= checkFile('scripts/migration-instructions.md', 'Instructions');
+  allFilesExist &= checkFile('docs/migration/migration-instructions.md', 'Instructions');
   
   // Check environment
   log(`\n${colors.cyan}🌍 Environment:${colors.reset}`);

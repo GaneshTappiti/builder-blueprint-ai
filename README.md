@@ -1,4 +1,4 @@
-# Builder Blueprint AI 🚀
+# Buildtrix 🚀
 
 A comprehensive AI-powered application builder that generates detailed prompts and blueprints for creating web and mobile applications with **RAG-enhanced tool-specific optimization** and **Universal Prompt Templates**.
 

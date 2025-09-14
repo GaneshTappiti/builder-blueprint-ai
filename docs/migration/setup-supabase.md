@@ -7,7 +7,7 @@
 2. Click "New Project"
 3. Choose your organization
 4. Enter project details:
-   - Name: `builder-blueprint-ai`
+   - Name: `buildtrix`
    - Database Password: (create a strong password)
    - Region: Choose closest to you
 5. Click "Create new project"

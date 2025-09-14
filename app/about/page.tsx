@@ -43,7 +43,7 @@ export default function AboutPage() {
                   Our Mission
                 </h2>
                 <p className="text-gray-400 md:text-lg">
-                  We believe that great ideas shouldn&apos;t be limited by technical barriers. Builder Blueprint AI empowers entrepreneurs, creators, and innovators to turn their visions into reality using the power of artificial intelligence.
+                  We believe that great ideas shouldn&apos;t be limited by technical barriers. Buildtrix empowers entrepreneurs, creators, and innovators to turn their visions into reality using the power of artificial intelligence.
                 </p>
                 <p className="text-gray-400 md:text-lg">
                   Our platform combines cutting-edge AI technology with intuitive design to create a seamless experience from ideation to deployment.
@@ -68,7 +68,7 @@ export default function AboutPage() {
                 Our Values
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto">
-                These core principles guide everything we do at Builder Blueprint AI.
+                These core principles guide everything we do at Buildtrix.
               </p>
             </div>
             
@@ -137,7 +137,7 @@ export default function AboutPage() {
                   Ready to Build Your Startup?
                 </h2>
                 <p className="mx-auto max-w-[700px] text-gray-400 md:text-xl mt-4">
-                  Join us on this journey and turn your ideas into reality with Builder Blueprint AI.
+                  Join us on this journey and turn your ideas into reality with Buildtrix.
                 </p>
                 <div className="pt-6">
                   <Button asChild size="lg" className="workspace-button button-hover-scale">

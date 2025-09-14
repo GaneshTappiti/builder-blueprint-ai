@@ -1,4 +1,4 @@
-# Complete Database Migration Script for Builder Blueprint AI
+# Complete Database Migration Script for Buildtrix
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host "🚀 COMPLETE DATABASE MIGRATION FOR BUILDER BLUEPRINT AI" -ForegroundColor Yellow
 Write-Host "================================================================================" -ForegroundColor Cyan

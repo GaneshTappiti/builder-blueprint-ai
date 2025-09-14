@@ -123,7 +123,7 @@ export default function LandingPage() {
             </Button>
           </div>
 
-          {/* Builder Blueprint AI Section */}
+          {/* Buildtrix Section */}
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               <div className="glass-effect p-6 rounded-lg text-center border border-green-500/20 relative">
@@ -155,7 +155,7 @@ export default function LandingPage() {
             <div className="glass-effect p-8 rounded-xl text-center">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Brain className="h-6 w-6 text-green-400" />
-                <h2 className="text-2xl font-bold text-white">🧱 Builder Blueprint AI</h2>
+                <h2 className="text-2xl font-bold text-white">🧱 Buildtrix</h2>
               </div>
               <p className="text-gray-300 mb-8">Transform your app idea into AI-ready prompts for any builder platform</p>
 

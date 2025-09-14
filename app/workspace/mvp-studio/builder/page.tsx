@@ -86,7 +86,7 @@ export default function BuilderPage() {
                 </div>
                 
                 <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
-                  Builder Blueprint AI
+                  Buildtrix
                 </h1>
                 
                 <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">

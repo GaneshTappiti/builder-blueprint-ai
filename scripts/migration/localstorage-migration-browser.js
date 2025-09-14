@@ -367,7 +367,7 @@ async function runLocalStorageMigration() {
   log(`\n${colors.bright}${colors.yellow}Files created:${colors.reset}`);
   log(`  📄 ${browserFile}`);
   log(`  📄 ${instructionsFile}`);
-  log(`  📄 scripts/localstorage-migration-sql.sql`);
+  log(`  📄 database/sql/localstorage-migration-sql.sql`);
   log(`  📄 app/services/localStorageSyncer.ts`);
 }
 

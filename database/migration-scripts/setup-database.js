@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 Builder Blueprint AI - Database Setup Script');
+console.log('🚀 Buildtrix - Database Setup Script');
 console.log('================================================\n');
 
 // Check if .env.local exists

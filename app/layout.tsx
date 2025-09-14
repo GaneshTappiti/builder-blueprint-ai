@@ -25,12 +25,12 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Builder Blueprint AI - MVP Studio',
+  title: 'Buildtrix - MVP Studio',
   description: 'Your AI-powered build orchestrator. Generate prompts, get tool recommendations, and build your MVP with the best AI builders in the market.',
-  authors: [{ name: 'Builder Blueprint AI' }],
+  authors: [{ name: 'Buildtrix' }],
   keywords: ['AI', 'MVP', 'App Builder', 'No-Code', 'Prompts', 'FlutterFlow', 'Framer', 'Bubble'],
   openGraph: {
-    title: 'Builder Blueprint AI - MVP Studio',
+    title: 'Buildtrix - MVP Studio',
     description: 'Your AI-powered build orchestrator for MVP development',
     type: 'website',
     images: [
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
         url: 'https://lovable.dev/opengraph-image-p98pqg.png',
         width: 1200,
         height: 630,
-        alt: 'Builder Blueprint AI'
+        alt: 'Buildtrix'
       }
     ]
   },

@@ -1,10 +1,10 @@
-# Builder Blueprint AI - Feature Documentation
+# Buildtrix - Feature Documentation
 
-Welcome to the comprehensive documentation for Builder Blueprint AI, an advanced AI-powered platform for startup ideation, validation, and development planning.
+Welcome to the comprehensive documentation for Buildtrix, an advanced AI-powered platform for startup ideation, validation, and development planning.
 
 ## 🚀 Platform Overview
 
-Builder Blueprint AI is a comprehensive suite of AI-powered tools designed to help entrepreneurs, startups, and businesses transform ideas into actionable plans. The platform leverages Google Gemini AI to provide intelligent insights, recommendations, and automated generation of business documents.
+Buildtrix is a comprehensive suite of AI-powered tools designed to help entrepreneurs, startups, and businesses transform ideas into actionable plans. The platform leverages Google Gemini AI to provide intelligent insights, recommendations, and automated generation of business documents.
 
 ## 📋 Feature Documentation Index
 

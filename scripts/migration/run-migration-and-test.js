@@ -111,7 +111,7 @@ async function runMigrationAndTest() {
       log('1. Go to: https://supabase.com/dashboard', colors.blue);
       log('2. Select your project', colors.blue);
       log('3. Navigate to SQL Editor', colors.blue);
-      log('4. Copy the contents of: scripts/create-missing-tables.sql', colors.blue);
+      log('4. Copy the contents of: database/sql/create-missing-tables.sql', colors.blue);
       log('5. Paste and execute the SQL', colors.blue);
       
       // Show the SQL content
@@ -119,7 +119,7 @@ async function runMigrationAndTest() {
       log('================================', colors.magenta);
       
       try {
-        const sqlContent = fs.readFileSync('scripts/create-missing-tables.sql', 'utf8');
+        const sqlContent = fs.readFileSync('database/sql/create-missing-tables.sql', 'utf8');
         console.log(sqlContent);
         log('================================', colors.magenta);
       } catch (err) {
@@ -244,7 +244,7 @@ async function runMigrationAndTest() {
       try {
         const { spawn } = require('child_process');
         
-        const e2eProcess = spawn('node', ['scripts/migration-e2e-test.js'], {
+        const e2eProcess = spawn('node', ['scripts/testing/migration-e2e-test.js'], {
           stdio: 'inherit',
           shell: true
         });
@@ -289,7 +289,7 @@ async function runMigrationAndTest() {
       log('⏭️  E2E tests: Skipped', colors.yellow);
       
       log('\n🎉 Migration deployment successful!', colors.green);
-      log('You can run E2E tests manually with: node scripts/migration-e2e-test.js', colors.blue);
+      log('You can run E2E tests manually with: node scripts/testing/migration-e2e-test.js', colors.blue);
       
       rl.close();
     }
