@@ -421,6 +421,17 @@
     @apply flex-1 min-h-0;
   }
 
+  /* Mobile-specific layout improvements */
+  @media (max-width: 768px) {
+    .layout-container {
+      @apply flex-col;
+    }
+    
+    .layout-main {
+      @apply h-full;
+    }
+  }
+
   /* Scroll performance optimizations */
   .scroll-smooth-fix {
     scroll-behavior: smooth;
@@ -469,5 +480,138 @@
 
   .workspace-last-section {
     @apply mb-12 md:mb-16 lg:mb-20;
+  }
+
+  /* Mobile touch targets - ensure minimum 44px */
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile-specific spacing */
+  .mobile-padding {
+    @apply px-3 py-4 sm:px-6 sm:py-6;
+  }
+
+  .mobile-padding-sm {
+    @apply px-2 py-2 sm:px-4 sm:py-4;
+  }
+
+  .mobile-padding-lg {
+    @apply px-4 py-6 sm:px-8 sm:py-8;
+  }
+
+  /* Mobile container */
+  .mobile-container {
+    @apply w-full mx-auto px-3 sm:px-6 lg:px-8;
+  }
+
+  /* Mobile text sizes */
+  .mobile-text-xs {
+    @apply text-xs sm:text-sm;
+  }
+
+  .mobile-text-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .mobile-text-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .mobile-text-lg {
+    @apply text-lg sm:text-xl;
+  }
+
+  .mobile-text-xl {
+    @apply text-xl sm:text-2xl;
+  }
+
+  /* Mobile grid utilities */
+  .mobile-grid-1 {
+    @apply grid-cols-1;
+  }
+
+  .mobile-grid-2 {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+
+  .mobile-grid-3 {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .mobile-grid-4 {
+    @apply grid-cols-2 sm:grid-cols-4;
+  }
+
+  /* Mobile flex utilities */
+  .mobile-flex-col {
+    @apply flex-col sm:flex-row;
+  }
+
+  .mobile-flex-row {
+    @apply flex-row;
+  }
+
+  .mobile-flex-wrap {
+    @apply flex-wrap;
+  }
+
+  /* Mobile gap utilities */
+  .mobile-gap-2 {
+    @apply gap-2 sm:gap-4;
+  }
+
+  .mobile-gap-4 {
+    @apply gap-4 sm:gap-6;
+  }
+
+  .mobile-gap-6 {
+    @apply gap-6 sm:gap-8;
+  }
+
+  /* Mobile visibility utilities */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  .mobile-tablet-only {
+    @apply block lg:hidden;
+  }
+
+  /* Orientation-specific improvements */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .workspace-content-spacing {
+      @apply py-2 sm:py-4;
+    }
+    
+    .mobile-padding {
+      @apply px-2 py-2 sm:px-4 sm:py-4;
+    }
+  }
+
+  @media (orientation: portrait) and (max-width: 768px) {
+    .workspace-full-height {
+      min-height: 100vh;
+      height: auto;
+    }
+  }
+
+  /* Landscape mobile optimizations */
+  @media (orientation: landscape) and (max-width: 768px) {
+    .layout-main {
+      @apply overflow-y-auto;
+    }
+    
+    .workspace-content-area {
+      @apply min-h-0;
+    }
   }
 }

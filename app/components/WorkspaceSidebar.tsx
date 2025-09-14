@@ -59,16 +59,16 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaV
     <Link
       href={path}
       onClick={onClick}
-      className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm transition-all duration-200 ${
+      className={`flex items-center gap-3 w-full px-3 py-3 rounded-md text-sm transition-all duration-200 mobile-touch-target ${
         isActive
           ? "bg-green-600/20 text-green-400 border-l-2 border-green-400"
           : "text-gray-400 hover:bg-black/30 hover:text-white hover:border-l-2 hover:border-green-500/50"
       }`}
     >
-      <Icon className="h-5 w-5" />
-      <span className="flex-1">{label}</span>
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      <span className="flex-1 truncate">{label}</span>
       {isNew && (
-        <Badge className="bg-green-500 text-black text-xs font-bold px-2 py-0.5 ml-auto">
+        <Badge className="bg-green-500 text-black text-xs font-bold px-2 py-0.5 ml-auto flex-shrink-0">
           NEW
         </Badge>
       )}
@@ -76,7 +76,7 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, onClick, isBeta, betaV
         <BetaLabel
           variant={betaVariant}
           size="sm"
-          className="ml-auto"
+          className="ml-auto flex-shrink-0"
         />
       )}
     </Link>
@@ -199,7 +199,7 @@ const WorkspaceSidebar = ({ isOpen = false, setIsOpen = () => {} }: WorkspaceSid
     <Sheet open={isOpen} onOpenChange={setIsOpen || (() => {})}>
       <SheetContent
         side="left"
-        className="w-64 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0 text-white"
+        className="w-64 sm:w-72 bg-black/95 backdrop-blur-xl border-r border-white/10 p-0 text-white"
       >
         {sidebarContent}
       </SheetContent>

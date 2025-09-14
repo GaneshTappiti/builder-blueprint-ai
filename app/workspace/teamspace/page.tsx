@@ -533,36 +533,39 @@ function TeamSpacePageContent() {
       <main className="layout-main transition-all duration-300">
         {/* Top Navigation Bar */}
         <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="px-6 py-4">
+          <div className="px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Button
-                  className="text-gray-400 hover:text-white hover:bg-black/30"
+                  className="text-gray-400 hover:text-white hover:bg-black/30 mobile-touch-target"
                   onClick={() => setSidebarOpen(true)}
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
                 <Link
                   href="/workspace"
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mobile-touch-target"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Back to Workspace</span>
+                  <span className="hidden sm:inline">Back to Workspace</span>
+                  <span className="sm:hidden">Back</span>
                 </Link>
               </div>
               <Button
                 onClick={() => setIsAddMemberModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 mobile-touch-target text-xs sm:text-sm"
+                size="sm"
               >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Member
+                <UserPlus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Add Member</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="px-6 py-8 workspace-content-spacing">
+        <div className="px-3 sm:px-6 py-4 sm:py-8 workspace-content-spacing">
           {/* Header Section */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">

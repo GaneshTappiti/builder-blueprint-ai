@@ -1325,15 +1325,15 @@ Format the response as JSON with this structure:
 
           {/* Main Content */}
           <div className="workspace-background workspace-content-area overflow-y-auto">
-            <div className="w-full min-h-full px-4 sm:px-6 lg:px-8 py-6 workspace-content-spacing">
-              <div className="workspace-card-solid p-6 sm:p-8 lg:p-10 min-h-full">
+            <div className="w-full min-h-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 workspace-content-spacing">
+              <div className="workspace-card-solid p-4 sm:p-6 lg:p-8 xl:p-10 min-h-full">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Dashboard</h1>
-                    <p className="text-gray-400">Manage your startup journey with AI-powered tools and insights.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+                  <div className="mb-4 sm:mb-0">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">Dashboard</h1>
+                    <p className="text-sm sm:text-base text-gray-400">Manage your startup journey with AI-powered tools and insights.</p>
                   </div>
-                  <div className="flex items-center gap-3 mt-4 sm:mt-0">
+                  <div className="flex items-center gap-2 sm:gap-3">
                       {isGeneratingIdea && (
                         <div className="flex items-center gap-2 text-green-400 text-sm px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
                           <div className="h-3 w-3 animate-spin rounded-full border-2 border-green-400 border-t-transparent" />
@@ -1342,11 +1342,13 @@ Format the response as JSON with this structure:
                       )}
                       <Button
                         variant="outline"
-                        className="bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/30 hover:border-green-500/50"
+                        size="sm"
+                        className="bg-green-600/20 border-green-500/30 text-green-400 hover:bg-green-600/30 hover:border-green-500/50 text-xs sm:text-sm min-h-[36px] sm:min-h-[40px]"
                         onClick={() => router.push('/workspace/workshop')}
                       >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Quick Start
+                        <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden xs:inline">Quick Start</span>
+                        <span className="xs:hidden">Start</span>
                       </Button>
                   </div>
                 </div>
@@ -1359,54 +1361,58 @@ Format the response as JSON with this structure:
                 )}
 
                 {/* Founder's GPT - Redesigned as AI Co-founder */}
-                <section className="mb-6 md:mb-8 flex justify-center items-center min-h-[60vh]">
-                  <div className="bg-black/20 backdrop-blur-xl rounded-2xl shadow-xl p-4 md:p-10 w-full flex flex-col items-center border border-white/10">
+                <section className="mb-6 md:mb-8 flex justify-center items-center min-h-[50vh] sm:min-h-[60vh]">
+                  <div className="bg-black/20 backdrop-blur-xl rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 lg:p-10 w-full flex flex-col items-center border border-white/10">
                     {/* Header */}
-                    <div className="flex flex-col items-center mb-6 md:mb-8">
+                    <div className="flex flex-col items-center mb-4 sm:mb-6 md:mb-8">
                       <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-green-400" />
-                        <h2 className="text-xl md:text-3xl font-bold text-white">Your AI Co-founder</h2>
+                        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-green-400" />
+                        <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">Your AI Co-founder</h2>
                       </div>
-                      <p className="text-gray-400 text-center max-w-md text-sm md:text-base">
+                      <p className="text-gray-400 text-center max-w-sm sm:max-w-md text-xs sm:text-sm md:text-base px-2">
                         From ideation to execution — I'm here to help you build your startup faster.
                       </p>
                     </div>
 
-                    {/* Quick Actions Grid */}
-                    <div className="w-full mb-6 md:mb-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base md:text-lg font-semibold text-white">Quick Actions</h3>
-                      </div>
-                      <Tabs
-                        defaultValue="ideation"
-                        value={activeCategory}
-                        onValueChange={(value) => setActiveCategory(value as Category)}
-                        className="w-full"
-                      >
-                        <TabsList className="grid grid-cols-4 mb-4 w-full">
+                {/* Quick Actions Grid */}
+                <div className="w-full mb-6 md:mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base md:text-lg font-semibold text-white">Quick Actions</h3>
+                  </div>
+                  <Tabs
+                    defaultValue="ideation"
+                    value={activeCategory}
+                    onValueChange={(value) => setActiveCategory(value as Category)}
+                    className="w-full"
+                  >
+                    <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4 w-full">
                           <TabsTrigger
                             value="ideation"
-                            className="text-xs md:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400"
+                            className="text-xs sm:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 px-2 py-2 min-h-[40px]"
                           >
-                            Ideation
+                            <span className="hidden sm:inline">Ideation</span>
+                            <span className="sm:hidden">Ideas</span>
                           </TabsTrigger>
                           <TabsTrigger
                             value="planning"
-                            className="text-xs md:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400"
+                            className="text-xs sm:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 px-2 py-2 min-h-[40px]"
                           >
-                            Planning
+                            <span className="hidden sm:inline">Planning</span>
+                            <span className="sm:hidden">Plan</span>
                           </TabsTrigger>
                           <TabsTrigger
                             value="execution"
-                            className="text-xs md:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400"
+                            className="text-xs sm:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 px-2 py-2 min-h-[40px]"
                           >
-                            Execution
+                            <span className="hidden sm:inline">Execution</span>
+                            <span className="sm:hidden">Build</span>
                           </TabsTrigger>
                           <TabsTrigger
                             value="validation"
-                            className="text-xs md:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400"
+                            className="text-xs sm:text-sm data-[state=active]:bg-green-600/20 data-[state=active]:text-green-400 px-2 py-2 min-h-[40px]"
                           >
-                            Validation
+                            <span className="hidden sm:inline">Validation</span>
+                            <span className="sm:hidden">Test</span>
                           </TabsTrigger>
                         </TabsList>
                         <TabsContent value={activeCategory} className="mt-0">

@@ -409,13 +409,13 @@ export default function IdeaVaultPage() {
       <main className="layout-main transition-all duration-300">
         {/* Top Navigation Bar */}
         <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="px-6 py-4">
+          <div className="px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-400 hover:text-white hover:bg-black/30"
+                  className="text-gray-400 hover:text-white hover:bg-black/30 mobile-touch-target"
                   onClick={() => setSidebarOpen(true)}
                 >
                   <Menu className="h-5 w-5" />
@@ -423,22 +423,25 @@ export default function IdeaVaultPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 hover:text-white mobile-touch-target"
                   onClick={() => router.push('/workspace')}
                 >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Back to Workspace
+                  <ChevronLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Workspace</span>
+                  <span className="sm:hidden">Back</span>
                 </Button>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Idea Vault</h1>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">Idea Vault</h1>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={startNewIdea} disabled={isLoading}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  New Idea
+              <div className="flex gap-1 sm:gap-2">
+                <Button onClick={startNewIdea} disabled={isLoading} size="sm" className="mobile-touch-target text-xs sm:text-sm">
+                  <PlusCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">New Idea</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
-                <Button onClick={createTestIdea} disabled={isLoading} variant="outline">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Test Idea
+                <Button onClick={createTestIdea} disabled={isLoading} variant="outline" size="sm" className="mobile-touch-target text-xs sm:text-sm">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Test Idea</span>
+                  <span className="sm:hidden">Test</span>
                 </Button>
               </div>
             </div>
@@ -446,7 +449,7 @@ export default function IdeaVaultPage() {
         </div>
 
         {/* Main Content */}
-        <div className="px-6 py-8 max-w-7xl mx-auto">
+        <div className="px-3 sm:px-6 py-4 sm:py-8 max-w-7xl mx-auto">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center min-h-[50vh]">
               <Loader2 className="h-12 w-12 text-green-500 animate-spin" />
