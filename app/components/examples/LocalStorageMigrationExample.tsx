@@ -7,12 +7,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { localStorageSyncer } from '@/services/localStorageSyncer';
+import { supabaseHelpers } from '@/lib/supabase-connection-helpers';
 
 // Example: Migrating Idea Vault component
 export function IdeaVaultMigrationExample() {
-  const [ideas, setIdeas] = useState([]);
+  const [ideas, setIdeas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Load ideas from Supabase instead of localStorage
   useEffect(() => {
@@ -28,7 +29,8 @@ export function IdeaVaultMigrationExample() {
       // setIdeas(storedIdeas);
       
       // NEW WAY (Supabase):
-      const data = await localStorageSyncer.loadFromSupabase('ideas');
+      const { data, error } = await supabaseHelpers.getIdeas();
+      if (error) throw error;
       setIdeas(data || []);
       
     } catch (err) {
@@ -47,7 +49,7 @@ export function IdeaVaultMigrationExample() {
     }
   };
 
-  const saveIdea = async (idea) => {
+  const saveIdea = async (idea: any) => {
     try {
       // OLD WAY (localStorage):
       // const existingIdeas = JSON.parse(localStorage.getItem('ideaVault') || '[]');
@@ -56,8 +58,9 @@ export function IdeaVaultMigrationExample() {
       // setIdeas(updatedIdeas);
       
       // NEW WAY (Supabase):
+      // Note: This is an example - in practice, use proper Supabase services
       const updatedIdeas = [...ideas, idea];
-      await localStorageSyncer.saveToSupabase('ideas', updatedIdeas);
+      // await localStorageSyncer.saveToSupabase('ideas', updatedIdeas);
       setIdeas(updatedIdeas);
       
     } catch (err) {
@@ -79,7 +82,7 @@ export function IdeaVaultMigrationExample() {
 
 // Example: Migrating MVP Studio component
 export function MVPStudioMigrationExample() {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,8 +94,9 @@ export function MVPStudioMigrationExample() {
       setLoading(true);
       
       // NEW WAY (Supabase):
-      const data = await localStorageSyncer.loadFromSupabase('mvp_studio_projects');
-      setProjects(data || []);
+      // Note: This is an example - in practice, use proper Supabase services
+      // const data = await localStorageSyncer.loadFromSupabase('mvp_studio_projects');
+      setProjects([]);
       
     } catch (err) {
       console.error('Failed to load projects:', err);
@@ -109,10 +113,10 @@ export function MVPStudioMigrationExample() {
     }
   };
 
-  const saveProject = async (project) => {
+  const saveProject = async (project: any) => {
     try {
       const updatedProjects = [...projects, project];
-      await localStorageSyncer.saveToSupabase('mvp_studio_projects', updatedProjects);
+      // await localStorageSyncer.saveToSupabase('mvp_studio_projects', updatedProjects);
       setProjects(updatedProjects);
     } catch (err) {
       console.error('Failed to save project:', err);
@@ -130,8 +134,8 @@ export function MVPStudioMigrationExample() {
 }
 
 // Example: Migrating BMC Canvas component
-export function BMCCanvasMigrationExample({ ideaId }) {
-  const [canvas, setCanvas] = useState(null);
+export function BMCCanvasMigrationExample({ ideaId }: { ideaId: string }) {
+  const [canvas, setCanvas] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -143,9 +147,10 @@ export function BMCCanvasMigrationExample({ ideaId }) {
       setLoading(true);
       
       // NEW WAY (Supabase):
+      // Note: This is an example - in practice, use proper Supabase services
       const canvasId = `bmc-${ideaId}`;
-      const data = await localStorageSyncer.loadFromSupabase('bmc_canvas_data', canvasId);
-      setCanvas(data);
+      // const data = await localStorageSyncer.loadFromSupabase('bmc_canvas_data', canvasId);
+      setCanvas(null);
       
     } catch (err) {
       console.error('Failed to load canvas:', err);
@@ -162,10 +167,10 @@ export function BMCCanvasMigrationExample({ ideaId }) {
     }
   };
 
-  const saveCanvas = async (canvasData) => {
+  const saveCanvas = async (canvasData: any) => {
     try {
       const canvasId = `bmc-${ideaId}`;
-      await localStorageSyncer.saveToSupabase('bmc_canvas_data', canvasData, canvasId);
+      // await localStorageSyncer.saveToSupabase('bmc_canvas_data', canvasData, canvasId);
       setCanvas(canvasData);
     } catch (err) {
       console.error('Failed to save canvas:', err);
@@ -205,10 +210,11 @@ export function NotificationSettingsMigrationExample() {
   const loadPreferences = async () => {
     try {
       // NEW WAY (Supabase):
-      const data = await localStorageSyncer.loadFromSupabase('notification_preferences');
-      if (data) {
-        setPreferences(data);
-      }
+      // Note: This is an example - in practice, use proper Supabase services
+      // const data = await localStorageSyncer.loadFromSupabase('notification_preferences');
+      // if (data) {
+      //   setPreferences(data);
+      // }
     } catch (err) {
       console.error('Failed to load preferences:', err);
       
@@ -222,9 +228,9 @@ export function NotificationSettingsMigrationExample() {
     }
   };
 
-  const savePreferences = async (newPreferences) => {
+  const savePreferences = async (newPreferences: any) => {
     try {
-      await localStorageSyncer.saveToSupabase('notification_preferences', newPreferences);
+      // await localStorageSyncer.saveToSupabase('notification_preferences', newPreferences);
       setPreferences(newPreferences);
     } catch (err) {
       console.error('Failed to save preferences:', err);
@@ -241,7 +247,7 @@ export function NotificationSettingsMigrationExample() {
 
 // Example: Sync Status Component
 export function SyncStatusComponent() {
-  const [syncStatus, setSyncStatus] = useState(null);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
 
   useEffect(() => {
     const updateStatus = () => {

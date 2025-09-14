@@ -666,7 +666,7 @@ export default function ProfileSetupPage() {
                   >
                     {isSaving ? (
                       <>
-                        <LoadingSpinner size="sm" className="mr-2" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
                         Saving...
                       </>
                     ) : (

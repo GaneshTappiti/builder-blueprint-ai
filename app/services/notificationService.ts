@@ -451,6 +451,7 @@ export interface NotificationPreferences {
   push: boolean;
   sms: boolean;
   desktop: boolean;
+  marketing: boolean;
   types: {
     mentions: boolean;
     tasks: boolean;
@@ -560,6 +561,7 @@ class ExtendedNotificationService extends NotificationService {
       push: true,
       sms: false,
       desktop: true,
+      marketing: false,
       types: {
         mentions: true,
         tasks: true,

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIdeaForgePersistence } from "@/hooks/useIdeaForgePersistence";
 import { FeedbackItem, FeedbackReply } from "@/utils/ideaforge-persistence";
 import { aiEngine } from "@/services/aiEngine";
+import { enhancedAIService } from "@/services/enhancedAIService";
 import { useToast } from "@/hooks/use-toast";
 import { FeedbackRating } from "./RatingSystem";
 import { FeedbackCard } from "./ThreadedReplies";
@@ -460,49 +461,18 @@ Respond ONLY in this JSON format:
     setIsGeneratingAudiences(true);
     
     try {
-      console.log('Starting target audience generation for:', idea.title);
+      console.log('Starting enhanced target audience generation for:', idea.title);
       
-      const prompt = `You are a marketing expert and startup advisor. Based on this specific idea, suggest realistic target audiences:
-
-IDEA: "${idea.title}"
-DESCRIPTION: "${idea.description}"
-
-CRITICAL: Provide specific audiences for THIS exact idea. Do NOT give generic responses.
-
-For "${idea.title}", identify specific target audiences with:
-
-1. **Name and Description**: Who specifically would use this?
-2. **Priority Level**: primary/secondary/tertiary based on likelihood to adopt
-3. **Specific Channels**: Where can you actually reach these people?
-
-IMPORTANT: Base your analysis on the specific idea provided. For example, if this is a fitness app, consider fitness enthusiasts, not generic "users".
-
-Respond ONLY in this JSON format (no additional text, no markdown, just pure JSON):
-[
-  {
-    "name": "Specific Audience Name",
-    "description": "Detailed description of why this audience would use this specific idea",
-    "priority": "primary",
-    "channels": ["specific channel 1", "specific channel 2", "specific channel 3"]
-  }
-]`;
-
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('AI request timeout')), 10000)
-      );
-      
-      const aiPromise = aiEngine.generateText(prompt, {
-        maxTokens: 1500,
+      // Use enhanced AI service for sophisticated target audience analysis
+      const response = await enhancedAIService.generateTargetAudience(idea.title, {
+        context: idea.description,
         temperature: 0.7
       });
-      
-      const response = await Promise.race([aiPromise, timeoutPromise]) as any;
 
-      console.log('Target Audiences AI Response:', response.text); // Debug log
+      console.log('Enhanced Target Audiences AI Response:', response.text);
 
       try {
-        // Clean the response text to extract JSON
+        // Parse the enhanced response - it should be structured JSON
         let cleanResponse = response.text.trim();
         
         // Remove any markdown code blocks
@@ -512,7 +482,7 @@ Respond ONLY in this JSON format (no additional text, no markdown, just pure JSO
           cleanResponse = cleanResponse.split('```')[1].split('```')[0].trim();
         }
         
-        // Remove any leading/trailing text that's not JSON
+        // Try to extract JSON array from the response
         const jsonStart = cleanResponse.indexOf('[');
         const jsonEnd = cleanResponse.lastIndexOf(']') + 1;
         if (jsonStart !== -1 && jsonEnd > jsonStart) {
@@ -528,18 +498,20 @@ Respond ONLY in this JSON format (no additional text, no markdown, just pure JSO
         
         const audiences: TargetAudience[] = parsed.map((audience: any, index: number) => ({
           id: `audience-${index}`,
-          name: audience.name || `Audience ${index + 1}`,
-          description: audience.description || `Target audience for ${idea.title}`,
-          priority: audience.priority || 'secondary',
-          channels: Array.isArray(audience.channels) ? audience.channels : ['Social media', 'Direct outreach'],
+          name: audience.name || audience.PRIMARY_TARGET_AUDIENCE?.name || `Audience ${index + 1}`,
+          description: audience.description || audience.PRIMARY_TARGET_AUDIENCE?.description || `Target audience for ${idea.title}`,
+          priority: audience.priority || audience.PRIMARY_TARGET_AUDIENCE?.priority || 'secondary',
+          channels: Array.isArray(audience.channels) ? audience.channels : 
+                   Array.isArray(audience.PRIMARY_TARGET_AUDIENCE?.channels) ? audience.PRIMARY_TARGET_AUDIENCE.channels :
+                   ['Social media', 'Direct outreach'],
           icon: getAudienceIcon(audience.name || `audience-${index}`)
         }));
         
         setTargetAudiences(audiences);
         
         toast({
-          title: "✅ Target Audiences Generated",
-          description: `Found ${audiences.length} potential audiences`,
+          title: "✅ Enhanced Target Audiences Generated",
+          description: `Found ${audiences.length} sophisticated audience profiles`,
           duration: 3000,
         });
       } catch (parseError) {

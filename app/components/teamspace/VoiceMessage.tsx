@@ -96,6 +96,9 @@ export function VoiceMessage({
         audio.removeEventListener('timeupdate', handleTimeUpdate);
       };
     }
+    
+    // Return empty cleanup function if no audio element
+    return () => {};
   }, [audioUrl]);
 
   const handleSend = () => {
@@ -142,7 +145,7 @@ export function VoiceMessage({
         <div className="flex items-center space-x-2">
           <Clock className="h-4 w-4 text-gray-400" />
           <span className="text-sm text-gray-400">
-            {formatDuration}
+            {formatDuration(duration)}
           </span>
         </div>
       </div>
@@ -224,7 +227,7 @@ export function VoiceMessage({
                 <Volume2 className="h-3 w-3 text-gray-400" />
                 <span className="text-xs text-gray-400">Voice message</span>
                 <Badge variant="secondary" className="text-xs">
-                  {formatDuration}
+                  {formatDuration(duration)}
                 </Badge>
               </div>
               <Progress value={playbackProgress} className="h-1" />

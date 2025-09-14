@@ -155,11 +155,18 @@ class LocalStorageSyncer {
    * Migrate specific localStorage data
    */
   private async migrateData(mapping: LocalStorageMapping, localData: any): Promise<{
+    success: boolean;
     migrated: number;
     conflicts: number;
     errors: string[];
   }> {
-    const result = {
+    const result: {
+      success: boolean;
+      migrated: number;
+      conflicts: number;
+      errors: string[];
+    } = {
+      success: false,
       migrated: 0,
       conflicts: 0,
       errors: []
@@ -285,7 +292,7 @@ class LocalStorageSyncer {
         };
       } else {
         // Same timestamp - merge if possible
-        return this.mergeData(localData, existingData[mapping.dataField]);
+        return this.mergeData(localData, existingData);
       }
     } catch (error) {
       console.error('Conflict resolution failed:', error);
@@ -398,7 +405,7 @@ class LocalStorageSyncer {
 
           if (data && data.length > 0) {
             // Convert back to localStorage format
-            const localData = data.map(item => item[mapping.dataField]);
+            const localData = data.map((item: any) => item[mapping.dataField]);
             
             if (Array.isArray(localData) && localData.length === 1) {
               // Single object - store as object

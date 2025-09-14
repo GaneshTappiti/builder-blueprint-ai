@@ -29,7 +29,7 @@ export function FeedbackLinkDebug({ ideaId }: FeedbackLinkDebugProps) {
       const info = {
         ideaId,
         windowOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
-        isPublicIdea: ideaId ? publicFeedbackPersistence.isPublicIdea(ideaId) : false,
+        isPublicIdea: ideaId ? await publicFeedbackPersistence.isPublicIdea(ideaId) : false,
         publicIdea: ideaId ? publicFeedbackPersistence.getPublicIdea(ideaId) : null,
         allPublicIdeas: publicFeedbackPersistence.getAllPublicIdeas(),
         clipboardSupported: typeof navigator !== 'undefined' && !!navigator.clipboard,
@@ -38,7 +38,7 @@ export function FeedbackLinkDebug({ ideaId }: FeedbackLinkDebugProps) {
       setDebugInfo(info);
     } catch (error) {
       console.error('Error gathering debug info:', error);
-      setDebugInfo({ error: error.message });
+      setDebugInfo({ error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +73,7 @@ export function FeedbackLinkDebug({ ideaId }: FeedbackLinkDebugProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to generate link: ${error.message}`,
+        description: `Failed to generate link: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
@@ -99,7 +99,7 @@ export function FeedbackLinkDebug({ ideaId }: FeedbackLinkDebugProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to create test idea: ${error.message}`,
+        description: `Failed to create test idea: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
@@ -156,7 +156,7 @@ export function FeedbackLinkDebug({ ideaId }: FeedbackLinkDebugProps) {
               <strong>Clipboard Support:</strong> {typeof navigator !== 'undefined' && !!navigator.clipboard ? '✅ Yes' : '❌ No'}
             </div>
             <div>
-              <strong>Public Idea Exists:</strong> {ideaId ? (publicFeedbackPersistence.isPublicIdea(ideaId) ? '✅ Yes' : '❌ No') : 'N/A'}
+              <strong>Public Idea Exists:</strong> {debugInfo.isPublicIdea ? '✅ Yes' : '❌ No'}
             </div>
           </div>
         </div>

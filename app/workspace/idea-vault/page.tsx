@@ -470,12 +470,8 @@ export default function IdeaVaultPage() {
             </div>
           ) : (
             <div>
-              <div className="flex justify-between items-center mb-8">
+              <div className="mb-8">
                 <h2 className="text-2xl font-bold">Your Ideas ({ideas.length})</h2>
-                <Button onClick={startNewIdea} size="sm">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  New Idea
-                </Button>
               </div>
 
               {/* Ideas Grid */}

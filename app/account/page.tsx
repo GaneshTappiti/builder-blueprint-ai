@@ -125,6 +125,14 @@ export default function AccountSettingsPage() {
         showContact: profile.privacy?.contactInfoVisibility === 'public' || false,
         showSocial: profile.privacy?.activityVisibility === 'public' || false
       });
+
+      // Load notification preferences from profile
+      if (profile.preferences?.notifications) {
+        setNotifications(prev => ({
+          ...prev,
+          ...profile.preferences.notifications
+        }));
+      }
     }
   }, [profile]);
 
@@ -150,11 +158,51 @@ export default function AccountSettingsPage() {
 
 
   // Notifications
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState<{
+    email: boolean;
+    push: boolean;
+    desktop: boolean;
+    sms: boolean;
+    marketing: boolean;
+    frequency: 'immediate' | 'daily' | 'weekly' | 'never';
+    types: {
+      mentions: boolean;
+      tasks: boolean;
+      meetings: boolean;
+      ideas: boolean;
+      projects: boolean;
+      teamUpdates: boolean;
+      achievements: boolean;
+    };
+    quietHours: {
+      enabled: boolean;
+      start: string;
+      end: string;
+    };
+  }>({
+    // General Notifications
     email: true,
     push: false,
+    desktop: true,
+    sms: false,
     marketing: false,
-    frequency: "real-time"
+    frequency: "immediate",
+    // Team & Collaboration
+    types: {
+      mentions: true,
+      tasks: true,
+      meetings: true,
+      ideas: true,
+      projects: true,
+      teamUpdates: true,
+      achievements: true
+    },
+    // Quiet Hours
+    quietHours: {
+      enabled: false,
+      start: '22:00',
+      end: '08:00'
+    }
   });
 
   // Security
@@ -264,11 +312,42 @@ export default function AccountSettingsPage() {
     });
   };
 
-  const handleSavePreferences = () => {
-    toast({
-      title: "Preferences Saved",
-      description: "Your preferences have been updated.",
-    });
+  const handleSavePreferences = async () => {
+    try {
+      // Save notification preferences to the profile
+      const success = await updatePreferences({
+        notifications: {
+          email: notifications.email,
+          push: notifications.push,
+          desktop: notifications.desktop,
+          sms: notifications.sms,
+          marketing: notifications.marketing,
+          frequency: notifications.frequency,
+          types: notifications.types,
+          quietHours: notifications.quietHours
+        }
+      });
+
+      if (success) {
+        toast({
+          title: "Preferences Saved",
+          description: "Your notification preferences have been updated.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to save notification preferences. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save notification preferences. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSignOut = async () => {
@@ -1421,21 +1500,34 @@ export default function AccountSettingsPage() {
 
               {/* Notifications Tab */}
               <TabsContent value="notifications" className="space-y-6">
+                {/* General Notifications */}
                 <Card className="workspace-card">
                   <CardHeader>
                     <CardTitle className="text-white flex items-center gap-2">
                       <Bell className="h-5 w-5" />
-                      Notification Preferences
+                      General Notifications
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                      Choose what notifications you want to receive and how often.
+                      Basic notification settings for your account
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-white">Email Notifications</Label>
-                        <p className="text-gray-400 text-sm">Receive updates about your account and features</p>
+                        <Label className="text-white">In-app notifications</Label>
+                        <p className="text-gray-400 text-sm">Show notifications within the application</p>
+                      </div>
+                      <Switch
+                        checked={notifications.desktop}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, desktop: checked }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Email notifications</Label>
+                        <p className="text-gray-400 text-sm">Receive notifications via email</p>
                       </div>
                       <Switch
                         checked={notifications.email}
@@ -1446,12 +1538,24 @@ export default function AccountSettingsPage() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label className="text-white">Push Notifications</Label>
-                        <p className="text-gray-400 text-sm">Get notified about important updates</p>
+                        <Label className="text-white">Push notifications</Label>
+                        <p className="text-gray-400 text-sm">Receive browser push notifications</p>
                       </div>
                       <Switch
                         checked={notifications.push}
                         onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, push: checked }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">SMS notifications</Label>
+                        <p className="text-gray-400 text-sm">Receive notifications via text message</p>
+                      </div>
+                      <Switch
+                        checked={notifications.sms}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, sms: checked }))}
                         disabled={!isEditing}
                       />
                     </div>
@@ -1472,26 +1576,260 @@ export default function AccountSettingsPage() {
                       <Label className="text-white font-medium">Notification Frequency</Label>
                       <Select 
                         value={notifications.frequency} 
-                        onValueChange={(value) => setNotifications({...notifications, frequency: value})}
+                        onValueChange={(value) => setNotifications(prev => ({...prev, frequency: value as 'immediate' | 'daily' | 'weekly' | 'never'}))}
                         disabled={!isEditing}
                       >
                         <SelectTrigger className="workspace-input">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="real-time">Real-time</SelectItem>
+                          <SelectItem value="immediate">Real-time</SelectItem>
                           <SelectItem value="daily">Daily Digest</SelectItem>
                           <SelectItem value="weekly">Weekly Summary</SelectItem>
-                          <SelectItem value="off">Off</SelectItem>
+                          <SelectItem value="never">Off</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-
-                    <Button className="w-full mt-6 workspace-button" onClick={handleSavePreferences}>
-                      Save Preferences
-                    </Button>
                   </CardContent>
                 </Card>
+
+                {/* Team & Collaboration */}
+                <Card className="workspace-card">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Team & Collaboration
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Notifications related to team activities and collaboration
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Meeting notifications</Label>
+                        <p className="text-gray-400 text-sm">Get notified when team members start meetings</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.meetings}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, meetings: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Chat notifications</Label>
+                        <p className="text-gray-400 text-sm">Get notified about new messages in team chat</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.mentions}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, mentions: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Idea sharing notifications</Label>
+                        <p className="text-gray-400 text-sm">Get notified when ideas are shared in team vault</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.ideas}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, ideas: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Team updates</Label>
+                        <p className="text-gray-400 text-sm">Get notified about team member changes</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.teamUpdates}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, teamUpdates: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Work & Tasks */}
+                <Card className="workspace-card">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Work & Tasks
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Notifications related to your work and task management
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Task reminders</Label>
+                        <p className="text-gray-400 text-sm">Get reminded about upcoming and overdue tasks</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.tasks}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, tasks: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Idea validation alerts</Label>
+                        <p className="text-gray-400 text-sm">Get notified when idea validation completes</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.achievements}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, achievements: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">System updates</Label>
+                        <p className="text-gray-400 text-sm">Get notified about new features and updates</p>
+                      </div>
+                      <Switch
+                        checked={notifications.types.projects}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          types: { ...prev.types, projects: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quiet Hours */}
+                <Card className="workspace-card">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Quiet Hours
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Set times when you don't want to receive notifications
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-white">Enable quiet hours</Label>
+                        <p className="text-gray-400 text-sm">Pause notifications during specified times</p>
+                      </div>
+                      <Switch
+                        checked={notifications.quietHours.enabled}
+                        onCheckedChange={(checked) => setNotifications(prev => ({ 
+                          ...prev, 
+                          quietHours: { ...prev.quietHours, enabled: checked } 
+                        }))}
+                        disabled={!isEditing}
+                      />
+                    </div>
+
+                    {notifications.quietHours.enabled && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-white text-sm">Start time</Label>
+                          <Input
+                            type="time"
+                            value={notifications.quietHours.start}
+                            onChange={(e) => setNotifications(prev => ({ 
+                              ...prev, 
+                              quietHours: { ...prev.quietHours, start: e.target.value } 
+                            }))}
+                            disabled={!isEditing}
+                            className="workspace-input"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-white text-sm">End time</Label>
+                          <Input
+                            type="time"
+                            value={notifications.quietHours.end}
+                            onChange={(e) => setNotifications(prev => ({ 
+                              ...prev, 
+                              quietHours: { ...prev.quietHours, end: e.target.value } 
+                            }))}
+                            disabled={!isEditing}
+                            className="workspace-input"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setNotifications({
+                        email: true,
+                        push: true,
+                        desktop: true,
+                        sms: false,
+                        marketing: false,
+                        frequency: "immediate",
+                        types: {
+                          mentions: true,
+                          tasks: true,
+                          meetings: true,
+                          ideas: true,
+                          projects: true,
+                          teamUpdates: true,
+                          achievements: true
+                        },
+                        quietHours: {
+                          enabled: false,
+                          start: '22:00',
+                          end: '08:00'
+                        }
+                      });
+                      toast({
+                        title: "Preferences Reset",
+                        description: "Notification preferences have been reset to defaults."
+                      });
+                    }}
+                    className="border-white/20 text-white hover:bg-white/10"
+                    disabled={!isEditing}
+                  >
+                    Reset to Defaults
+                  </Button>
+                  <Button 
+                    className="workspace-button" 
+                    onClick={handleSavePreferences}
+                    disabled={!isEditing}
+                  >
+                    Save Preferences
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* Privacy & Security Tab */}

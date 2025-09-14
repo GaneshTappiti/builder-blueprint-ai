@@ -12,6 +12,7 @@ export const useRealtimeNotifications = () => {
     push: true,
     sms: false,
     desktop: true,
+    marketing: false,
     types: {
       mentions: true,
       tasks: true,

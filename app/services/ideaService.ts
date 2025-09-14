@@ -305,7 +305,7 @@ class IdeaService {
       await supabase
         .from('ideas')
         .update({
-          metadata: supabase.raw('metadata || ?', JSON.stringify({ comment_count: 1 }))
+          metadata: { comment_count: 1 }
         })
         .eq('id', ideaId);
 
@@ -404,10 +404,10 @@ class IdeaService {
         .from('ideas')
         .update({
           status: status,
-          metadata: supabase.raw('metadata || ?', JSON.stringify({ 
+          metadata: { 
             team_status: status,
             last_modified_by: userId 
-          }))
+          }
         })
         .eq('id', ideaId)
         .select()

@@ -93,36 +93,149 @@ export class ProfileService {
     }
   }
 
-  // Create or initialize user profile
+  // Create or initialize user profile with enhanced error handling and retry logic
   static async createProfile(userId: string, initialData: Partial<UserProfile> = {}): Promise<boolean> {
-    try {
-      const profileData = {
-        id: userId,
-        ...initialData,
-        preferences: initialData.preferences || DEFAULT_USER_PREFERENCES,
-        privacy: initialData.privacy || DEFAULT_PRIVACY_SETTINGS,
-        working_hours: initialData.workingHours || DEFAULT_WORKING_HOURS,
-        status: initialData.status || 'offline',
-        profile_completion: calculateProfileCompletion(initialData),
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+    const maxRetries = 3;
+    let lastError: any = null;
 
-      const { error } = await supabase
-        .from('user_profiles')
-        .insert(profileData);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Profile creation attempt ${attempt}/${maxRetries} for user ${userId}`);
 
-      if (error) {
-        console.error('Error creating profile:', error);
-        return false;
+        // First, check if profile already exists
+        const existingProfile = await this.getProfile(userId);
+        if (existingProfile) {
+          console.log('Profile already exists, skipping creation');
+          return true;
+        }
+
+        // Get user data from auth if not provided
+        let userData = initialData;
+        if (!userData.email || !userData.name) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              userData = {
+                ...userData,
+                email: userData.email || user.email || '',
+                name: userData.name || user.user_metadata?.name || user.email || 'User',
+                avatar_url: userData.avatar_url || user.user_metadata?.avatar_url || null,
+                role: userData.role || user.user_metadata?.role || 'user'
+              };
+            }
+          } catch (authError) {
+            console.warn('Could not fetch user data from auth:', authError);
+          }
+        }
+
+        const profileData = {
+          id: userId,
+          user_id: userId,  // Add the required user_id column
+          email: userData.email || '',
+          name: userData.name || 'User',
+          avatar_url: userData.avatar_url || null,
+          role: userData.role || 'user',
+          first_name: userData.firstName || null,
+          last_name: userData.lastName || null,
+          display_name: userData.displayName || null,
+          bio: userData.bio || null,
+          phone: userData.phone || null,
+          location: userData.location || null,
+          timezone: userData.timezone || 'UTC',
+          website: userData.website || null,
+          linkedin: userData.linkedin || null,
+          twitter: userData.twitter || null,
+          github: userData.github || null,
+          job_title: userData.jobTitle || null,
+          department: typeof userData.department === 'string' ? userData.department : userData.department?.name || null,
+          work_location: userData.workLocation || 'remote',
+          status: userData.status || 'offline',
+          preferences: userData.preferences || DEFAULT_USER_PREFERENCES,
+          privacy: userData.privacy || DEFAULT_PRIVACY_SETTINGS,
+          working_hours: userData.workingHours || DEFAULT_WORKING_HOURS,
+          availability: userData.availability || { isAvailable: true, workingDays: [1, 2, 3, 4, 5], timezone: 'UTC', vacationMode: false },
+          interests: userData.interests || [],
+          profile_completion: calculateProfileCompletion(userData),
+          is_active: true,
+          onboarding_completed: userData.onboardingCompleted || false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        // Try direct insert
+        const { error } = await supabase
+          .from('user_profiles')
+          .insert(profileData);
+
+        if (error) {
+          console.error(`Profile creation error (attempt ${attempt}):`, error);
+          lastError = error;
+          
+          // If it's a duplicate key error, profile might already exist
+          if (error.code === '23505') {
+            console.log('Profile already exists (duplicate key error)');
+            return true;
+          }
+          
+          // If it's a foreign key constraint error, the user might not exist in auth.users
+          if (error.code === '23503') {
+            console.error('Foreign key constraint error - user may not exist in auth.users');
+            return false;
+          }
+          
+          // If it's a table doesn't exist error
+          if (error.message.includes('relation "public.user_profiles" does not exist')) {
+            console.error('user_profiles table does not exist');
+            return false;
+          }
+          
+          // For other errors, retry with exponential backoff
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+            console.log(`Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          return false;
+        }
+
+        // Verify the profile was created
+        const createdProfile = await this.getProfile(userId);
+        if (createdProfile) {
+          console.log('Profile created successfully');
+          this.trackProfileCreation(userId, true);
+          return true;
+        } else {
+          console.error('Profile creation succeeded but profile not found after creation');
+          lastError = new Error('Profile not found after creation');
+          
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000;
+            console.log(`Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
+          return false;
+        }
+      } catch (error) {
+        console.error(`Profile creation error (attempt ${attempt}):`, error);
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000;
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
       }
-
-      return true;
-    } catch (error) {
-      console.error('Error in createProfile:', error);
-      return false;
     }
+
+    // All retries failed
+    console.error(`Profile creation failed after ${maxRetries} attempts:`, lastError);
+    this.trackProfileCreation(userId, false, lastError?.message);
+    return false;
   }
 
   // Update user skills
@@ -756,6 +869,78 @@ export class ProfileService {
       console.error('Error in getProfilesPendingDeletion:', error);
       return [];
     }
+  }
+
+  // NEW: Retry profile creation with exponential backoff
+  static async retryProfileCreation(userId: string, maxRetries: number = 3): Promise<boolean> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Try to create profile again
+        const success = await this.createProfile(userId);
+        
+        if (success) {
+          this.trackProfileCreation(userId, true);
+          return true;
+        }
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        
+        return false;
+      } catch (error) {
+        console.error(`Profile creation retry ${attempt} error:`, error);
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // NEW: Get profile creation status
+  static async getProfileCreationStatus(userId: string): Promise<{ status: 'pending' | 'completed' | 'failed'; error?: string } | null> {
+    try {
+      const profile = await this.getProfile(userId);
+      
+      if (profile) {
+        return {
+          status: 'completed',
+          error: undefined
+        };
+      } else {
+        return {
+          status: 'failed',
+          error: 'Profile not found'
+        };
+      }
+    } catch (error) {
+      console.error('Error in getProfileCreationStatus:', error);
+      return {
+        status: 'failed',
+        error: error.message
+      };
+    }
+  }
+
+  // NEW: Validate profile sync
+  static async validateProfileSync(userId: string): Promise<boolean> {
+    try {
+      const profile = await this.getProfile(userId);
+      return profile !== null;
+    } catch (error) {
+      console.error('Error in validateProfileSync:', error);
+      return false;
+    }
+  }
+
+  // NEW: Track profile creation attempts
+  private static trackProfileCreation(userId: string, success: boolean, error?: string): void {
+    // This could be expanded to track in analytics or logging service
+    console.log(`Profile creation ${success ? 'successful' : 'failed'} for user ${userId}`, error ? `Error: ${error}` : '');
   }
 
   // Helper method to transform database data to UserProfile

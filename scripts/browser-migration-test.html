@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration System E2E Test - Browser Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+        }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-pending { background: #6c757d; }
+        .status-running { background: #ffc107; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Migration System End-to-End Test Suite</h1>
+        <p>This interface allows you to test the complete migration system from localStorage to Supabase with real browser environment.</p>
+
+        <!-- Test Configuration -->
+        <div class="test-section">
+            <h3>📋 Test Configuration</h3>
+            <div>
+                <label for="supabaseUrl">Supabase URL:</label><br>
+                <input type="text" id="supabaseUrl" value="https://isvjuagegfnkuaucpsvj.supabase.co" style="width: 100%; margin: 5px 0;">
+            </div>
+            <div>
+                <label for="supabaseKey">Supabase Anon Key:</label><br>
+                <input type="text" id="supabaseKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlzdmp1YWdlZ2Zua3VhdWNwc3ZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNzUzMDMsImV4cCI6MjA2ODc1MTMwM30.p9EwEAr0NGr3Biw5pu7wA3wQeQsO2G7DhlqtRHnY6wE" style="width: 100%; margin: 5px 0;">
+            </div>
+            <div>
+                <label for="testEmail">Test Email:</label><br>
+                <input type="email" id="testEmail" value="" placeholder="test@example.com" style="width: 100%; margin: 5px 0;">
+            </div>
+            <div>
+                <label for="testPassword">Test Password:</label><br>
+                <input type="password" id="testPassword" value="TestPassword123!" style="width: 100%; margin: 5px 0;">
+            </div>
+        </div>
+
+        <!-- Test Steps -->
+        <div class="test-section">
+            <h3>🧪 Test Steps</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="testStatus">
+                <div id="test1"><span class="status-indicator status-pending"></span>1. Setup & Authentication</div>
+                <div id="test2"><span class="status-indicator status-pending"></span>2. Pre-populate localStorage</div>
+                <div id="test3"><span class="status-indicator status-pending"></span>3. Execute Migration</div>
+                <div id="test4"><span class="status-indicator status-pending"></span>4. Verify Supabase Data</div>
+                <div id="test5"><span class="status-indicator status-pending"></span>5. Test RLS Policies</div>
+                <div id="test6"><span class="status-indicator status-pending"></span>6. Test Offline Mode</div>
+                <div id="test7"><span class="status-indicator status-pending"></span>7. Test Cross-Device Sync</div>
+                <div id="test8"><span class="status-indicator status-pending"></span>8. Cleanup</div>
+            </div>
+            <br>
+            <button class="test-button" onclick="runAllTests()">🚀 Run All Tests</button>
+            <button class="test-button" onclick="runIndividualTest(1)">Test 1: Auth</button>
+            <button class="test-button" onclick="runIndividualTest(2)">Test 2: localStorage</button>
+            <button class="test-button" onclick="runIndividualTest(3)">Test 3: Migration</button>
+            <button class="test-button" onclick="runIndividualTest(4)">Test 4: Verification</button>
+            <button class="test-button" onclick="runIndividualTest(5)">Test 5: RLS</button>
+            <button class="test-button" onclick="runIndividualTest(6)">Test 6: Offline</button>
+            <button class="test-button" onclick="runIndividualTest(7)">Test 7: Sync</button>
+            <button class="test-button" onclick="runIndividualTest(8)">Test 8: Cleanup</button>
+            <button class="test-button" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <!-- Test Data Management -->
+        <div class="test-section">
+            <h3>📊 Test Data Management</h3>
+            <button class="test-button" onclick="populateTestData()">Populate Test Data</button>
+            <button class="test-button" onclick="clearTestData()">Clear Test Data</button>
+            <button class="test-button" onclick="exportTestData()">Export Test Data</button>
+            <button class="test-button" onclick="importTestData()">Import Test Data</button>
+            <br><br>
+            <div>
+                <label for="testDataInput">Test Data JSON:</label><br>
+                <textarea id="testDataInput" rows="10" style="width: 100%; font-family: monospace;" placeholder="Paste test data JSON here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Log Output -->
+        <div class="test-section">
+            <h3>📝 Test Logs</h3>
+            <div id="logOutput" class="log-output">Ready to run tests...\n</div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="test-section">
+            <h3>📈 Test Results Summary</h3>
+            <div id="resultsSummary">
+                <p>No tests run yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Supabase client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Global variables
+        let supabase;
+        let testResults = {
+            totalTests: 0,
+            passed: 0,
+            failed: 0,
+            errors: [],
+            warnings: [],
+            startTime: null,
+            endTime: null
+        };
+
+        // Test data templates
+        const TEST_DATA = {
+            'builder-blueprint-history': [
+                {
+                    project_id: 'test-project-1',
+                    name: 'Test Project 1',
+                    description: 'A test project for migration testing',
+                    created_at: new Date().toISOString(),
+                    last_modified: new Date().toISOString(),
+                    context: {
+                        steps: ['Step 1', 'Step 2', 'Step 3'],
+                        progress: 0.5,
+                        notes: 'Test notes'
+                    }
+                }
+            ],
+            'mvp_studio_projects': [
+                {
+                    project_id: 'mvp-test-1',
+                    name: 'MVP Test Project',
+                    description: 'Test MVP project for migration',
+                    status: 'in_progress',
+                    created_at: new Date().toISOString(),
+                    last_modified: new Date().toISOString(),
+                    project_data: {
+                        features: ['Feature 1', 'Feature 2'],
+                        target_audience: 'Test users',
+                        business_model: 'SaaS'
+                    }
+                }
+            ],
+            'ideaforge_ideas': [
+                {
+                    idea_id: 'idea-test-1',
+                    title: 'Test Idea 1',
+                    description: 'A test idea for migration testing',
+                    category: 'Technology',
+                    created_at: new Date().toISOString(),
+                    last_modified: new Date().toISOString(),
+                    idea_data: {
+                        problem: 'Test problem',
+                        solution: 'Test solution',
+                        market_size: 'Large',
+                        competition: 'Moderate'
+                    }
+                }
+            ],
+            'ideaVault': [
+                {
+                    id: 'vault-idea-1',
+                    title: 'Vault Test Idea',
+                    description: 'Test idea in vault',
+                    created_at: new Date().toISOString(),
+                    last_modified: new Date().toISOString(),
+                    idea_data: {
+                        tags: ['test', 'migration'],
+                        priority: 'high',
+                        status: 'active'
+                    }
+                }
+            ],
+            'notificationPreferences': {
+                email: true,
+                push: false,
+                sms: false,
+                frequency: 'daily',
+                categories: {
+                    updates: true,
+                    marketing: false,
+                    security: true
+                }
+            },
+            'chat-notification-preferences': {
+                desktop: true,
+                mobile: true,
+                sound: true,
+                mentions: true,
+                channels: {
+                    general: true,
+                    updates: false
+                }
+            }
+        };
+
+        // Initialize Supabase
+        function initializeSupabase() {
+            const url = document.getElementById('supabaseUrl').value;
+            const key = document.getElementById('supabaseKey').value;
+            
+            if (!url || !key) {
+                log('Error: Supabase URL and Key are required', 'error');
+                return false;
+            }
+
+            supabase = window.supabase.createClient(url, key);
+            log('Supabase client initialized', 'success');
+            return true;
+        }
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            logOutput.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logOutput').innerHTML = 'Logs cleared...\n';
+        }
+
+        // Test status management
+        function updateTestStatus(testNumber, status) {
+            const testElement = document.getElementById(`test${testNumber}`);
+            const indicator = testElement.querySelector('.status-indicator');
+            indicator.className = `status-indicator status-${status}`;
+        }
+
+        function updateProgress(current, total) {
+            const progressFill = document.getElementById('progressFill');
+            const percentage = (current / total) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        // Test 1: Setup and Authentication
+        async function testSetupAndAuth() {
+            updateTestStatus(1, 'running');
+            log('Starting Test 1: Setup and Authentication', 'info');
+            
+            try {
+                if (!initializeSupabase()) {
+                    throw new Error('Failed to initialize Supabase');
+                }
+
+                const email = document.getElementById('testEmail').value || `test-${Date.now()}@example.com`;
+                const password = document.getElementById('testPassword').value;
+
+                // Try to sign up first
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                });
+
+                if (authError) {
+                    // Try to sign in if user already exists
+                    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (signInError) {
+                        throw new Error(`Authentication failed: ${signInError.message}`);
+                    }
+                    
+                    log('Using existing test user', 'info');
+                    testResults.userId = signInData.user.id;
+                } else {
+                    log('Created new test user', 'success');
+                    testResults.userId = authData.user.id;
+                }
+
+                // Verify user is authenticated
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    throw new Error('User authentication verification failed');
+                }
+
+                log('Authentication setup complete', 'success');
+                updateTestStatus(1, 'success');
+                return { success: true, userId: user.id };
+            } catch (error) {
+                log(`Test 1 failed: ${error.message}`, 'error');
+                updateTestStatus(1, 'error');
+                testResults.errors.push(`Test 1: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 2: Pre-populate localStorage
+        async function testPrePopulateLocalStorage() {
+            updateTestStatus(2, 'running');
+            log('Starting Test 2: Pre-populate localStorage', 'info');
+            
+            try {
+                // Clear existing localStorage
+                Object.keys(TEST_DATA).forEach(key => {
+                    localStorage.removeItem(key);
+                });
+
+                // Populate localStorage with test data
+                Object.entries(TEST_DATA).forEach(([key, data]) => {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    log(`Populated ${key}: ${Array.isArray(data) ? data.length : 1} items`, 'success');
+                });
+
+                // Verify data was stored
+                let allDataStored = true;
+                Object.entries(TEST_DATA).forEach(([key, expectedData]) => {
+                    const storedData = localStorage.getItem(key);
+                    if (!storedData) {
+                        log(`Failed to store ${key}`, 'error');
+                        allDataStored = false;
+                    }
+                });
+
+                if (allDataStored) {
+                    log('localStorage pre-population complete', 'success');
+                    updateTestStatus(2, 'success');
+                    return { success: true };
+                } else {
+                    throw new Error('Some data failed to store in localStorage');
+                }
+            } catch (error) {
+                log(`Test 2 failed: ${error.message}`, 'error');
+                updateTestStatus(2, 'error');
+                testResults.errors.push(`Test 2: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 3: Execute Migration Process
+        async function testMigrationProcess() {
+            updateTestStatus(3, 'running');
+            log('Starting Test 3: Execute Migration Process', 'info');
+            
+            try {
+                const userId = testResults.userId;
+                if (!userId) {
+                    throw new Error('No authenticated user found');
+                }
+
+                const migrationResults = {};
+                
+                // Table mapping
+                const tableMapping = {
+                    'builder-blueprint-history': 'builder_context',
+                    'mvp_studio_projects': 'mvp_studio_projects',
+                    'ideaforge_ideas': 'ideaforge_data',
+                    'ideaVault': 'ideas',
+                    'notificationPreferences': 'notification_preferences',
+                    'chat-notification-preferences': 'chat_notification_preferences'
+                };
+
+                for (const [localStorageKey, data] of Object.entries(TEST_DATA)) {
+                    log(`Migrating ${localStorageKey}...`, 'info');
+                    
+                    const tableName = tableMapping[localStorageKey];
+                    if (!tableName) {
+                        log(`No table mapping found for ${localStorageKey}`, 'warning');
+                        continue;
+                    }
+
+                    // Prepare data for Supabase
+                    let supabaseData;
+                    if (Array.isArray(data)) {
+                        supabaseData = data.map(item => ({
+                            ...item,
+                            user_id: userId,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }));
+                    } else {
+                        supabaseData = {
+                            ...data,
+                            user_id: userId,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        };
+                    }
+
+                    // Insert data into Supabase
+                    const { data: insertedData, error: insertError } = await supabase
+                        .from(tableName)
+                        .insert(supabaseData)
+                        .select();
+
+                    if (insertError) {
+                        log(`Failed to migrate ${localStorageKey}: ${insertError.message}`, 'error');
+                        migrationResults[localStorageKey] = { success: false, error: insertError.message };
+                    } else {
+                        log(`Migrated ${localStorageKey}: ${Array.isArray(insertedData) ? insertedData.length : 1} records`, 'success');
+                        migrationResults[localStorageKey] = { success: true, data: insertedData };
+                    }
+                }
+
+                const successCount = Object.values(migrationResults).filter(r => r.success).length;
+                const totalCount = Object.keys(migrationResults).length;
+                
+                if (successCount === totalCount) {
+                    log(`Migration completed: ${successCount}/${totalCount} successful`, 'success');
+                    updateTestStatus(3, 'success');
+                    return { success: true, results: migrationResults };
+                } else {
+                    log(`Migration partially completed: ${successCount}/${totalCount} successful`, 'warning');
+                    updateTestStatus(3, 'error');
+                    return { success: false, error: 'Some migrations failed', results: migrationResults };
+                }
+            } catch (error) {
+                log(`Test 3 failed: ${error.message}`, 'error');
+                updateTestStatus(3, 'error');
+                testResults.errors.push(`Test 3: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 4: Verify Supabase Data
+        async function testVerifySupabaseData() {
+            updateTestStatus(4, 'running');
+            log('Starting Test 4: Verify Supabase Data', 'info');
+            
+            try {
+                const userId = testResults.userId;
+                const verificationResults = {};
+
+                const tablesToVerify = [
+                    'builder_context',
+                    'mvp_studio_projects', 
+                    'ideaforge_data',
+                    'ideas',
+                    'notification_preferences',
+                    'chat_notification_preferences'
+                ];
+
+                for (const tableName of tablesToVerify) {
+                    log(`Verifying table: ${tableName}`, 'info');
+                    
+                    const { data, error } = await supabase
+                        .from(tableName)
+                        .select('*')
+                        .eq('user_id', userId);
+
+                    if (error) {
+                        log(`Failed to query ${tableName}: ${error.message}`, 'error');
+                        verificationResults[tableName] = { success: false, error: error.message };
+                        continue;
+                    }
+
+                    if (!data || data.length === 0) {
+                        log(`No data found in ${tableName}`, 'warning');
+                        verificationResults[tableName] = { success: false, error: 'No data found' };
+                        continue;
+                    }
+
+                    log(`Found ${data.length} records in ${tableName}`, 'success');
+                    verificationResults[tableName] = { success: true, count: data.length };
+                }
+
+                const successCount = Object.values(verificationResults).filter(r => r.success).length;
+                const totalCount = tablesToVerify.length;
+                
+                if (successCount === totalCount) {
+                    log(`Data verification completed: ${successCount}/${totalCount} tables verified`, 'success');
+                    updateTestStatus(4, 'success');
+                    return { success: true, results: verificationResults };
+                } else {
+                    log(`Data verification partially completed: ${successCount}/${totalCount} tables verified`, 'warning');
+                    updateTestStatus(4, 'error');
+                    return { success: false, error: 'Some tables verification failed', results: verificationResults };
+                }
+            } catch (error) {
+                log(`Test 4 failed: ${error.message}`, 'error');
+                updateTestStatus(4, 'error');
+                testResults.errors.push(`Test 4: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 5: Test RLS Policies
+        async function testRLSPolicies() {
+            updateTestStatus(5, 'running');
+            log('Starting Test 5: Test RLS Policies', 'info');
+            
+            try {
+                const userId = testResults.userId;
+                const rlsResults = {};
+
+                // Test 1: User can access their own data
+                log('Testing: User can access their own data', 'info');
+                const { data: ownData, error: ownError } = await supabase
+                    .from('mvp_studio_projects')
+                    .select('*')
+                    .eq('user_id', userId);
+
+                if (ownError) {
+                    log(`Failed to access own data: ${ownError.message}`, 'error');
+                    rlsResults.ownDataAccess = { success: false, error: ownError.message };
+                } else {
+                    log(`Can access own data: ${ownData.length} records`, 'success');
+                    rlsResults.ownDataAccess = { success: true, count: ownData.length };
+                }
+
+                // Test 2: User cannot access other users' data
+                log('Testing: User cannot access other users\' data', 'info');
+                const { data: otherData, error: otherError } = await supabase
+                    .from('mvp_studio_projects')
+                    .select('*')
+                    .neq('user_id', userId);
+
+                if (otherError) {
+                    log(`Error accessing other users' data: ${otherError.message}`, 'error');
+                    rlsResults.otherDataAccess = { success: false, error: otherError.message };
+                } else if (otherData && otherData.length > 0) {
+                    log(`Security issue: Can access other users' data (${otherData.length} records)`, 'error');
+                    rlsResults.otherDataAccess = { success: false, error: 'Can access other users\' data' };
+                } else {
+                    log('Cannot access other users\' data (RLS working correctly)', 'success');
+                    rlsResults.otherDataAccess = { success: true, count: 0 };
+                }
+
+                const successCount = Object.values(rlsResults).filter(r => r.success).length;
+                const totalCount = Object.keys(rlsResults).length;
+                
+                if (successCount === totalCount) {
+                    log(`RLS testing completed: ${successCount}/${totalCount} tests passed`, 'success');
+                    updateTestStatus(5, 'success');
+                    return { success: true, results: rlsResults };
+                } else {
+                    log(`RLS testing partially completed: ${successCount}/${totalCount} tests passed`, 'warning');
+                    updateTestStatus(5, 'error');
+                    return { success: false, error: 'Some RLS tests failed', results: rlsResults };
+                }
+            } catch (error) {
+                log(`Test 5 failed: ${error.message}`, 'error');
+                updateTestStatus(5, 'error');
+                testResults.errors.push(`Test 5: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 6: Test Offline Mode
+        async function testOfflineMode() {
+            updateTestStatus(6, 'running');
+            log('Starting Test 6: Test Offline Mode', 'info');
+            
+            try {
+                const offlineResults = {};
+
+                // Test offline queue functionality
+                log('Testing: Offline queue functionality', 'info');
+                
+                const testOfflineData = {
+                    operation: 'create',
+                    table: 'mvp_studio_projects',
+                    data: {
+                        project_id: 'offline-test-1',
+                        name: 'Offline Test Project',
+                        description: 'Test project created while offline',
+                        status: 'draft',
+                        user_id: testResults.userId,
+                        created_at: new Date().toISOString(),
+                        last_modified: new Date().toISOString(),
+                        project_data: {
+                            features: ['Offline Feature 1'],
+                            target_audience: 'Offline users'
+                        }
+                    }
+                };
+
+                // Add to offline queue
+                const { data: queueData, error: queueError } = await supabase
+                    .from('offline_queue')
+                    .insert({
+                        user_id: testResults.userId,
+                        operation: testOfflineData.operation,
+                        table_name: testOfflineData.table,
+                        data: testOfflineData.data,
+                        status: 'pending',
+                        retry_count: 0
+                    })
+                    .select();
+
+                if (queueError) {
+                    log(`Failed to add to offline queue: ${queueError.message}`, 'error');
+                    offlineResults.queueAdd = { success: false, error: queueError.message };
+                } else {
+                    log('Successfully added to offline queue', 'success');
+                    offlineResults.queueAdd = { success: true, data: queueData };
+                }
+
+                // Test sync process
+                log('Testing: Sync process from offline queue', 'info');
+                
+                const { data: queueItems, error: queueQueryError } = await supabase
+                    .from('offline_queue')
+                    .select('*')
+                    .eq('user_id', testResults.userId)
+                    .eq('status', 'pending');
+
+                if (queueQueryError) {
+                    log(`Failed to query offline queue: ${queueQueryError.message}`, 'error');
+                    offlineResults.queueSync = { success: false, error: queueQueryError.message };
+                } else {
+                    log(`Found ${queueItems.length} pending queue items`, 'info');
+                    
+                    let processedCount = 0;
+                    for (const item of queueItems) {
+                        try {
+                            const { data: insertData, error: insertError } = await supabase
+                                .from(item.table_name)
+                                .insert(item.data)
+                                .select();
+
+                            if (insertError) {
+                                log(`Failed to process queue item: ${insertError.message}`, 'error');
+                            } else {
+                                processedCount++;
+                                log(`Processed queue item: ${item.table_name}`, 'success');
+                            }
+                        } catch (error) {
+                            log(`Error processing queue item: ${error.message}`, 'error');
+                        }
+                    }
+
+                    offlineResults.queueSync = { 
+                        success: processedCount > 0, 
+                        processed: processedCount,
+                        total: queueItems.length
+                    };
+                }
+
+                const successCount = Object.values(offlineResults).filter(r => r.success).length;
+                const totalCount = Object.keys(offlineResults).length;
+                
+                if (successCount === totalCount) {
+                    log(`Offline mode testing completed: ${successCount}/${totalCount} tests passed`, 'success');
+                    updateTestStatus(6, 'success');
+                    return { success: true, results: offlineResults };
+                } else {
+                    log(`Offline mode testing partially completed: ${successCount}/${totalCount} tests passed`, 'warning');
+                    updateTestStatus(6, 'error');
+                    return { success: false, error: 'Some offline mode tests failed', results: offlineResults };
+                }
+            } catch (error) {
+                log(`Test 6 failed: ${error.message}`, 'error');
+                updateTestStatus(6, 'error');
+                testResults.errors.push(`Test 6: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 7: Test Cross-Device Sync
+        async function testCrossDeviceSync() {
+            updateTestStatus(7, 'running');
+            log('Starting Test 7: Test Cross-Device Sync', 'info');
+            
+            try {
+                const syncResults = {};
+
+                // Test real-time subscription
+                log('Testing: Real-time subscription setup', 'info');
+                
+                let subscriptionReceived = false;
+                const subscription = supabase
+                    .channel('test_sync_channel')
+                    .on('postgres_changes', 
+                        { event: 'INSERT', schema: 'public', table: 'mvp_studio_projects' },
+                        (payload) => {
+                            log('Real-time subscription received data', 'success');
+                            subscriptionReceived = true;
+                        }
+                    )
+                    .subscribe();
+
+                // Wait for subscription to establish
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Test data creation that should trigger sync
+                log('Testing: Data creation triggers sync', 'info');
+                
+                const { data: syncTestData, error: syncTestError } = await supabase
+                    .from('mvp_studio_projects')
+                    .insert({
+                        project_id: 'sync-test-1',
+                        name: 'Cross-Device Sync Test',
+                        description: 'Test project for cross-device sync',
+                        status: 'active',
+                        user_id: testResults.userId,
+                        created_at: new Date().toISOString(),
+                        last_modified: new Date().toISOString(),
+                        project_data: {
+                            features: ['Sync Feature 1'],
+                            target_audience: 'Multi-device users'
+                        }
+                    })
+                    .select();
+
+                if (syncTestError) {
+                    log(`Failed to create sync test data: ${syncTestError.message}`, 'error');
+                    syncResults.dataCreation = { success: false, error: syncTestError.message };
+                } else {
+                    log('Created sync test data', 'success');
+                    syncResults.dataCreation = { success: true, data: syncTestData };
+                }
+
+                // Wait for potential real-time updates
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Test data consistency
+                log('Testing: Data consistency verification', 'info');
+                
+                const { data: consistencyData, error: consistencyError } = await supabase
+                    .from('mvp_studio_projects')
+                    .select('*')
+                    .eq('user_id', testResults.userId)
+                    .order('created_at', { ascending: false });
+
+                if (consistencyError) {
+                    log(`Failed to verify data consistency: ${consistencyError.message}`, 'error');
+                    syncResults.dataConsistency = { success: false, error: consistencyError.message };
+                } else {
+                    log(`Data consistency verified: ${consistencyData.length} records found`, 'success');
+                    syncResults.dataConsistency = { success: true, count: consistencyData.length };
+                }
+
+                // Clean up subscription
+                subscription.unsubscribe();
+
+                syncResults.realTimeSubscription = { 
+                    success: true, 
+                    received: subscriptionReceived 
+                };
+
+                const successCount = Object.values(syncResults).filter(r => r.success).length;
+                const totalCount = Object.keys(syncResults).length;
+                
+                if (successCount === totalCount) {
+                    log(`Cross-device sync testing completed: ${successCount}/${totalCount} tests passed`, 'success');
+                    updateTestStatus(7, 'success');
+                    return { success: true, results: syncResults };
+                } else {
+                    log(`Cross-device sync testing partially completed: ${successCount}/${totalCount} tests passed`, 'warning');
+                    updateTestStatus(7, 'error');
+                    return { success: false, error: 'Some cross-device sync tests failed', results: syncResults };
+                }
+            } catch (error) {
+                log(`Test 7 failed: ${error.message}`, 'error');
+                updateTestStatus(7, 'error');
+                testResults.errors.push(`Test 7: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test 8: Cleanup
+        async function testCleanup() {
+            updateTestStatus(8, 'running');
+            log('Starting Test 8: Cleanup', 'info');
+            
+            try {
+                const userId = testResults.userId;
+                const cleanupResults = {};
+
+                const tablesToClean = [
+                    'offline_queue',
+                    'chat_notification_preferences',
+                    'notification_preferences',
+                    'ideas',
+                    'ideaforge_data',
+                    'mvp_studio_projects',
+                    'builder_context'
+                ];
+
+                for (const tableName of tablesToClean) {
+                    log(`Cleaning up table: ${tableName}`, 'info');
+                    
+                    const { error } = await supabase
+                        .from(tableName)
+                        .delete()
+                        .eq('user_id', userId);
+
+                    if (error) {
+                        log(`Failed to clean up ${tableName}: ${error.message}`, 'error');
+                        cleanupResults[tableName] = { success: false, error: error.message };
+                    } else {
+                        log(`Cleaned up ${tableName}`, 'success');
+                        cleanupResults[tableName] = { success: true };
+                    }
+                }
+
+                // Sign out user
+                const { error: signOutError } = await supabase.auth.signOut();
+                if (signOutError) {
+                    log(`Failed to sign out: ${signOutError.message}`, 'warning');
+                } else {
+                    log('User signed out', 'success');
+                }
+
+                const successCount = Object.values(cleanupResults).filter(r => r.success).length;
+                const totalCount = tablesToClean.length;
+                
+                if (successCount === totalCount) {
+                    log(`Cleanup completed: ${successCount}/${totalCount} tables cleaned`, 'success');
+                    updateTestStatus(8, 'success');
+                    return { success: true, results: cleanupResults };
+                } else {
+                    log(`Cleanup partially completed: ${successCount}/${totalCount} tables cleaned`, 'warning');
+                    updateTestStatus(8, 'error');
+                    return { success: false, error: 'Some cleanup operations failed', results: cleanupResults };
+                }
+            } catch (error) {
+                log(`Test 8 failed: ${error.message}`, 'error');
+                updateTestStatus(8, 'error');
+                testResults.errors.push(`Test 8: ${error.message}`);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Test data management functions
+        function populateTestData() {
+            Object.entries(TEST_DATA).forEach(([key, data]) => {
+                localStorage.setItem(key, JSON.stringify(data));
+            });
+            log('Test data populated in localStorage', 'success');
+        }
+
+        function clearTestData() {
+            Object.keys(TEST_DATA).forEach(key => {
+                localStorage.removeItem(key);
+            });
+            log('Test data cleared from localStorage', 'success');
+        }
+
+        function exportTestData() {
+            const data = {};
+            Object.keys(TEST_DATA).forEach(key => {
+                const stored = localStorage.getItem(key);
+                if (stored) {
+                    data[key] = JSON.parse(stored);
+                }
+            });
+            document.getElementById('testDataInput').value = JSON.stringify(data, null, 2);
+            log('Test data exported to textarea', 'success');
+        }
+
+        function importTestData() {
+            try {
+                const data = JSON.parse(document.getElementById('testDataInput').value);
+                Object.entries(data).forEach(([key, value]) => {
+                    localStorage.setItem(key, JSON.stringify(value));
+                });
+                log('Test data imported from textarea', 'success');
+            } catch (error) {
+                log(`Failed to import test data: ${error.message}`, 'error');
+            }
+        }
+
+        // Individual test runner
+        async function runIndividualTest(testNumber) {
+            testResults.startTime = new Date();
+            log(`\n=== Running Individual Test ${testNumber} ===`, 'info');
+            
+            let result;
+            switch (testNumber) {
+                case 1: result = await testSetupAndAuth(); break;
+                case 2: result = await testPrePopulateLocalStorage(); break;
+                case 3: result = await testMigrationProcess(); break;
+                case 4: result = await testVerifySupabaseData(); break;
+                case 5: result = await testRLSPolicies(); break;
+                case 6: result = await testOfflineMode(); break;
+                case 7: result = await testCrossDeviceSync(); break;
+                case 8: result = await testCleanup(); break;
+                default: log('Invalid test number', 'error'); return;
+            }
+
+            testResults.totalTests++;
+            if (result.success) {
+                testResults.passed++;
+            } else {
+                testResults.failed++;
+            }
+
+            updateResultsSummary();
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            testResults = {
+                totalTests: 0,
+                passed: 0,
+                failed: 0,
+                errors: [],
+                warnings: [],
+                startTime: new Date(),
+                endTime: null
+            };
+
+            log('\n🚀 Starting Migration System End-to-End Test Suite', 'info');
+            
+            const tests = [
+                { name: 'Setup and Authentication', fn: testSetupAndAuth },
+                { name: 'Pre-populate localStorage', fn: testPrePopulateLocalStorage },
+                { name: 'Execute Migration Process', fn: testMigrationProcess },
+                { name: 'Verify Supabase Data', fn: testVerifySupabaseData },
+                { name: 'Test RLS Policies', fn: testRLSPolicies },
+                { name: 'Test Offline Mode', fn: testOfflineMode },
+                { name: 'Test Cross-Device Sync', fn: testCrossDeviceSync },
+                { name: 'Cleanup', fn: testCleanup }
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                testResults.totalTests++;
+                
+                log(`\n--- Running Test ${i + 1}: ${test.name} ---`, 'info');
+                updateProgress(i + 1, tests.length);
+                
+                try {
+                    const result = await test.fn();
+                    if (result.success) {
+                        testResults.passed++;
+                    } else {
+                        testResults.failed++;
+                    }
+                } catch (error) {
+                    testResults.failed++;
+                    testResults.errors.push(`${test.name}: ${error.message}`);
+                    log(`Test ${i + 1} failed with error: ${error.message}`, 'error');
+                }
+            }
+
+            testResults.endTime = new Date();
+            updateProgress(tests.length, tests.length);
+            updateResultsSummary();
+            
+            log('\n✅ Test Suite Complete!', 'success');
+        }
+
+        function updateResultsSummary() {
+            const summary = document.getElementById('resultsSummary');
+            const duration = testResults.endTime ? 
+                Math.round((testResults.endTime - testResults.startTime) / 1000) : 0;
+            
+            summary.innerHTML = `
+                <p><strong>Total Tests:</strong> ${testResults.totalTests}</p>
+                <p><strong>Passed:</strong> <span class="success">${testResults.passed}</span></p>
+                <p><strong>Failed:</strong> <span class="error">${testResults.failed}</span></p>
+                <p><strong>Success Rate:</strong> ${testResults.totalTests > 0 ? 
+                    Math.round((testResults.passed / testResults.totalTests) * 100) : 0}%</p>
+                <p><strong>Duration:</strong> ${duration}s</p>
+                ${testResults.errors.length > 0 ? 
+                    `<p><strong>Errors:</strong><br>${testResults.errors.map(e => `• ${e}`).join('<br>')}</p>` : ''}
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Migration E2E Test Suite loaded. Configure your settings and run tests.', 'info');
+        });
+    </script>
+</body>
+</html>

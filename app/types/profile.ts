@@ -166,6 +166,7 @@ export interface NotificationPreferences {
   push: boolean;
   sms: boolean;
   desktop: boolean;
+  marketing: boolean;
   types: {
     mentions: boolean;
     tasks: boolean;
@@ -654,6 +655,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     push: true,
     sms: false,
     desktop: true,
+    marketing: false,
     types: {
       mentions: true,
       tasks: true,

@@ -37,15 +37,18 @@ export function useMVPProjectStorage(options: UseMVPProjectStorageOptions = {}) 
         setCurrentProject(project);
         
         // Restore builder state from project
-        dispatch(builderActions.setAppIdea(project.appIdea));
-        dispatch(builderActions.setValidationQuestions(project.validationQuestions));
+        dispatch(builderActions.updateAppIdea(project.appIdea));
+        dispatch(builderActions.updateValidation(project.validationQuestions));
         
         if (project.appBlueprint) {
           dispatch(builderActions.setAppBlueprint(project.appBlueprint));
         }
         
         if (project.screenPrompts) {
-          dispatch(builderActions.setScreenPrompts(project.screenPrompts));
+          dispatch(builderActions.clearScreenPrompts());
+          project.screenPrompts.forEach(prompt => {
+            dispatch(builderActions.addScreenPrompt(prompt));
+          });
         }
         
         if (project.appFlow) {
@@ -116,17 +119,22 @@ export function useMVPProjectStorage(options: UseMVPProjectStorageOptions = {}) 
         status: projectStatus,
         appIdea: state.appIdea,
         validationQuestions: state.validationQuestions,
-        appBlueprint: state.appBlueprint,
+        appBlueprint: state.appBlueprint || undefined,
         screenPrompts: state.screenPrompts,
-        appFlow: state.appFlow,
+        appFlow: state.appFlow || undefined,
         progress,
         metadata: {
-          ...currentProject?.metadata,
-          ...projectData?.metadata,
+          version: 1,
           toolUsed: state.validationQuestions.selectedTool,
           estimatedComplexity: state.appBlueprint?.screens?.length 
             ? state.appBlueprint.screens.length > 10 ? 'complex' : 'moderate'
-            : 'simple'
+            : 'simple',
+          tags: [],
+          isPublic: false,
+          viewCount: 0,
+          likeCount: 0,
+          ...currentProject?.metadata,
+          ...projectData?.metadata,
         }
       };
 
@@ -155,7 +163,7 @@ export function useMVPProjectStorage(options: UseMVPProjectStorageOptions = {}) 
   // Create new project
   const createNewProject = useCallback(async (name?: string) => {
     // Reset builder state
-    dispatch(builderActions.reset());
+    dispatch(builderActions.resetState());
     
     // Create new project
     const newProject = await saveProject({
@@ -193,7 +201,7 @@ export function useMVPProjectStorage(options: UseMVPProjectStorageOptions = {}) 
     
     if (success) {
       setCurrentProject(null);
-      dispatch(builderActions.reset());
+      dispatch(builderActions.resetState());
       toast({
         title: "Project deleted",
         description: `"${currentProject.name}" has been deleted.`,

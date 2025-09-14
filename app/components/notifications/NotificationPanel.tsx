@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,8 +27,8 @@ import {
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications';
 import { notificationService } from '@/services/notificationService';
 import { ChatNotification } from '@/types/chat';
-import NotificationPreferences from './NotificationPreferences';
 import NotificationTester from './NotificationTester';
+import NotificationPreferences from './NotificationPreferences';
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -46,8 +47,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
     formatTimeAgo
   } = useRealtimeNotifications();
 
-  const [showPreferences, setShowPreferences] = useState(false);
   const [showTester, setShowTester] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ChatNotification['type'] | 'all'>('all');
 
   if (!isOpen) return null;
@@ -178,14 +179,15 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                 <TestTube className="h-3 w-3 mr-1" />
                 Test
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPreferences(true)}
-                className="text-gray-400 hover:text-white"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
+              <Link href="/account">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"

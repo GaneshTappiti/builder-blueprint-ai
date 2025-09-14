@@ -32,8 +32,14 @@ export default function AuthGuard({
   
   try {
     const auth = useAuth();
-    user = auth.user;
-    loading = auth.loading;
+    if (auth) {
+      user = auth.user;
+      loading = auth.loading;
+    } else {
+      console.warn('AuthGuard: useAuth returned null/undefined');
+      loading = true;
+      user = null;
+    }
   } catch (error) {
     console.warn('AuthGuard: useAuth hook failed, using fallback state:', error);
     // Fallback to loading state if context is not available

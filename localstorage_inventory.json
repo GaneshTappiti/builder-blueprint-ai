@@ -1,0 +1,174 @@
+{
+  "inventory": {
+    "critical_data": [
+      {
+        "key": "ideaVault",
+        "files": [
+          "app/workspace/idea-vault/page.tsx:336",
+          "app/workspace/idea-vault/[ideaId]/page.tsx:86,121",
+          "app/utils/idea-vault-helpers.ts:64,212,260,291,310",
+          "app/workspace/page.tsx:1792"
+        ],
+        "description": "Idea Vault system data - user's ideas and concepts",
+        "table": "ideas",
+        "priority": "CRITICAL"
+      },
+      {
+        "key": "mvp_studio_projects",
+        "files": [
+          "app/utils/mvp-studio-storage.ts:65,423,431",
+          "app/components/ideaforge/BlueprintView.tsx:60"
+        ],
+        "description": "MVP Studio project data - user's project blueprints",
+        "table": "mvp_studio_projects",
+        "priority": "CRITICAL"
+      },
+      {
+        "key": "builder-blueprint-history",
+        "files": [
+          "app/lib/builderContext.tsx:195,203",
+          "app/components/ideaforge/BlueprintView.tsx:146"
+        ],
+        "description": "Builder context and project history",
+        "table": "builder_context",
+        "priority": "CRITICAL"
+      },
+      {
+        "key": "ideaforge_ideas",
+        "files": [
+          "app/utils/ideaforge-persistence.ts:105,166,208,241,254"
+        ],
+        "description": "Idea Forge storage data",
+        "table": "ideaforge_data",
+        "priority": "CRITICAL"
+      },
+      {
+        "key": "public_feedback_ideas",
+        "files": [
+          "app/utils/public-feedback-persistence.ts:94,429"
+        ],
+        "description": "Public feedback data",
+        "table": "public_feedback_ideas",
+        "priority": "CRITICAL"
+      }
+    ],
+    "user_preferences": [
+      {
+        "key": "notificationPreferences",
+        "files": [
+          "app/services/notificationService.ts:585",
+          "app/components/examples/LocalStorageMigrationExample.tsx:223"
+        ],
+        "description": "General notification settings",
+        "table": "notification_preferences",
+        "priority": "PREFERENCE"
+      },
+      {
+        "key": "chat-notification-preferences",
+        "files": [
+          "app/components/teamspace/NotificationSettings.tsx:67,79",
+          "app/components/examples/LocalStorageMigrationExample.tsx:223"
+        ],
+        "description": "Chat-specific notification settings",
+        "table": "chat_notification_preferences",
+        "priority": "PREFERENCE"
+      }
+    ],
+    "dynamic_data": [
+      {
+        "key": "bmc-{ideaId}",
+        "files": [
+          "app/components/ideaforge/BMCView.tsx:61,187,204",
+          "app/components/examples/LocalStorageMigrationExample.tsx:160"
+        ],
+        "description": "Business Model Canvas data per idea",
+        "table": "bmc_canvas_data",
+        "priority": "CRITICAL",
+        "pattern": "bmc-*"
+      },
+      {
+        "key": "bmc-canvas",
+        "files": [
+          "app/components/ideaforge/BMCView.tsx:69,188"
+        ],
+        "description": "General BMC canvas data",
+        "table": "bmc_canvas_data",
+        "priority": "CRITICAL"
+      }
+    ],
+    "ephemeral_data": [
+      {
+        "key": "test-idea-vault",
+        "files": [
+          "app/workspace/page.tsx:1767,1768,1770"
+        ],
+        "description": "Test data - can be removed",
+        "priority": "EPHEMERAL"
+      }
+    ]
+  },
+  "summary": {
+    "total_keys": 10,
+    "critical_keys": 6,
+    "preference_keys": 2,
+    "ephemeral_keys": 1,
+    "dynamic_keys": 1,
+    "files_affected": 15
+  },
+  "migration_mapping": {
+    "ideaVault": {
+      "table": "ideas",
+      "user_id_field": "user_id",
+      "data_field": "idea_data",
+      "id_field": "id"
+    },
+    "mvp_studio_projects": {
+      "table": "mvp_studio_projects",
+      "user_id_field": "user_id",
+      "data_field": "project_data",
+      "id_field": "project_id"
+    },
+    "builder-blueprint-history": {
+      "table": "builder_context",
+      "user_id_field": "user_id",
+      "data_field": "context_data",
+      "id_field": "project_id"
+    },
+    "ideaforge_ideas": {
+      "table": "ideaforge_data",
+      "user_id_field": "user_id",
+      "data_field": "idea_data",
+      "id_field": "idea_id"
+    },
+    "public_feedback_ideas": {
+      "table": "public_feedback_ideas",
+      "user_id_field": "user_id",
+      "data_field": "feedback_data",
+      "id_field": "id"
+    },
+    "notificationPreferences": {
+      "table": "notification_preferences",
+      "user_id_field": "user_id",
+      "data_field": "preferences",
+      "id_field": "id"
+    },
+    "chat-notification-preferences": {
+      "table": "chat_notification_preferences",
+      "user_id_field": "user_id",
+      "data_field": "preferences",
+      "id_field": "id"
+    },
+    "bmc-{ideaId}": {
+      "table": "bmc_canvas_data",
+      "user_id_field": "user_id",
+      "data_field": "canvas_data",
+      "id_field": "canvas_id"
+    },
+    "bmc-canvas": {
+      "table": "bmc_canvas_data",
+      "user_id_field": "user_id",
+      "data_field": "canvas_data",
+      "id_field": "canvas_id"
+    }
+  }
+}

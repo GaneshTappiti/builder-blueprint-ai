@@ -43,7 +43,7 @@ export function usePublicFeedback(ideaId: string): UsePublicFeedbackReturn {
       }
 
       // Get or create public idea data
-      let publicIdea = publicFeedbackPersistence.getPublicIdea(ideaId);
+      let publicIdea = await publicFeedbackPersistence.getPublicIdea(ideaId);
       
       if (!publicIdea && authenticatedData) {
         // Create public version from authenticated data
@@ -69,7 +69,7 @@ export function usePublicFeedback(ideaId: string): UsePublicFeedbackReturn {
       if (authenticatedData) {
         publicFeedbackPersistence.syncWithAuthenticatedData(ideaId, authenticatedData);
         // Reload to get synced data
-        publicIdea = publicFeedbackPersistence.getPublicIdea(ideaId);
+        publicIdea = await publicFeedbackPersistence.getPublicIdea(ideaId);
       }
 
       if (publicIdea) {
@@ -93,7 +93,7 @@ export function usePublicFeedback(ideaId: string): UsePublicFeedbackReturn {
 
   const addFeedback = useCallback(async (newFeedback: Omit<FeedbackItem, 'id'>): Promise<boolean> => {
     try {
-      const success = publicFeedbackPersistence.addFeedback(ideaId, newFeedback);
+      const success = await publicFeedbackPersistence.addFeedback(ideaId, newFeedback);
       if (success) {
         await loadData(); // Refresh data
       }

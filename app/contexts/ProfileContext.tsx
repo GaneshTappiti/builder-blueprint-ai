@@ -14,6 +14,7 @@ interface ProfileContextType {
   analytics: ProfileAnalytics | null;
   loading: boolean;
   error: string | null;
+  profileCreationStatus: 'pending' | 'completed' | 'failed' | null;
 
   // Profile Management
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
@@ -57,6 +58,11 @@ interface ProfileContextType {
   restoreProfile: () => Promise<boolean>;
   exportProfileData: () => Promise<any>;
   
+  // NEW: Profile Creation Management
+  retryProfileCreation: () => Promise<boolean>;
+  validateProfileSync: () => Promise<boolean>;
+  getProfileCreationStatus: () => Promise<void>;
+
   // Utility Functions
   clearError: () => void;
   getProfileCompletion: () => number;
@@ -76,6 +82,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [analytics, setAnalytics] = useState<ProfileAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileCreationStatus, setProfileCreationStatus] = useState<'pending' | 'completed' | 'failed' | null>(null);
 
   // Initialize profile when user changes
   useEffect(() => {
@@ -89,7 +96,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  // Load user profile
+  // Load user profile with enhanced error handling
   const loadProfile = useCallback(async () => {
     if (!user) return;
 
@@ -97,11 +104,31 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
+      // First, check profile creation status
+      const status = await ProfileService.getProfileCreationStatus(user.id);
+      if (status) {
+        setProfileCreationStatus(status.status);
+        
+        if (status.status === 'failed') {
+          setError(`Profile creation failed: ${status.error || 'Unknown error'}`);
+          toast({
+            title: "Profile Creation Failed",
+            description: "There was an error creating your profile. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       const profileData = await ProfileService.getCurrentProfile();
       if (profileData) {
         setProfile(profileData);
+        setProfileCreationStatus('completed');
       } else {
-        // Create profile if it doesn't exist
+        // Create profile if it doesn't exist with retry logic
+        console.log('Profile not found, creating new profile...');
+        setProfileCreationStatus('pending');
+        
         const created = await ProfileService.createProfile(user.id, {
           email: user.email,
           name: user.name,
@@ -117,7 +144,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           location: user.location,
           timezone: user.timezone,
           jobTitle: user.jobTitle,
-          department: typeof user.department === 'string' ? { id: '', name: user.department, description: '', color: '', icon: '', memberCount: 0, isActive: true, createdBy: '', createdAt: '' } : user.department,
+          department: typeof user.department === 'string' ? { 
+            id: '', 
+            name: user.department, 
+            description: '', 
+            color: '', 
+            icon: '', 
+            memberCount: 0, 
+            isActive: true, 
+            createdBy: '', 
+            createdAt: '' 
+          } : user.department,
           status: user.status || 'offline',
           profileCompletion: user.profileCompletion || 0,
           lastLogin: user.lastLogin
@@ -126,15 +163,34 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         if (created) {
           const newProfile = await ProfileService.getCurrentProfile();
           setProfile(newProfile);
+          setProfileCreationStatus('completed');
+          toast({
+            title: "Profile Created",
+            description: "Your profile has been created successfully.",
+          });
+        } else {
+          setProfileCreationStatus('failed');
+          setError('Failed to create profile');
+          toast({
+            title: "Profile Creation Failed",
+            description: "There was an error creating your profile. Please try again.",
+            variant: "destructive",
+          });
         }
       }
     } catch (err) {
       console.error('Error loading profile:', err);
       setError('Failed to load profile');
+      setProfileCreationStatus('failed');
+      toast({
+        title: "Profile Error",
+        description: "There was an error loading your profile. Please refresh the page.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   // Update profile
   const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<boolean> => {
@@ -502,6 +558,87 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // NEW: Retry profile creation
+  const retryProfileCreation = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+
+    setLoading(true);
+    setError(null);
+    setProfileCreationStatus('pending');
+
+    try {
+      const success = await ProfileService.retryProfileCreation(user.id);
+      if (success) {
+        setProfileCreationStatus('completed');
+        await loadProfile(); // Reload profile after successful creation
+        toast({
+          title: "Profile Created",
+          description: "Your profile has been created successfully.",
+        });
+        return true;
+      } else {
+        setProfileCreationStatus('failed');
+        setError('Failed to create profile after retry');
+        toast({
+          title: "Profile Creation Failed",
+          description: "Unable to create your profile. Please contact support.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (err) {
+      console.error('Error retrying profile creation:', err);
+      setProfileCreationStatus('failed');
+      setError('Failed to create profile');
+      toast({
+        title: "Profile Creation Error",
+        description: "There was an error creating your profile. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, loadProfile, toast]);
+
+  // NEW: Validate profile sync
+  const validateProfileSync = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const isValid = await ProfileService.validateProfileSync(user.id);
+      if (!isValid) {
+        toast({
+          title: "Profile Sync Issue",
+          description: "Your profile data may be out of sync. Refreshing...",
+          variant: "destructive",
+        });
+        await loadProfile();
+      }
+      return isValid;
+    } catch (err) {
+      console.error('Error validating profile sync:', err);
+      return false;
+    }
+  }, [user, loadProfile, toast]);
+
+  // NEW: Get profile creation status
+  const getProfileCreationStatus = useCallback(async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const status = await ProfileService.getProfileCreationStatus(user.id);
+      if (status) {
+        setProfileCreationStatus(status.status);
+        if (status.status === 'failed' && status.error) {
+          setError(`Profile creation failed: ${status.error}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error getting profile creation status:', err);
+    }
+  }, [user]);
+
   // Utility Functions
   const clearError = useCallback(() => {
     setError(null);
@@ -664,6 +801,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     analytics,
     loading,
     error,
+    profileCreationStatus,
 
     // Profile Management
     updateProfile,
@@ -706,6 +844,11 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     deactivateProfile,
     restoreProfile,
     exportProfileData,
+
+    // NEW: Profile Creation Management
+    retryProfileCreation,
+    validateProfileSync,
+    getProfileCreationStatus,
 
     // Utility Functions
     clearError,

@@ -20,6 +20,7 @@ interface VoiceRecordingControls {
   clearRecording: () => void;
   playRecording: () => void;
   stopPlayback: () => void;
+  formatDuration: (seconds: number) => string;
 }
 
 export function useVoiceRecording(): VoiceRecordingState & VoiceRecordingControls {
@@ -266,6 +267,6 @@ export function useVoiceRecording(): VoiceRecordingState & VoiceRecordingControl
     clearRecording,
     playRecording,
     stopPlayback,
-    formatDuration: formatDuration(state.duration)
+    formatDuration
   };
 }

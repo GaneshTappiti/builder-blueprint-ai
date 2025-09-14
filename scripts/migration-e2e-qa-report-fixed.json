@@ -1,0 +1,331 @@
+{
+  "summary": {
+    "testSuite": "Migration System End-to-End Test (Fixed)",
+    "startTime": "2025-09-14T19:47:53.871Z",
+    "endTime": "2025-09-14T19:47:59.404Z",
+    "duration": "6s",
+    "totalTests": 8,
+    "passed": 8,
+    "failed": 0,
+    "successRate": "100%"
+  },
+  "testResults": {
+    "localStorageData": {
+      "builder-blueprint-history": [
+        {
+          "project_id": "test-project-1",
+          "name": "Test Project 1",
+          "description": "A test project for migration testing",
+          "created_at": "2025-09-14T19:47:54.690Z",
+          "last_modified": "2025-09-14T19:47:54.691Z",
+          "context": {
+            "steps": [
+              "Step 1",
+              "Step 2",
+              "Step 3"
+            ],
+            "progress": 0.5,
+            "notes": "Test notes"
+          }
+        }
+      ],
+      "mvp_studio_projects": [
+        {
+          "project_id": "mvp-test-1",
+          "name": "MVP Test Project",
+          "description": "Test MVP project for migration",
+          "status": "in_progress",
+          "created_at": "2025-09-14T19:47:54.691Z",
+          "last_modified": "2025-09-14T19:47:54.691Z",
+          "project_data": {
+            "features": [
+              "Feature 1",
+              "Feature 2"
+            ],
+            "target_audience": "Test users",
+            "business_model": "SaaS"
+          }
+        }
+      ],
+      "ideaforge_ideas": [
+        {
+          "idea_id": "idea-test-1",
+          "title": "Test Idea 1",
+          "description": "A test idea for migration testing",
+          "category": "Technology",
+          "created_at": "2025-09-14T19:47:54.691Z",
+          "last_modified": "2025-09-14T19:47:54.691Z",
+          "idea_data": {
+            "problem": "Test problem",
+            "solution": "Test solution",
+            "market_size": "Large",
+            "competition": "Moderate"
+          }
+        }
+      ]
+    },
+    "supabaseData": {
+      "builder_context": {
+        "success": true,
+        "count": 1,
+        "data": [
+          {
+            "id": "7ab29664-5063-4903-a9ff-18cbab0d2840",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "project_id": "test-project-1",
+            "context_data": {},
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.692+00:00",
+            "updated_at": "2025-09-14T19:47:54.692+00:00",
+            "name": "Test Project 1",
+            "description": "A test project for migration testing",
+            "context": {
+              "notes": "Test notes",
+              "steps": [
+                "Step 1",
+                "Step 2",
+                "Step 3"
+              ],
+              "progress": 0.5
+            }
+          }
+        ]
+      },
+      "mvp_studio_projects": {
+        "success": true,
+        "count": 1,
+        "data": [
+          {
+            "id": "e3e6074c-4bf7-48c3-8827-30dfcb8cdce3",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "project_id": "mvp-test-1",
+            "project_data": {
+              "features": [
+                "Feature 1",
+                "Feature 2"
+              ],
+              "business_model": "SaaS",
+              "target_audience": "Test users"
+            },
+            "status": "in_progress",
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.766+00:00",
+            "updated_at": "2025-09-14T19:47:54.766+00:00",
+            "name": "MVP Test Project",
+            "description": "Test MVP project for migration"
+          }
+        ]
+      },
+      "ideaforge_data": {
+        "success": true,
+        "count": 1,
+        "data": [
+          {
+            "id": "e2b96495-48a4-4bf0-bb61-4bc30d55de4c",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "idea_id": "idea-test-1",
+            "idea_data": {
+              "problem": "Test problem",
+              "solution": "Test solution",
+              "competition": "Moderate",
+              "market_size": "Large"
+            },
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.83+00:00",
+            "updated_at": "2025-09-14T19:47:54.83+00:00",
+            "title": "Test Idea 1",
+            "description": "A test idea for migration testing",
+            "category": "Technology"
+          }
+        ]
+      }
+    },
+    "migrationResults": {
+      "builder-blueprint-history": {
+        "success": true,
+        "data": [
+          {
+            "id": "7ab29664-5063-4903-a9ff-18cbab0d2840",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "project_id": "test-project-1",
+            "context_data": {},
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.692+00:00",
+            "updated_at": "2025-09-14T19:47:54.692+00:00",
+            "name": "Test Project 1",
+            "description": "A test project for migration testing",
+            "context": {
+              "notes": "Test notes",
+              "steps": [
+                "Step 1",
+                "Step 2",
+                "Step 3"
+              ],
+              "progress": 0.5
+            }
+          }
+        ]
+      },
+      "mvp_studio_projects": {
+        "success": true,
+        "data": [
+          {
+            "id": "e3e6074c-4bf7-48c3-8827-30dfcb8cdce3",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "project_id": "mvp-test-1",
+            "project_data": {
+              "features": [
+                "Feature 1",
+                "Feature 2"
+              ],
+              "business_model": "SaaS",
+              "target_audience": "Test users"
+            },
+            "status": "in_progress",
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.766+00:00",
+            "updated_at": "2025-09-14T19:47:54.766+00:00",
+            "name": "MVP Test Project",
+            "description": "Test MVP project for migration"
+          }
+        ]
+      },
+      "ideaforge_ideas": {
+        "success": true,
+        "data": [
+          {
+            "id": "e2b96495-48a4-4bf0-bb61-4bc30d55de4c",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "idea_id": "idea-test-1",
+            "idea_data": {
+              "problem": "Test problem",
+              "solution": "Test solution",
+              "competition": "Moderate",
+              "market_size": "Large"
+            },
+            "last_modified": "2025-09-14T19:47:54.691+00:00",
+            "created_at": "2025-09-14T19:47:54.83+00:00",
+            "updated_at": "2025-09-14T19:47:54.83+00:00",
+            "title": "Test Idea 1",
+            "description": "A test idea for migration testing",
+            "category": "Technology"
+          }
+        ]
+      }
+    },
+    "syncResults": {
+      "dataCreation": {
+        "success": true,
+        "data": [
+          {
+            "id": "c2dc428e-1800-4d0f-b90b-3f807ba5e72f",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "project_id": "sync-test-1",
+            "project_data": {
+              "features": [
+                "Sync Feature 1"
+              ],
+              "target_audience": "Multi-device users"
+            },
+            "status": "active",
+            "last_modified": "2025-09-14T19:47:56.472+00:00",
+            "created_at": "2025-09-14T19:47:56.472+00:00",
+            "updated_at": "2025-09-14T19:47:56.275548+00:00",
+            "name": "Cross-Device Sync Test",
+            "description": "Test project for cross-device sync"
+          }
+        ]
+      },
+      "dataConsistency": {
+        "success": true,
+        "count": 3
+      },
+      "realTimeSubscription": {
+        "success": true,
+        "received": false
+      }
+    },
+    "userId": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+    "rlsResults": {
+      "ownDataAccess": {
+        "success": true,
+        "count": 1
+      },
+      "otherDataAccess": {
+        "success": true,
+        "count": 0
+      }
+    },
+    "offlineResults": {
+      "queueAdd": {
+        "success": true,
+        "data": [
+          {
+            "id": "ac7711cd-fd7c-4fcd-a701-d6cb8d98dc44",
+            "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+            "operation": "create",
+            "table_name": "mvp_studio_projects",
+            "record_id": null,
+            "data": {
+              "name": "Offline Test Project",
+              "status": "draft",
+              "user_id": "89bc8f44-ad64-4dd0-b7c7-aa8cacf1e4c7",
+              "created_at": "2025-09-14T19:47:55.214Z",
+              "project_id": "offline-test-1",
+              "description": "Test project created while offline",
+              "project_data": {
+                "features": [
+                  "Offline Feature 1"
+                ],
+                "target_audience": "Offline users"
+              },
+              "last_modified": "2025-09-14T19:47:55.214Z"
+            },
+            "status": "pending",
+            "error_message": null,
+            "retry_count": 0,
+            "created_at": "2025-09-14T19:47:55.028525+00:00",
+            "processed_at": null
+          }
+        ]
+      },
+      "queueSync": {
+        "success": true,
+        "processed": 1,
+        "total": 1
+      }
+    },
+    "cleanupResults": {
+      "offline_queue": {
+        "success": true
+      },
+      "bmc_canvas_data": {
+        "success": true
+      },
+      "public_feedback_ideas": {
+        "success": true
+      },
+      "chat_notification_preferences": {
+        "success": true
+      },
+      "notification_preferences": {
+        "success": true
+      },
+      "ideas": {
+        "success": true
+      },
+      "ideaforge_data": {
+        "success": true
+      },
+      "mvp_studio_projects": {
+        "success": true
+      },
+      "builder_context": {
+        "success": true
+      }
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "recommendations": []
+}

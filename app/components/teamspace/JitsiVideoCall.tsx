@@ -183,6 +183,14 @@ export default function JitsiVideoCall({
         });
       }
     }
+    
+    // Return cleanup function for all code paths
+    return () => {
+      if (apiRef.current) {
+        apiRef.current.dispose();
+        apiRef.current = null;
+      }
+    };
   }, [isActive, roomName, displayName, isMuted, isVideoOff]);
 
   const handleMuteToggle = () => {

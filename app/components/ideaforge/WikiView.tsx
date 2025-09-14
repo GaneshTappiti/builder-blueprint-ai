@@ -45,6 +45,7 @@ import {
   Activity
 } from 'lucide-react';
 import { aiEngine } from '@/services/aiEngine';
+import { enhancedAIService } from '@/services/enhancedAIService';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -181,9 +182,10 @@ Research the market and provide a detailed analysis. Be specific and realistic.
 - "Consider focusing on user experience and scalability"
 - "The concept shows promise but needs refinement"`;
 
-      const response = await aiEngine.generateText(prompt, {
-        maxTokens: 3000,
-        temperature: 0.8
+      // Use enhanced AI service for sophisticated market analysis
+      const response = await enhancedAIService.generateMarketAnalysis(idea.title, {
+        context: idea.description,
+        temperature: 0.6
       });
 
       try {
