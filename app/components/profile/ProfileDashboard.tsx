@@ -44,6 +44,7 @@ import { ProfileTrendAnalytics } from './ProfileTrendAnalytics';
 import { ProfileBenchmarking } from './ProfileBenchmarking';
 import { ProfileEngagementSentiment } from './ProfileEngagementSentiment';
 import { ProfileGDPRExport } from './ProfileGDPRExport';
+import EnhancedProfileAnalytics from './EnhancedProfileAnalytics';
 
 interface ProfileDashboardProps {
   userId?: string;
@@ -439,6 +440,7 @@ export function ProfileDashboard({
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <div className="space-y-6">
+            <EnhancedProfileAnalytics />
             <ProfileAnalytics />
             <ProfileTrendAnalytics userId={userId} />
             <ProfileBenchmarking userId={userId} />

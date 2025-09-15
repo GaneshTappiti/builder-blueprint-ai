@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { AuthFlowManager } from '@/utils/authFlowManager';
 // import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
@@ -103,16 +104,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               updated_at: session.user.updated_at
             });
             
-            // Note: OAuth redirects are handled by AuthCallback page
-            // This context mainly handles programmatic auth changes
+            // Use AuthFlowManager for intelligent auth flow handling
             if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
               // Only redirect if we're not on the callback page (to avoid conflicts)
-              // AND we're not already on a workspace page (to prevent redirect loops)
-              if (!window.location.pathname.includes('/auth/callback') && 
-                  !window.location.pathname.startsWith('/workspace')) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirectTo = urlParams.get('redirectTo') || '/workspace';
-                router.push(redirectTo);
+              if (!window.location.pathname.includes('/auth/callback')) {
+                
+                // Analyze the auth event to determine appropriate action
+                const authEventInfo = await AuthFlowManager.analyzeAuthEvent(event, session);
+                
+                console.log('🔍 AuthContext: Auth event analysis', authEventInfo);
+                
+                // Handle redirects based on analysis
+                if (!window.location.pathname.startsWith('/workspace') && 
+                    !window.location.pathname.startsWith('/profile')) {
+                  
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const defaultRedirect = urlParams.get('redirectTo') || '/workspace';
+                  const redirectPath = AuthFlowManager.getRedirectPath(authEventInfo, defaultRedirect);
+                  
+                  console.log('🔄 AuthContext: Redirecting to', redirectPath);
+                  router.push(redirectPath);
+                }
               }
             }
           } else {

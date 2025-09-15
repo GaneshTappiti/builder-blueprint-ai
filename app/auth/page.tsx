@@ -445,6 +445,7 @@ export default function AuthPage() {
                   className="workspace-button-secondary"
                   onClick={() => handleSocialSignIn('github')}
                   disabled={loading}
+                  data-testid="github-oauth-button"
                 >
                   <Github className="h-4 w-4" />
                   <span className="ml-2">GitHub</span>
@@ -455,6 +456,7 @@ export default function AuthPage() {
                   className="workspace-button-secondary"
                   onClick={() => handleSocialSignIn('google')}
                   disabled={loading}
+                  data-testid="google-oauth-button"
                 >
                   <GoogleIcon />
                   <span className="ml-2">Google</span>

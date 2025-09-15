@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { AuthFlowManager } from '@/utils/authFlowManager';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -26,70 +27,30 @@ export default function AuthCallbackPage() {
 
         if (data.session) {
           setStatus('success');
-          setMessage('Authentication successful! Checking profile...');
+          setMessage('Authentication successful! Analyzing user status...');
           
-          // Check if this is a new user and if they need onboarding
-          const user = data.session.user;
-          if (user?.created_at) {
-            const userCreatedAt = new Date(user.created_at);
-            const now = new Date();
-            const isNewUser = (now.getTime() - userCreatedAt.getTime()) < 300000; // Less than 5 minutes old
-            
-            console.log('🔍 AuthCallback: Checking new user status', {
-              userCreatedAt: userCreatedAt.toISOString(),
-              now: now.toISOString(),
-              timeDiff: now.getTime() - userCreatedAt.getTime(),
-              isNewUser,
-              userEmail: user.email
-            });
-            
-            if (isNewUser) {
-              // Check if user has completed onboarding by looking at their profile
-              try {
-                const { data: profileData, error: profileError } = await supabase
-                  .from('user_profiles')
-                  .select('onboardingCompleted')
-                  .eq('id', user.id)
-                  .single();
-                
-                const needsOnboarding = !profileData?.onboardingCompleted;
-                
-                console.log('🔍 AuthCallback: Profile check result', {
-                  profileData,
-                  profileError,
-                  needsOnboarding
-                });
-                
-                if (needsOnboarding) {
-                  console.log('🆕 AuthCallback: New user needs onboarding, redirecting to profile setup');
-                  setMessage('New user detected! Setting up your profile...');
-                  setTimeout(() => {
-                    router.push('/profile/setup');
-                  }, 1500);
-                  return;
-                } else {
-                  console.log('✅ AuthCallback: User has completed onboarding');
-                }
-              } catch (profileCheckError) {
-                console.warn('⚠️ AuthCallback: Could not check profile status, assuming needs onboarding', profileCheckError);
-                // If we can't check the profile, assume they need onboarding
-                setMessage('Setting up your profile...');
-                setTimeout(() => {
-                  router.push('/profile/setup');
-                }, 1500);
-                return;
-              }
-            }
+          // Use AuthFlowManager to analyze the auth event and determine next steps
+          const authEventInfo = await AuthFlowManager.analyzeAuthEvent('SIGNED_IN', data.session);
+          
+          console.log('🔍 AuthCallback: Auth event analysis complete', authEventInfo);
+          
+          if (authEventInfo.isOAuthRefresh) {
+            setMessage('Welcome back! Redirecting...');
+          } else if (authEventInfo.needsProfileSetup) {
+            setMessage('Setting up your profile...');
+          } else {
+            setMessage('Redirecting to workspace...');
           }
           
-          // Get redirect URL from search params or default to workspace
+          // Get redirect URL from search params or use AuthFlowManager's recommendation
           const urlParams = new URLSearchParams(window.location.search);
-          const redirectTo = urlParams.get('redirectTo') || '/workspace';
+          const defaultRedirect = urlParams.get('redirectTo') || '/workspace';
+          const redirectPath = AuthFlowManager.getRedirectPath(authEventInfo, defaultRedirect);
           
-          setMessage('Redirecting to workspace...');
           setTimeout(() => {
-            router.push(redirectTo);
+            router.push(redirectPath);
           }, 1500);
+          
         } else {
           setStatus('error');
           setMessage('No session found. Please try again.');
@@ -98,8 +59,17 @@ export default function AuthCallbackPage() {
       } catch (error) {
         console.error('Auth callback error:', error);
         setStatus('error');
-        setMessage('An unexpected error occurred. Please try again.');
-        setTimeout(() => router.push('/auth'), 3000);
+        
+        // Fallback: Force profile setup if there's any uncertainty
+        if (error instanceof Error && error.message.includes('profile')) {
+          setMessage('Setting up your profile due to authentication issue...');
+          setTimeout(() => {
+            router.push(AuthFlowManager.forceProfileSetup());
+          }, 2000);
+        } else {
+          setMessage('An unexpected error occurred. Please try again.');
+          setTimeout(() => router.push('/auth'), 3000);
+        }
       }
     };
 

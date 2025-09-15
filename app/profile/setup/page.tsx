@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { useOnboardingSuccessBanner } from '@/components/ui/OnboardingSuccessBanner';
+import { PrivacyDefaultsManager } from '@/utils/privacyDefaultsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,6 +90,7 @@ export default function ProfileSetupPage() {
   const { user } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const { toast } = useToast();
+  const { triggerBanner } = useOnboardingSuccessBanner();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -273,7 +276,10 @@ export default function ProfileSetupPage() {
         })),
         interests: formData.interests,
         status: formData.status,
-        onboardingCompleted: true
+        onboardingCompleted: true,
+        // Apply privacy-conscious defaults
+        privacy: PrivacyDefaultsManager.getPrivacyDefaults(),
+        preferences: PrivacyDefaultsManager.getUserPreferencesDefaults()
       });
 
       if (success) {
@@ -281,6 +287,9 @@ export default function ProfileSetupPage() {
           title: "Profile Updated!",
           description: "Your profile has been completed successfully.",
         });
+        
+        // Trigger the onboarding success banner
+        triggerBanner();
         
         // Redirect to workspace
         setTimeout(() => {

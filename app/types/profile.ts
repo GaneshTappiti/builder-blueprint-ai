@@ -210,10 +210,16 @@ export interface PrivacySettings {
   activityVisibility: 'public' | 'team' | 'private';
   skillsVisibility: 'public' | 'team' | 'private';
   availabilityVisibility: 'public' | 'team' | 'private';
+  notesVisibility: 'public' | 'team' | 'private'; // Notes → private (as suggested)
+  projectsVisibility: 'public' | 'team' | 'private';
+  achievementsVisibility: 'public' | 'team' | 'private';
   allowDirectMessages: boolean;
   allowMeetingInvites: boolean;
+  allowTeamInvites: boolean;
   showOnlineStatus: boolean;
   showLastActive: boolean;
+  allowSearchIndexing: boolean; // For external search engines
+  dataProcessingConsent: boolean; // GDPR compliance
 }
 
 // Performance and Activity Tracking
@@ -693,14 +699,20 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
 
 export const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
   profileVisibility: 'team',
-  contactInfoVisibility: 'team',
-  activityVisibility: 'team',
-  skillsVisibility: 'team',
+  contactInfoVisibility: 'team', // Contact info → team only (as suggested)
+  activityVisibility: 'team', // Activity logs → team (as suggested)  
+  skillsVisibility: 'public', // Skills can be public for collaboration
   availabilityVisibility: 'team',
+  notesVisibility: 'private', // Notes → private (as suggested)
+  projectsVisibility: 'team',
+  achievementsVisibility: 'public', // Achievements can be public for recognition
   allowDirectMessages: true,
   allowMeetingInvites: true,
+  allowTeamInvites: true,
   showOnlineStatus: true,
-  showLastActive: true,
+  showLastActive: false, // More privacy-conscious default
+  allowSearchIndexing: false, // Privacy-first approach
+  dataProcessingConsent: true, // Required for app functionality
 };
 
 export const DEFAULT_MEDIA_STORAGE: MediaStorageInfo = {

@@ -16,6 +16,7 @@ import { TeamManagementProvider } from '@/contexts/TeamManagementContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { BuilderProvider } from '@/lib/builderContext';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import OnboardingSuccessBanner from '@/components/ui/OnboardingSuccessBanner';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -69,6 +70,7 @@ export default function RootLayout({
                           <TooltipProvider>
                             <IdeaProvider>
                               {children}
+                              <OnboardingSuccessBanner />
                             </IdeaProvider>
                             <Toaster />
                             <Sonner />
