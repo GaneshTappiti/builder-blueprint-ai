@@ -11,11 +11,16 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // User is authenticated, redirect to workspace
-        router.replace("/workspace");
+        // User is authenticated, redirect to workspace only if they're on the home page
+        // Don't redirect if they're already on a specific page
+        if (window.location.pathname === '/') {
+          router.replace("/workspace");
+        }
       } else {
-        // User is not authenticated, redirect to auth page
-        router.replace("/auth");
+        // User is not authenticated, redirect to auth page only if they're on the home page
+        if (window.location.pathname === '/') {
+          router.replace("/auth");
+        }
       }
     }
   }, [user, loading, router]);

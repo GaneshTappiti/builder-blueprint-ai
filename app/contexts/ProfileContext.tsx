@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
 import { UserProfile, UserSkill, UserCertification, UserLanguage, UserPerformance, UserActivity, ProfileAnalytics, ProfileSearchFilters, DEFAULT_USER_PREFERENCES, DEFAULT_PRIVACY_SETTINGS } from '@/types/profile';
 import ProfileService from '@/services/profileService';
@@ -74,6 +75,7 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   // State
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -173,9 +175,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
           setError('Failed to create profile');
           toast({
             title: "Profile Creation Failed",
-            description: "There was an error creating your profile. Please try again.",
+            description: "There was an error creating your profile. You'll be redirected to complete your profile setup.",
             variant: "destructive",
           });
+          
+          // Redirect to profile setup even if creation failed
+          // Only redirect if we're not already on a profile-related page
+          if (!window.location.pathname.includes('/profile/')) {
+            setTimeout(() => {
+              router.push('/profile/setup');
+            }, 2000);
+          }
         }
       }
     } catch (err) {
@@ -184,9 +194,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       setProfileCreationStatus('failed');
       toast({
         title: "Profile Error",
-        description: "There was an error loading your profile. Please refresh the page.",
+        description: "There was an error loading your profile. You'll be redirected to complete your profile setup.",
         variant: "destructive",
       });
+      
+      // Redirect to profile setup even if there's an error
+      // Only redirect if we're not already on a profile-related page
+      if (!window.location.pathname.includes('/profile/')) {
+        setTimeout(() => {
+          router.push('/profile/setup');
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -581,9 +599,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
         setError('Failed to create profile after retry');
         toast({
           title: "Profile Creation Failed",
-          description: "Unable to create your profile. Please contact support.",
+          description: "Unable to create your profile automatically. You'll be redirected to complete your profile setup manually.",
           variant: "destructive",
         });
+        
+        // Redirect to profile setup even after retry failure
+        // Only redirect if we're not already on a profile-related page
+        if (!window.location.pathname.includes('/profile/')) {
+          setTimeout(() => {
+            router.push('/profile/setup');
+          }, 2000);
+        }
         return false;
       }
     } catch (err) {
@@ -592,9 +618,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       setError('Failed to create profile');
       toast({
         title: "Profile Creation Error",
-        description: "There was an error creating your profile. Please try again.",
+        description: "There was an error creating your profile. You'll be redirected to complete your profile setup manually.",
         variant: "destructive",
       });
+      
+      // Redirect to profile setup even after error
+      // Only redirect if we're not already on a profile-related page
+      if (!window.location.pathname.includes('/profile/')) {
+        setTimeout(() => {
+          router.push('/profile/setup');
+        }, 2000);
+      }
       return false;
     } finally {
       setLoading(false);

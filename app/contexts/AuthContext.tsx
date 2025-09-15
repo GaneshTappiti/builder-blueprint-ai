@@ -90,8 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession();
 
     // Listen for auth changes
-    {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event: any, session: any) => {
           if (session?.user) {
             setUser({
@@ -104,33 +103,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               updated_at: session.user.updated_at
             });
             
-            // Redirect to workspace after successful authentication
+            // Note: OAuth redirects are handled by AuthCallback page
+            // This context mainly handles programmatic auth changes
             if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
-              const urlParams = new URLSearchParams(window.location.search);
-              const redirectTo = urlParams.get('redirectTo') || '/workspace';
-              
-              // Check if this is a new user signup and redirect to profile setup
-              if (event === 'SIGNED_IN' && session?.user?.created_at) {
-                const userCreatedAt = new Date(session.user.created_at);
-                const now = new Date();
-                const isNewUser = (now.getTime() - userCreatedAt.getTime()) < 300000; // Less than 5 minutes old (increased window)
-                
-                console.log('🔍 AuthContext: Checking new user status', {
-                  userCreatedAt: userCreatedAt.toISOString(),
-                  now: now.toISOString(),
-                  timeDiff: now.getTime() - userCreatedAt.getTime(),
-                  isNewUser,
-                  event
-                });
-                
-                if (isNewUser) {
-                  console.log('🆕 AuthContext: New user detected, redirecting to profile setup');
-                  router.push('/profile/setup');
-                  return;
-                }
+              // Only redirect if we're not on the callback page (to avoid conflicts)
+              // AND we're not already on a workspace page (to prevent redirect loops)
+              if (!window.location.pathname.includes('/auth/callback') && 
+                  !window.location.pathname.startsWith('/workspace')) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectTo = urlParams.get('redirectTo') || '/workspace';
+                router.push(redirectTo);
               }
-              
-              router.push(redirectTo);
             }
           } else {
             setUser(null);
@@ -140,8 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      return () => subscription.unsubscribe();
-    }
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {

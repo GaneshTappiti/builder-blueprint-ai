@@ -113,6 +113,25 @@ export default function ProfileSetupPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Check if user has already completed onboarding or is not authenticated
+  useEffect(() => {
+    if (!user) {
+      console.log('User not authenticated, redirecting to auth');
+      router.push('/auth');
+      return;
+    }
+    
+    if (profile && profile.onboardingCompleted) {
+      console.log('User has already completed onboarding, redirecting to profile page');
+      toast({
+        title: "Onboarding Already Complete",
+        description: "You have already completed your profile setup. Redirecting to your profile page where you can make changes.",
+      });
+      router.push('/profile');
+      return;
+    }
+  }, [user, profile, router, toast]);
+
   // Initialize form data from existing profile
   useEffect(() => {
     if (profile) {
@@ -296,7 +315,8 @@ export default function ProfileSetupPage() {
 
   const completionPercentage = calculateCompletion();
 
-  if (profileLoading) {
+  // Show loading while checking user status
+  if (!user || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-green-900/20">
         <div className="flex flex-col items-center gap-4">
@@ -319,6 +339,11 @@ export default function ProfileSetupPage() {
           <p className="text-gray-400 max-w-2xl mx-auto">
             Set up your profile to unlock all features including team invitations, idea vault, and collaborative tools.
           </p>
+          <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg max-w-2xl mx-auto">
+            <p className="text-sm text-blue-300">
+              <strong>Note:</strong> This is your initial profile setup. After completion, you can make changes anytime from your profile page.
+            </p>
+          </div>
         </div>
 
         {/* Progress Bar */}

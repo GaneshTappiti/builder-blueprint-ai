@@ -130,7 +130,6 @@ export class ProfileService {
 
         const profileData = {
           id: userId,
-          user_id: userId,  // Add the required user_id column
           email: userData.email || '',
           name: userData.name || 'User',
           avatar_url: userData.avatar_url || null,
@@ -162,13 +161,22 @@ export class ProfileService {
           updated_at: new Date().toISOString()
         };
 
+        console.log('Inserting profile data:', profileData);
+
         // Try direct insert
-        const { error } = await supabase
+        const { data: insertData, error } = await supabase
           .from('user_profiles')
-          .insert(profileData);
+          .insert(profileData)
+          .select();
 
         if (error) {
           console.error(`Profile creation error (attempt ${attempt}):`, error);
+          console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          });
           lastError = error;
           
           // If it's a duplicate key error, profile might already exist

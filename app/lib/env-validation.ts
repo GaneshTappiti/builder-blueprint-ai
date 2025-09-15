@@ -8,16 +8,6 @@ interface EnvConfig {
 }
 
 export function validateEnvironment(): EnvConfig {
-  // Only run on client side to avoid SSR issues
-  if (typeof window === 'undefined') {
-    return {
-      supabaseUrl: undefined,
-      supabaseAnonKey: undefined,
-      isSupabaseConfigured: false,
-      missingVars: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY']
-    };
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
@@ -62,11 +52,6 @@ After adding these variables, restart your development server.
 }
 
 export function logEnvironmentStatus(): void {
-  // Only log on client side to avoid SSR issues
-  if (typeof window === 'undefined') {
-    return;
-  }
-
   const config = validateEnvironment();
   
   if (config.isSupabaseConfigured) {
@@ -74,8 +59,10 @@ export function logEnvironmentStatus(): void {
   } else {
     console.warn('⚠️ Supabase authentication is not configured');
     console.warn('Missing environment variables:', config.missingVars.join(', '));
-    console.warn('Setup instructions:');
-    console.warn(getSetupInstructions());
+    if (typeof window !== 'undefined') {
+      console.warn('Setup instructions:');
+      console.warn(getSetupInstructions());
+    }
   }
 }
 
